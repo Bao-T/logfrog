@@ -44,18 +44,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  int _bottomNavBarIndex = 0;
+  PageOne pgOne;
+  PageHome pgHome;
+  List<Widget> pageList;
+  Widget currentPage;
+
+  @override
+  void initState(){
+    pgOne = PageOne();
+    pgHome = PageHome();
+    pageList = [pgHome,pgOne];
+    currentPage = pgHome;
+
+    super.initState();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +77,79 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
+      body: currentPage,
+      bottomNavigationBar: BottomNavigationBar(
+
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _bottomNavBarIndex,
+        onTap: (int index){
+          setState(() {
+            _bottomNavBarIndex = index;
+            //Temp page selector
+            currentPage = index == 0 ? pageList[_bottomNavBarIndex] : pageList[1] ;
+          });
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.home),
+            title: new Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.input),
+            title: new Text('Input'),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.mail),
+            title: new Text('Mail'),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.person),
+            title: new Text('Person'),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.settings),
+            title: new Text('Settings'),
+          ),
+        ]
+
+      ),
+    );
+  }
+}
+// Pages and their states
+class PageOne extends StatefulWidget{
+  PageOne ({Key key}) :super (key:key);
+  @override
+  PageOneState createState() => PageOneState();
+}
+
+class PageOneState extends State<PageOne>{
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Container(
+      color: Colors.red,
+    );
+  }
+}
+// End of page template and page functionality
+
+class PageHome extends StatefulWidget{
+  PageHome({Key key}) : super(key:key);
+  @override
+  PageHomeState createState() => PageHomeState();
+}
+class PageHomeState extends State<PageHome>{
+  int _counter = 0;
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
@@ -100,34 +179,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        items: [
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.home),
-            title: new Text('Home'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.input),
-            title: new Text('Input'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.mail),
-            title: new Text('Mail'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.person),
-            title: new Text('Person'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.error),
-            title: new Text('Error'),
-          ),
-        ]
-
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
