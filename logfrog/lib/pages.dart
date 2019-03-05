@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class PageOne extends StatefulWidget {
   PageOne({Key key}) : super(key: key);
   @override
@@ -11,36 +10,81 @@ class PageOneState extends State<PageOne> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+
     return Padding(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.all(5.0),
       child: Container(
-        child: Row(
-            children: [
-              Expanded(
-                  flex: 5,
-                  child: Container(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Expanded(
-                          child: Container(
-                            color: Colors.red,
-                            child: Column(
-                              children: <Widget>[Text("test"), Text("test")],
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                            child: Container(
+        child: Column(children: [
+          Expanded(
+              flex: 4,
+              child: Container(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    AspectRatio(
+                        aspectRatio: 3.0 / 4.0,
+                        child: Container(
+                          height: 120,
+                          margin: EdgeInsets.all(5.0),
                           color: Colors.greenAccent,
                           child: Text("Camera"),
-                        ))
+                        )),
+                    Expanded(
+                      child: Container(
+                          margin: EdgeInsets.all(5.0),
+                          color: Colors.red,
+                          child: Text("User Info")),
+                    )
+                  ],
+                ),
+              )),
+          Expanded(
+            flex: 6,
+            child: CustomScrollView(
+              shrinkWrap: true,
+              slivers: <Widget>[
+                SliverPadding(
+                  padding: const EdgeInsets.all(20.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate(
+                      <Widget>[
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+                        const Text('I\'m dedicating every day to you'),
+                        const Text('Domestic life was never quite my style'),
+                        const Text('When you smile, you knock me out, I fall apart'),
+                        const Text('And I thought I was so smart'),
+
                       ],
                     ),
-                  )),
-              Expanded(
-                  flex: 5, child: Container( color: Colors.amber)),
-            ]),
+                  ),
+                ),
+              ],
+            )
+          )
+        ]),
       ),
     );
   }
