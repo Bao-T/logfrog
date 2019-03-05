@@ -1,5 +1,5 @@
 name: logfrog
-description: A new Flutter project.
+description: An application for logging and databasing items based on 2d codes.
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -27,7 +27,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: "^0.7.0"
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/Full_Logo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
