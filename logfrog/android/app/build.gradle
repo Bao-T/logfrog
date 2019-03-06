@@ -59,7 +59,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.firebase:firebase-core:16.0.1'
+<<<<<<< HEAD
 
+=======
+>>>>>>> f0fcb434f479dc1d6372f956610fa0940f62b238
 }
 
 apply plugin: 'com.google.gms.google-services'
