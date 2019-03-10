@@ -1,50 +1,13 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
-
+import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/material.dart';
 
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool _preview = false;
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("Live Barcode Scanner"),
-        ),
-        floatingActionButton: FloatingActionButton(
-          child: Text("scan"),
-          onPressed: () {
-            setState(() {
-              _preview = !_preview;
-            });
-          },
-        ),
-        body: _preview ? LiveBarcodeScanner(
-          onBarcode: (code) {
-            print(code);
-
-            return true;
-          },
-        ) : null,
-      ),
-    );
-  }
-}
-
 final BarcodeDetector barcodeDetector =
-FirebaseVision.instance.barcodeDetector();
+    FirebaseVision.instance.barcodeDetector();
 
 typedef bool BarcodeFoundCallback(String code);
 
@@ -52,6 +15,7 @@ class LiveBarcodeScanner extends StatefulWidget {
   LiveBarcodeScanner({
     @required this.onBarcode,
   });
+  final Set<String> codes = {};
 
   /// This will be called with newly found barcode
   /// and should return [true] if the scanning can stop
@@ -63,7 +27,6 @@ class LiveBarcodeScanner extends StatefulWidget {
 
 class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
   CameraController controller;
-  var codeString = '';
   List<CameraDescription> cameras;
 
   @override
@@ -109,12 +72,13 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
         ));
 
     final List<Barcode> scannedBarcode =
-    await barcodeDetector.detectInImage(visionImage);
+        await barcodeDetector.detectInImage(visionImage);
 
     for (int i = 0; i < scannedBarcode.length; i++) {
       if (widget.onBarcode(scannedBarcode[i].rawValue)) {
-        setState(() => codeString = scannedBarcode[i].rawValue);
-        debugPrint(codeString);
+        setState(() => widget.codes.add(scannedBarcode[i].rawValue));
+        //debugPrint(codeString);
+
         /*
         controller.stopImageStream().catchError((e) {
           switch (e.runtimeType) {
@@ -123,11 +87,9 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
             default:
               throw (e);
           }
-        });
+        });*/
 
-        break;*/
       }
-
     }
   }
 
@@ -138,12 +100,28 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
         child: CircularProgressIndicator(),
       );
     }
+    /*return AspectRatio(
+        aspectRatio: controller.value.aspectRatio,
+        child: Transform.rotate(angle: -math.pi/2, child: CameraPreview(controller)));*/
 
+    return OrientationBuilder(builder: (context, orientation) {
+      if (orientation == Orientation.portrait) {
+        return AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child:
+                Transform.rotate(angle: -math.pi / 2, child: CameraPreview(controller)));
+      } else if (orientation == Orientation.landscape) {
+        return AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: Transform.rotate(
+                angle: 0, child: CameraPreview(controller)));
+      }
+    });
+    /*
     return Column(
         children: [AspectRatio(
         aspectRatio: controller.value.aspectRatio,
         child: CameraPreview(controller),
-      ), Text(codeString)]
-    );
+      ), Text(codeString)] */
   }
 }

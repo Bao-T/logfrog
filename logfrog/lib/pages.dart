@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'liveCamera.dart';
+import 'dart:math' as math;
 import "widgets.dart";
 
 class PageOne extends StatefulWidget {
@@ -8,20 +10,26 @@ class PageOne extends StatefulWidget {
 }
 
 class PageOneState extends State<PageOne> {
+  LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
-  var camera = Container(
-        height: 120,
-        margin: EdgeInsets.all(5.0),
-        color: Colors.greenAccent,
-        child: Text("Camera"),
-      );
-  var userInfo = Expanded(
+  String data = "";
+  Container camera;
+  Expanded userInfo;
+  CustomScrollView database;
+  /*
+  Container camera = Container(
+    height: 120,
+    margin: EdgeInsets.all(5.0),
+    color: Colors.greenAccent,
+    child: _Bscanner,
+  );
+  Expanded userInfo = Expanded(
     child: Container(
         margin: EdgeInsets.all(5.0),
         color: Colors.red,
         child: Text("User Info")),
   );
-  var database = CustomScrollView(
+  CustomScrollView database = CustomScrollView(
     shrinkWrap: true,
     slivers: <Widget>[
       SliverPadding(
@@ -29,45 +37,60 @@ class PageOneState extends State<PageOne> {
         sliver: SliverList(
           delegate: SliverChildListDelegate(
             <Widget>[
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
-              const Text('I\'m dedicating every day to you'),
-              const Text('Domestic life was never quite my style'),
-              const Text('When you smile, you knock me out, I fall apart'),
-              const Text('And I thought I was so smart'),
+              Text(_Bscanner.codes.toString()),
             ],
           ),
         ),
       ),
     ],
   );
+  */
+  @override
+  void initState() {
+    super.initState();
+    _Bscanner = LiveBarcodeScanner(
+      onBarcode: (code) {
+        //print(code);
+        setState(() {
+          if (data != code)
+            data = code;
+        });
+        return true;
+      },
+    );
+    camera = Container(
+      margin: EdgeInsets.all(5.0),
+      color: Colors.greenAccent,
+      child: _Bscanner,
+    );
+    userInfo = Expanded(
+      child: Container(
+          margin: EdgeInsets.all(5.0),
+          color: Colors.red,
+          child: Text("User Info")),
+    );
+    database = CustomScrollView(
+      shrinkWrap: true,
+      slivers: <Widget>[
+        SliverPadding(
+          padding: const EdgeInsets.all(20.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                Text(data),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-
-    return Padding(
+    return Scaffold(
+        body: Padding(
       padding: const EdgeInsets.all(5.0),
       child: Scaffold(body: OrientationBuilder(
         builder: (context, orientation) {
@@ -79,10 +102,26 @@ class PageOneState extends State<PageOne> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[AspectRatio(aspectRatio: 3.0/4.0, child: camera), userInfo],
+                      children: <Widget>[camera, userInfo],
                     ),
                   )),
-              Expanded(flex: 6, child: database)
+              Expanded(
+                  flex: 6,
+                  child: CustomScrollView(
+                    shrinkWrap: true,
+                    slivers: <Widget>[
+                      SliverPadding(
+                        padding: const EdgeInsets.all(20.0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate(
+                            <Widget>[
+                              Text(data),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),)
             ]);
           } else {
             return Row(children: [
@@ -91,15 +130,29 @@ class PageOneState extends State<PageOne> {
                   child: Container(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[AspectRatio(aspectRatio: 4.0/3.0, child: camera), userInfo],
+                      children: <Widget>[camera, userInfo],
                     ),
                   )),
-              Expanded(flex: 7, child: database)
+              Expanded(flex: 7, child: CustomScrollView(
+                shrinkWrap: true,
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: const EdgeInsets.all(20.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        <Widget>[
+                          Text(data),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ))
             ]);
           }
         },
       )),
-    );
+    ));
   }
 }
 // End of page template and page functionality
@@ -121,24 +174,13 @@ class PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+          title: Text('LogFrog')
+      ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
