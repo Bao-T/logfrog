@@ -13,13 +13,15 @@ class _MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+//creates a camera to scan barcodes with
+//dependencies: camera/camera.dart
 class _MyHomePageState extends State<_MyHomePage> {
-  dynamic _scanResults;
-  CameraController _camera;
+  dynamic _scanResults; //
+  CameraController _camera; //creates a camera view for the user to see on the device screen
 
-  Detector _currentDetector = Detector.text;
+  Detector _currentDetector = Detector.text; //prints out the information that the camera scans from the barcode
   bool _isDetecting = false;
-  CameraLensDirection _direction = CameraLensDirection.back;
+  CameraLensDirection _direction = CameraLensDirection.back; //tells the program that we want to use the back camera, and not the front.
 
   @override
   void initState() {
@@ -30,22 +32,25 @@ class _MyHomePageState extends State<_MyHomePage> {
   void _initializeCamera() async {
     CameraDescription description = await getCamera(_direction);
     ImageRotation rotation = rotationIntToImageRotation(
-      description.sensorOrientation,
+      description.sensorOrientation, //makes sure that the orientation of the camera matches the current orientation of the device
     );
 
+    //sets the default resolution for IOS devices
     _camera = CameraController(
       description,
-      defaultTargetPlatform == TargetPlatform.iOS
-          ? ResolutionPreset.low
+      defaultTargetPlatform == TargetPlatform.iOS //we are using an IOS device
+          ? ResolutionPreset.low //if the resolution of the IOS device is set to low by default, change the resolution to medium for the usage of the program
           : ResolutionPreset.medium,
     );
-    await _camera.initialize();
+    await _camera.initialize(); //initialize the camera
 
+    //returns the images that the camera is picking up to screen in a continious stream
     _camera.startImageStream((CameraImage image) {
-      if (_isDetecting) return;
+      if (_isDetecting) return; //if the camera is active, show the camera feed on the screen
 
       _isDetecting = true;
 
+      //try catch block to catch errors and exceptions in the camera interface
       detect(image, _getDetectionMethod(), rotation).then(
             (dynamic result) {
           setState(() {
@@ -62,27 +67,30 @@ class _MyHomePageState extends State<_MyHomePage> {
     });
   }
 
+  //setting up the barcode detection part of the program
   HandleDetection _getDetectionMethod() {
-    final FirebaseVision mlVision = FirebaseVision.instance;
+    final FirebaseVision mlVision = FirebaseVision.instance; //use firebase's object detection interface
 
     switch (_currentDetector) {
-      case Detector.text:
+      case Detector.text: //use if the program will be detecting text
         return mlVision.textRecognizer().processImage;
-      case Detector.barcode:
+      case Detector.barcode: //use if the program will be detecting barcodes
         return mlVision.barcodeDetector().detectInImage;
-      case Detector.label:
+      case Detector.label: //use if the program will be detecting objects
         return mlVision.labelDetector().detectInImage;
-      case Detector.cloudLabel:
+      case Detector.cloudLabel: //use if the program will be detecting clouds(?)
         return mlVision.cloudLabelDetector().detectInImage;
       default:
-        assert(_currentDetector == Detector.face);
+        assert(_currentDetector == Detector.face); //use if the program will be detecting human faces
         return mlVision.faceDetector().processImage;
     }
   }
 
+  //displays the results of the camera image detection
   Widget _buildResults() {
-    const Text noResultsText = const Text('No results!');
+    const Text noResultsText = const Text('No results!'); //if nothing is being detected, print "No results!" to screen
 
+    //if no barcodes are being detected, if the camera has not been initialized, or if the camera does not exist in the program, return "No results!"
     if (_scanResults == null ||
         _camera == null ||
         !_camera.value.isInitialized) {
@@ -91,11 +99,13 @@ class _MyHomePageState extends State<_MyHomePage> {
 
     CustomPainter painter;
 
+    //set the final height and width of the camera feed display on the screen
     final Size imageSize = Size(
       _camera.value.previewSize.height,
       _camera.value.previewSize.width,
     );
 
+    //depending on the detection type being used (faces, barcodes, etc), return results that make sense for the kind of detection being used
     switch (_currentDetector) {
       case Detector.barcode:
         if (_scanResults is! List<Barcode>) return noResultsText;
@@ -124,9 +134,11 @@ class _MyHomePageState extends State<_MyHomePage> {
     );
   }
 
+  //Set the page styles that will be displayed
   Widget _buildImage() {
     return Container(
       constraints: const BoxConstraints.expand(),
+      //if no camera is initialized, then initialize the camera
       child: _camera == null
           ? const Center(
         child: Text(
@@ -164,6 +176,7 @@ class _MyHomePageState extends State<_MyHomePage> {
     _initializeCamera();
   }
 
+  //choose which detector the program will use
   @override
   Widget build(BuildContext context) {
     return Scaffold(
