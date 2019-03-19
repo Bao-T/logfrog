@@ -76,6 +76,8 @@ class FirebaseFirestoreService {
       String equipId = equipment.id.toString(); //Dart method to convert integer to string
       final DocumentSnapshot ds = await tx.get(equipmentCollection.document(equipId));
 
+
+
       //TODO: Fix this issue?  Also, finish implementing updates for all classes, deletes for all classes, etc. based off tutorial
       await tx.update(ds.reference, Equipment.toMap());
       return {'updated': true};
