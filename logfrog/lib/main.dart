@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 
 void main() => runApp(MyApp());
 
+Firestore db = Firestore.instance; //Initially getting firestore instance for use in database access
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -127,57 +128,5 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 // Pages and their states
-
-
-class Equipment {
-  int id;
-  String condition;
-  List<DocumentReference> history;
-  String image; //leaving this as string for now, until we figure out getting firebase to accept images
-  List<String> notes;
-  DocumentReference reference;
-  int barcode;
-  int type;
-
-  //default constuctor
-  //For making a new equipment item, so history is empty, notes are empty
-  //https://pub.dartlang.org/packages/cloud_firestore explains how to actually push something up to firebase
-  Equipment(int new_id, String new_cond, String image, int new_barcode,
-      int new_type) {
-    this.id = new_id;
-    this.condition = new_cond;
-    this.history = List<
-        DocumentReference>(); //TODO: check if this works with memory management (been a while since I"ve used anything with news in C++)
-    this.image = null; //set to null for now
-    this.notes = List<String>();
-    this.type =
-        new_type; //0 is camera, 1 is lens, 2 is stand, 3 is misc. TODO: Bao, can you add some more equipment numbers?
-    //separating out new barcode, new reference
-    //do we want to do barcode generation here???
-    //Firestore.instance.collection('Equipment').document().setData()
-  }
-
-}
-
-class Users{
-  int id;
-  String first_name;
-  String last_name;
-  String email_address;
-  String username;
-  String password;
-
-}
-
-class Patrons {
-  int id;
-  String first_name;
-  String last_name;
-  List<DocumentReference> check_out_history;
-  String email_address;
-  List<DocumentReference> checked_out_equipment;
-}
-
-
 
 
