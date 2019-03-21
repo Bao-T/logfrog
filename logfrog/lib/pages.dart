@@ -3,6 +3,8 @@ import 'liveCamera.dart';
 import 'dart:math' as math;
 import "widgets.dart";
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 class PageOne extends StatefulWidget {
   PageOne({Key key}) : super(key: key);
   @override
