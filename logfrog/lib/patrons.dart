@@ -24,18 +24,18 @@ class Patrons {
     this.checkedOutEquipment = obj['checkedOutEquipment'];
   }
 
-  Map<String, dynamic> toMap() {
+  static Map<String, dynamic> toMap(Patrons pat) {
     var map = new Map<String, dynamic>();
-    if (id != null) {
-      map['id'] = id;
+    if (pat.id != null) {
+      map['id'] = pat.id;
     }
-    map['firstName'] = firstName;
-    map['lastName'] = lastName;
-    map['emailAddress'] = emailAddress;
-    map['username'] = username;
-    map['password'] = password;
-    map['checkOutHistory'] = checkOutHistory;
-    map['checkedOutEquipment'] = checkedOutEquipment;
+    map['firstName'] = pat.firstName;
+    map['lastName'] = pat.lastName;
+    map['emailAddress'] = pat.emailAddress;
+    map['username'] = pat.username;
+    map['password'] = pat.password;
+    map['checkOutHistory'] = pat.checkOutHistory;
+    map['checkedOutEquipment'] = pat.checkedOutEquipment;
     return map;
   }
 

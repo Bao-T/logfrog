@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
-import 'dart:async';
+//import 'dart:async';
 
 //Following this tutorial for building the class
 // https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview#Initialize_038_Reference
@@ -43,17 +43,17 @@ class Equipment {
     this.type = obj['type'];
   }
 
-  Map<String, dynamic> toMap() {
+  static Map<String, dynamic> toMap(Equipment equip) {
     var map = new Map<String, dynamic>();
-    if (id != null) {
-      map['id'] = id;
+    if (equip.id != null) {
+      map['id'] = equip.id;
     }
-    map['condition'] =  condition;
-    map['history'] = history;
-    map['notes'] = notes;
-    map['reference'] = reference;
-    map['barcode'] = barcode;
-    map['type'] = type;
+    map['condition'] =  equip.condition;
+    map['history'] = equip.history;
+    map['notes'] = equip.notes;
+    map['reference'] = equip.reference;
+    map['barcode'] = equip.barcode;
+    map['type'] = equip.type;
     return map;
   }
 
