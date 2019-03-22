@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
+//import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 
 
 class Users {
@@ -20,16 +20,16 @@ class Users {
     this.password = obj['password'];
   }
 
-  Map<String, dynamic> toMap() {
+  static Map<String, dynamic> toMap(Users usr) {
     var map = new Map<String, dynamic>();
-    if (id != null) {
-      map['id'] = id;
+    if (usr.id != null) {
+      map['id'] = usr.id;
     }
-    map['firstName'] = firstName;
-    map['lastName'] = lastName;
-    map['emailAddress'] = emailAddress;
-    map['username'] = username;
-    map['password'] = password;
+    map['firstName'] = usr.firstName;
+    map['lastName'] = usr.lastName;
+    map['emailAddress'] = usr.emailAddress;
+    map['username'] = usr.username;
+    map['password'] = usr.password;
     return map;
   }
 

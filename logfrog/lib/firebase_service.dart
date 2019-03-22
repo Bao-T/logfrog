@@ -73,11 +73,9 @@ class FirebaseFirestoreService {
 
   Future<dynamic> updateEquipment(Equipment equipment) async {
     final TransactionHandler updateTransaction = (Transaction tx) async {
-      String equipId = equipment.id.toString(); //Dart method to convert integer to string
-      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(equipId));
-
-      //TODO: Fix this issue?  Also, finish implementing updates for all classes, deletes for all classes, etc. based off tutorial
-      await tx.update(ds.reference, Equipment.toMap());
+      String idGet = equipment.id.toString();
+      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(idGet));
+      await tx.update(ds.reference, Equipment.toMap(equipment));
       return {'updated': true};
     };
 
@@ -90,5 +88,90 @@ class FirebaseFirestoreService {
     });
   }
 
+  Future<dynamic> updatePatrons(Patrons patron) async {
+    final TransactionHandler updateTransaction = (Transaction tx) async {
+      String idGet = patron.id.toString();
+      final DocumentSnapshot ds = await tx.get(patronsCollection.document(idGet));
+      await tx.update(ds.reference, Patrons.toMap(patron));
+      return {'updated': true};
+    };
+
+    return Firestore.instance
+        .runTransaction(updateTransaction)
+        .then((result) => result['updated'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
+
+
+  Future<dynamic> updateUsers(Users usr) async {
+    final TransactionHandler updateTransaction = (Transaction tx) async {
+      String idGet = usr.id.toString();
+      final DocumentSnapshot ds = await tx.get(usersCollection.document(idGet));
+      await tx.update(ds.reference, Users.toMap(usr));
+      return {'updated': true};
+    };
+
+    return Firestore.instance
+        .runTransaction(updateTransaction)
+        .then((result) => result['updated'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
+
+  Future<dynamic> deleteEquipment(int id) async {
+    final TransactionHandler deleteTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(id.toString()));
+
+      await tx.delete(ds.reference);
+      return {'deleted': true};
+    };
+
+    return Firestore.instance
+        .runTransaction(deleteTransaction)
+        .then((result) => result['deleted'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
+
+  Future<dynamic> deletePatrons(int id) async {
+    final TransactionHandler deleteTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds = await tx.get(patronsCollection.document(id.toString()));
+
+      await tx.delete(ds.reference);
+      return {'deleted': true};
+    };
+
+    return Firestore.instance
+        .runTransaction(deleteTransaction)
+        .then((result) => result['deleted'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
+
+  Future<dynamic> deleteUsers(int id) async {
+    final TransactionHandler deleteTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds = await tx.get(usersCollection.document(id.toString()));
+
+      await tx.delete(ds.reference);
+      return {'deleted': true};
+    };
+
+    return Firestore.instance
+        .runTransaction(deleteTransaction)
+        .then((result) => result['deleted'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
 }
 

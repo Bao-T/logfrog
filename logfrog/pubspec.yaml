@@ -26,6 +26,7 @@ dependencies:
   cupertino_icons: ^0.1.2
   cloud_firestore: ^0.8.2 #adding for firebase
   charts_flutter: #added for animated charts for statistics
+  firebase_auth:
   firebase_ml_vision:
   camera:
 
