@@ -14,8 +14,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
 
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
       DeviceOrientation.portraitUp,
     ]);
     return MaterialApp(
@@ -59,7 +57,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   int _bottomNavBarIndex = 0;
-  PageOne pgOne;
+  CheckoutPg checkoutPg;
   PageHome pgHome;
 
   List<Widget> pageList;
@@ -67,9 +65,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState(){
-    pgOne = PageOne();
+    checkoutPg = CheckoutPg();
     pgHome = PageHome();
-    pageList = [pgHome,pgOne];
+    pageList = [pgHome,checkoutPg];
     currentPage = pgHome;
 
     super.initState();

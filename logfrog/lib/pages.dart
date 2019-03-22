@@ -1,50 +1,23 @@
 import 'package:flutter/material.dart';
 import 'liveCamera.dart';
 import 'dart:math' as math;
-import "widgets.dart";
+import "chartWidgets.dart";
 
-class PageOne extends StatefulWidget {
-  PageOne({Key key}) : super(key: key);
+class CheckoutPg extends StatefulWidget {
+  CheckoutPg({Key key}) : super(key: key);
   @override
-  PageOneState createState() => PageOneState();
+  CheckoutPgState createState() => CheckoutPgState();
 }
 
-class PageOneState extends State<PageOne> {
+class CheckoutPgState extends State<CheckoutPg> {
   LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
-  String data = "";
+  Set<String> data = {};
+  List<Widget> dataWidget = [];
   Container camera;
   Expanded userInfo;
   CustomScrollView database;
-  /*
-  Container camera = Container(
-    height: 120,
-    margin: EdgeInsets.all(5.0),
-    color: Colors.greenAccent,
-    child: _Bscanner,
-  );
-  Expanded userInfo = Expanded(
-    child: Container(
-        margin: EdgeInsets.all(5.0),
-        color: Colors.red,
-        child: Text("User Info")),
-  );
-  CustomScrollView database = CustomScrollView(
-    shrinkWrap: true,
-    slivers: <Widget>[
-      SliverPadding(
-        padding: const EdgeInsets.all(20.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate(
-            <Widget>[
-              Text(_Bscanner.codes.toString()),
-            ],
-          ),
-        ),
-      ),
-    ],
-  );
-  */
+
   @override
   void initState() {
     super.initState();
@@ -52,15 +25,17 @@ class PageOneState extends State<PageOne> {
       onBarcode: (code) {
         //print(code);
         setState(() {
-          if (data != code)
-            data = code;
+          if (data.contains(code) == false) {
+            data.add(code);
+            dataWidget.add(Text(code));
+            //debugPrint(dataWidget.toString());
+          }
         });
         return true;
       },
     );
     camera = Container(
       margin: EdgeInsets.all(5.0),
-      color: Colors.greenAccent,
       child: _Bscanner,
     );
     userInfo = Expanded(
@@ -77,7 +52,7 @@ class PageOneState extends State<PageOne> {
           sliver: SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                Text(data),
+                Text(data.toString()),
               ],
             ),
           ),
@@ -90,13 +65,14 @@ class PageOneState extends State<PageOne> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
+        /*
+        appBar: AppBar(
+            title: Text('Check-In')
+        ),*/
         body: Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Scaffold(body: OrientationBuilder(
-        builder: (context, orientation) {
-          ori = orientation;
-          if (ori == Orientation.portrait) {
-            return Column(children: [
+            padding: const EdgeInsets.all(5.0),
+            child: Scaffold(
+                body: Column(children: [
               Expanded(
                   flex: 4,
                   child: Container(
@@ -106,53 +82,20 @@ class PageOneState extends State<PageOne> {
                     ),
                   )),
               Expanded(
-                  flex: 6,
-                  child: CustomScrollView(
-                    shrinkWrap: true,
-                    slivers: <Widget>[
-                      SliverPadding(
+                flex: 6,
+                child: CustomScrollView(
+                  shrinkWrap: true,
+                  slivers: <Widget>[
+                    SliverPadding(
                         padding: const EdgeInsets.all(20.0),
                         sliver: SliverList(
-                          delegate: SliverChildListDelegate(
-                            <Widget>[
-                              Text(data),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),)
-            ]);
-          } else {
-            return Row(children: [
-              Expanded(
-                  flex: 3,
-                  child: Container(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo],
-                    ),
-                  )),
-              Expanded(flex: 7, child: CustomScrollView(
-                shrinkWrap: true,
-                slivers: <Widget>[
-                  SliverPadding(
-                    padding: const EdgeInsets.all(20.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate(
-                        <Widget>[
-                          Text(data),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ))
-            ]);
-          }
-        },
-      )),
-    ));
+                          delegate:
+                              SliverChildListDelegate(dataWidget.toList()),
+                        )),
+                  ],
+                ),
+              )
+            ]))));
   }
 }
 // End of page template and page functionality
@@ -164,40 +107,30 @@ class PageHome extends StatefulWidget {
 }
 
 class PageHomeState extends State<PageHome> {
-  int _counter = 0;
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text('LogFrog')
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      appBar: AppBar(title: Text('LogFrog')),
+      body: ListView(
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+            Card(
+              child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(children: <Widget>[
+                    Text("Chart  1"),
+                    Container( width: MediaQuery.of(context).size.width/2, height: MediaQuery.of(context).size.height/4, child: DonutAutoLabelChart.withSampleData())
+                  ])
+              )),
+            Card(
+                child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(children: <Widget>[
+                      Text("Chart  2"),
+                      Container( width: MediaQuery.of(context).size.width/2, height: MediaQuery.of(context).size.height/4, child: StackedFillColorBarChart.withSampleData())
+                    ])
+                ))
+          ]
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
