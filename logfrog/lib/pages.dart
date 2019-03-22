@@ -5,7 +5,9 @@ import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CheckoutPg extends StatefulWidget {
-  CheckoutPg({Key key}) : super(key: key);}
+  CheckoutPg({Key key}) : super(key: key);
+  @override
+  CheckoutPgState createState() => CheckoutPgState();}
 
 class CheckoutPgState extends State<CheckoutPg> {
   LiveBarcodeScanner _Bscanner;
