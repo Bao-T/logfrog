@@ -59,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _bottomNavBarIndex = 0;
   CheckoutPg checkoutPg;
   PageHome pgHome;
+  LoginPage loginPg;
 
   List<Widget> pageList;
   Widget currentPage;
@@ -67,12 +68,14 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState(){
     checkoutPg = CheckoutPg();
     pgHome = PageHome();
+    loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
     pageList = [pgHome,checkoutPg];
     currentPage = pgHome;
-
     super.initState();
   }
+  void callback(){setState(() {
 
+  });}
 
 
   @override
@@ -83,8 +86,13 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
 
+
+    if (loginPg.loginComplete == false)
+      {
+        return loginPg;
+      }
+      else {return Scaffold(
 
       body: currentPage,
       bottomNavigationBar: BottomNavigationBar(
@@ -95,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _bottomNavBarIndex = index;
             //Temp page selector
-            currentPage = index == 0 ? pageList[_bottomNavBarIndex] : pageList[1] ;
+            currentPage = index <= 1 ? pageList[_bottomNavBarIndex] : loginPg ;
           });
         },
         items: [
@@ -122,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ]
 
       ),
-    );
+    );}
   }
 }
 // Pages and their states
