@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class CheckoutPg extends StatefulWidget {
   CheckoutPg({Key key}) : super(key: key);
   @override
@@ -17,7 +16,7 @@ class CheckoutPgState extends State<CheckoutPg> {
   Set<String> dataSet = {};
   List<String> dataList = [];
   List<Widget> dataWidget = [];
-  Container camera;
+  Card camera;
   Expanded userInfo;
   CustomScrollView database;
 
@@ -38,61 +37,27 @@ class CheckoutPgState extends State<CheckoutPg> {
         return true;
       },
     );
-    camera = Container(
+    camera = Card(
       margin: EdgeInsets.all(5.0),
       child: _Bscanner,
     );
     userInfo = Expanded(
-      child: Container(
+      child: Card(
           margin: EdgeInsets.all(5.0),
           color: Colors.red,
           child: Text("User Info")),
     );
-    /*
-    database = CustomScrollView(
-      shrinkWrap: true,
-      slivers: <Widget>[
-        SliverPadding(
-          padding: const EdgeInsets.all(20.0),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[
-                Text(data.toString()),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );*/
+
   }
 
-/*
-  Widget codeListWidget(String code) {
-    IconButton ic = IconButton(
-        onPressed: () {
-          dataWidget.remove();
-        },
-        icon: Icon(Icons.highlight_off));
-    Card card = Card(
-        child: InkWell(
-            onTap: () {
-              print("tapped");
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[Text(code), ic],
-            )));
-    return card;
-  }
-*/
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-        /*
         appBar: AppBar(
-            title: Text('Check-In')
-        ),*/
+            title: Text('Check-out')
+        ),
         body: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Scaffold(
@@ -107,13 +72,15 @@ class CheckoutPgState extends State<CheckoutPg> {
                   )),
               Expanded(
                   flex: 6,
-                  child: ListView.builder(
+                  child: Card(child:
+                  ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible(
                           key: Key(UniqueKey().toString()),
                           onDismissed: (direction) {
-                            debugPrint(index.toString() +" " + dataList[index]);
+                            debugPrint(
+                                index.toString() + " " + dataList[index]);
                             dataSet.remove(dataList[index]);
                             dataList.removeAt(index);
                           },
@@ -124,38 +91,15 @@ class CheckoutPgState extends State<CheckoutPg> {
                                 },
                                 child: Padding(
                                     padding: const EdgeInsets.all(0.0),
-                                    child: ListTile( title: Text(dataList[index])))),
+                                    child: ListTile(
+                                        title: Text(dataList[index])))),
                             Divider()
                           ]));
                     },
                   )
-                  /*
-                  child: ListView.builder(
-                    itemCount: dataWidget.length,
-                    itemBuilder: (context, int index) {
-                      return Dismissible(
-                          key: Key(dataWidget[index].toString()),
-                          onDismissed: (direction) {
-                            dataWidget.removeAt(index);
-                          },
-                          child: dataWidget[index]);
-                    },
-                  )*/
 
-                  /*
-                child: CustomScrollView(
-                  shrinkWrap: true,
-                  slivers: <Widget>[
-                    SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
-                        sliver: SliverList(
-                          delegate:
-                              SliverChildListDelegate(dataWidget.toList()),
-                        )),
-                  ],
-                ),
-                */
-                  )
+
+                  ))
             ]))));
   }
 }
@@ -205,7 +149,7 @@ class LoginPage extends StatefulWidget {
   LoginPage({Key key, this.title, this.callback}) : super(key: key);
   Function callback;
   final String title;
-  bool testMode = true;
+  bool testMode = false;
   bool loginComplete = false;
 
   @override
@@ -241,6 +185,7 @@ class _LoginPageState extends State<LoginPage> {
         FirebaseUser user = await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: _email, password: _password);
         setState(() {
+          loginComplete();
           _authHint = 'Success\n\nUser id: ${user.uid}';
         });
       } catch (e) {
@@ -304,5 +249,52 @@ class _LoginPageState extends State<LoginPage> {
         key: new Key('hint'),
         style: new TextStyle(fontSize: 18.0, color: Colors.grey),
         textAlign: TextAlign.center);
+  }
+}
+
+class SettingsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Scaffold(
+        appBar: AppBar(title: Text('Settings')),
+        body: ListView(
+          children: <Widget>[
+            ListTile(
+              title: Text("Change Username"),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text("Change Password"),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text("Change Email"),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text("Manage Databases"),
+              onTap: () {},
+            ),
+            ListTile(
+              title: Text("Log Out"),
+              onTap: () {},
+            ),
+          ],
+        ));
+  }
+}
+
+class DatabasePg extends StatefulWidget {
+  DatabasePg({Key key}) : super(key: key);
+  @override
+  DatabasePgState createState() => DatabasePgState();
+}
+
+class DatabasePgState extends State<DatabasePg> {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return null;
   }
 }
