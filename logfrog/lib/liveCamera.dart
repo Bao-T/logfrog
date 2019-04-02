@@ -78,7 +78,6 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
       if (widget.onBarcode(scannedBarcode[i].rawValue)) {
         setState(() => widget.codes.add(scannedBarcode[i].rawValue));
         //debugPrint(codeString);
-
         /*
         controller.stopImageStream().catchError((e) {
           switch (e.runtimeType) {
@@ -87,8 +86,8 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
             default:
               throw (e);
           }
-        });*/
-
+        });
+        */
       }
     }
   }
@@ -100,23 +99,16 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
         child: CircularProgressIndicator(),
       );
     }
-    /*return AspectRatio(
+    /*
+    return AspectRatio(
         aspectRatio: controller.value.aspectRatio,
-        child: Transform.rotate(angle: -math.pi/2, child: CameraPreview(controller)));*/
+        child: Transform.rotate(angle: -math.pi/2, child: CameraPreview(controller)));
+  */
+    return AspectRatio(
+                    aspectRatio: controller.value.aspectRatio,
+                    child: Transform.scale(scale: 1, child: Transform.rotate(angle: 0, child: CameraPreview(controller))));
 
-    return OrientationBuilder(builder: (context, orientation) {
-      if (orientation == Orientation.portrait) {
-        return AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child:
-                Transform.rotate(angle: -math.pi / 2, child: CameraPreview(controller)));
-      } else if (orientation == Orientation.landscape) {
-        return AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: Transform.rotate(
-                angle: 0, child: CameraPreview(controller)));
-      }
-    });
+
     /*
     return Column(
         children: [AspectRatio(

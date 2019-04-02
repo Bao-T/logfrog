@@ -1,52 +1,26 @@
 import 'package:flutter/material.dart';
 import 'liveCamera.dart';
 import 'dart:math' as math;
-import "widgets.dart";
-
+import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 
-class PageOne extends StatefulWidget {
-  PageOne({Key key}) : super(key: key);
+
+class CheckoutPg extends StatefulWidget {
+  CheckoutPg({Key key}) : super(key: key);
   @override
-  PageOneState createState() => PageOneState();
+  CheckoutPgState createState() => CheckoutPgState();
 }
 
-class PageOneState extends State<PageOne> {
+class CheckoutPgState extends State<CheckoutPg> {
   LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
-  String data = "";
+  Set<String> dataSet = {};
+  List<String> dataList = [];
+  List<Widget> dataWidget = [];
   Container camera;
   Expanded userInfo;
   CustomScrollView database;
-  /*
-  Container camera = Container(
-    height: 120,
-    margin: EdgeInsets.all(5.0),
-    color: Colors.greenAccent,
-    child: _Bscanner,
-  );
-  Expanded userInfo = Expanded(
-    child: Container(
-        margin: EdgeInsets.all(5.0),
-        color: Colors.red,
-        child: Text("User Info")),
-  );
-  CustomScrollView database = CustomScrollView(
-    shrinkWrap: true,
-    slivers: <Widget>[
-      SliverPadding(
-        padding: const EdgeInsets.all(20.0),
-        sliver: SliverList(
-          delegate: SliverChildListDelegate(
-            <Widget>[
-              Text(_Bscanner.codes.toString()),
-            ],
-          ),
-        ),
-      ),
-    ],
-  );
-  */
+
   @override
   void initState() {
     super.initState();
@@ -54,15 +28,18 @@ class PageOneState extends State<PageOne> {
       onBarcode: (code) {
         //print(code);
         setState(() {
-          if (data != code)
-            data = code;
+          if (dataSet.contains(code) == false) {
+            dataSet.add(code);
+            dataList.add(code);
+            //Create widgets for scanned items
+            //debugPrint(dataWidget.toString());
+          }
         });
         return true;
       },
     );
     camera = Container(
       margin: EdgeInsets.all(5.0),
-      color: Colors.greenAccent,
       child: _Bscanner,
     );
     userInfo = Expanded(
@@ -71,6 +48,7 @@ class PageOneState extends State<PageOne> {
           color: Colors.red,
           child: Text("User Info")),
     );
+    /*
     database = CustomScrollView(
       shrinkWrap: true,
       slivers: <Widget>[
@@ -79,26 +57,46 @@ class PageOneState extends State<PageOne> {
           sliver: SliverList(
             delegate: SliverChildListDelegate(
               <Widget>[
-                Text(data),
+                Text(data.toString()),
               ],
             ),
           ),
         ),
       ],
-    );
+    );*/
   }
 
+/*
+  Widget codeListWidget(String code) {
+    IconButton ic = IconButton(
+        onPressed: () {
+          dataWidget.remove();
+        },
+        icon: Icon(Icons.highlight_off));
+    Card card = Card(
+        child: InkWell(
+            onTap: () {
+              print("tapped");
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[Text(code), ic],
+            )));
+    return card;
+  }
+*/
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
+        /*
+        appBar: AppBar(
+            title: Text('Check-In')
+        ),*/
         body: Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Scaffold(body: OrientationBuilder(
-        builder: (context, orientation) {
-          ori = orientation;
-          if (ori == Orientation.portrait) {
-            return Column(children: [
+            padding: const EdgeInsets.all(5.0),
+            child: Scaffold(
+                body: Column(children: [
               Expanded(
                   flex: 4,
                   child: Container(
@@ -109,52 +107,56 @@ class PageOneState extends State<PageOne> {
                   )),
               Expanded(
                   flex: 6,
-                  child: CustomScrollView(
-                    shrinkWrap: true,
-                    slivers: <Widget>[
-                      SliverPadding(
-                        padding: const EdgeInsets.all(20.0),
+                  child: ListView.builder(
+                    itemCount: dataList.length,
+                    itemBuilder: (context, int index) {
+                      return Dismissible(
+                          key: Key(UniqueKey().toString()),
+                          onDismissed: (direction) {
+                            debugPrint(index.toString() +" " + dataList[index]);
+                            dataSet.remove(dataList[index]);
+                            dataList.removeAt(index);
+                          },
+                          child: Column(children: <Widget>[
+                            InkWell(
+                                onTap: () {
+                                  print("tapped");
+                                },
+                                child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile( title: Text(dataList[index])))),
+                            Divider()
+                          ]));
+                    },
+                  )
+                  /*
+                  child: ListView.builder(
+                    itemCount: dataWidget.length,
+                    itemBuilder: (context, int index) {
+                      return Dismissible(
+                          key: Key(dataWidget[index].toString()),
+                          onDismissed: (direction) {
+                            dataWidget.removeAt(index);
+                          },
+                          child: dataWidget[index]);
+                    },
+                  )*/
+
+                  /*
+                child: CustomScrollView(
+                  shrinkWrap: true,
+                  slivers: <Widget>[
+                    SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(5.0, 0.0, 5.0, 0.0),
                         sliver: SliverList(
-                          delegate: SliverChildListDelegate(
-                            <Widget>[
-                              Text(data),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),)
-            ]);
-          } else {
-            return Row(children: [
-              Expanded(
-                  flex: 3,
-                  child: Container(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo],
-                    ),
-                  )),
-              Expanded(flex: 7, child: CustomScrollView(
-                shrinkWrap: true,
-                slivers: <Widget>[
-                  SliverPadding(
-                    padding: const EdgeInsets.all(20.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate(
-                        <Widget>[
-                          Text(data),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ))
-            ]);
-          }
-        },
-      )),
-    ));
+                          delegate:
+                              SliverChildListDelegate(dataWidget.toList()),
+                        )),
+                  ],
+                ),
+                */
+                  )
+            ]))));
   }
 }
 // End of page template and page functionality
@@ -166,40 +168,32 @@ class PageHome extends StatefulWidget {
 }
 
 class PageHomeState extends State<PageHome> {
-  int _counter = 0;
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text('LogFrog')
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      appBar: AppBar(title: Text('LogFrog')),
+      body: ListView(children: <Widget>[
+        Card(
+            child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(children: <Widget>[
+                  Text("Chart  1"),
+                  Container(
+                      width: MediaQuery.of(context).size.width / 2,
+                      height: MediaQuery.of(context).size.height / 4,
+                      child: DonutAutoLabelChart.withSampleData())
+                ]))),
+        Card(
+            child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(children: <Widget>[
+                  Text("Chart  2"),
+                  Container(
+                      width: MediaQuery.of(context).size.width / 2,
+                      height: MediaQuery.of(context).size.height / 4,
+                      child: StackedFillColorBarChart.withSampleData())
+                ])))
+      ]),
     );
   }
 }
@@ -208,16 +202,17 @@ class PageHomeState extends State<PageHome> {
 //date accessed: 3/21/2019
 
 class LoginPage extends StatefulWidget {
-  LoginPage({Key key, this.title}) : super(key: key);
-
+  LoginPage({Key key, this.title, this.callback}) : super(key: key);
+  Function callback;
   final String title;
+  bool testMode = true;
+  bool loginComplete = false;
 
   @override
   _LoginPageState createState() => new _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   static final formKey = new GlobalKey<FormState>();
 
   String _email;
@@ -233,6 +228,13 @@ class _LoginPageState extends State<LoginPage> {
     return false;
   }
 
+  //TODO: Execute when username and password are successfully validated.
+  void loginComplete() {
+    widget.loginComplete = true;
+    widget.callback();
+  }
+
+  //TODO: Connect with firebase Users document.
   void validateAndSubmit() async {
     if (validateAndSave()) {
       try {
@@ -241,8 +243,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _authHint = 'Success\n\nUser id: ${user.uid}';
         });
-      }
-      catch (e) {
+      } catch (e) {
         setState(() {
           _authHint = 'Sign In Error\n\n${e.toString()}';
         });
@@ -271,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
                       key: new Key('email'),
                       decoration: new InputDecoration(labelText: 'Email'),
                       validator: (val) =>
-                      val.isEmpty ? 'Email can\'t be empty.' : null,
+                          val.isEmpty ? 'Email can\'t be empty.' : null,
                       onSaved: (val) => _email = val,
                     ),
                     new TextFormField(
@@ -279,28 +280,27 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: new InputDecoration(labelText: 'Password'),
                       obscureText: true,
                       validator: (val) =>
-                      val.isEmpty ? 'Password can\'t be empty.' : null,
+                          val.isEmpty ? 'Password can\'t be empty.' : null,
                       onSaved: (val) => _password = val,
                     ),
                     new RaisedButton(
                         key: new Key('login'),
-                        child: new Text('Login', style: new TextStyle(fontSize: 20.0)),
-                        onPressed: validateAndSubmit
-                    ),
+                        child: new Text('Login',
+                            style: new TextStyle(fontSize: 20.0)),
+                        //testMode will enable or disable validation of username and password.
+                        onPressed: widget.testMode == false
+                            ? validateAndSubmit
+                            : loginComplete),
                     new Container(
                         height: 80.0,
                         padding: const EdgeInsets.all(32.0),
                         child: buildHintText())
                   ],
-                )
-            )
-        )
-    );
+                ))));
   }
 
   Widget buildHintText() {
-    return new Text(
-        _authHint,
+    return new Text(_authHint,
         key: new Key('hint'),
         style: new TextStyle(fontSize: 18.0, color: Colors.grey),
         textAlign: TextAlign.center);
