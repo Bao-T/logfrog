@@ -60,6 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
   CheckoutPg checkoutPg;
   PageHome pgHome;
   LoginPage loginPg;
+  SettingsPage settingpg;
 
   List<Widget> pageList;
   Widget currentPage;
@@ -68,8 +69,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState(){
     checkoutPg = CheckoutPg();
     pgHome = PageHome();
+    settingpg = SettingsPage();
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
-    pageList = [pgHome,checkoutPg];
+    pageList = [pgHome,checkoutPg, settingpg];
     currentPage = pgHome;
     super.initState();
   }
@@ -103,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _bottomNavBarIndex = index;
             //Temp page selector
-            currentPage = index <= 1 ? pageList[_bottomNavBarIndex] : loginPg ;
+            currentPage = index <= 1 ? pageList[_bottomNavBarIndex] : settingpg ;
           });
         },
         items: [
