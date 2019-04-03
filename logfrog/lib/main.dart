@@ -72,7 +72,6 @@ class _MyHomePageState extends State<MyHomePage> {
     pgHome = PageHome();
     settingpg = SettingsPage();
     fbService = FirebaseFirestoreService();
-    fbService.createEquipment("0OiNLxMsZI1cYjgiwdWn", "test", "test");
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
     pageList = [pgHome, checkoutPg, settingpg];
     currentPage = pgHome;
@@ -101,7 +100,6 @@ class _MyHomePageState extends State<MyHomePage> {
             type: BottomNavigationBarType.fixed,
             currentIndex: _bottomNavBarIndex,
             onTap: (int index) {
-              fbService.createEquipment("0OiNLxMsZI1cYjgiwdWn", "test", "test");
               setState(() {
                 _bottomNavBarIndex = index;
                 //Temp page selector
