@@ -3,16 +3,17 @@ import 'package:flutter/services.dart';
 import 'pages.dart';
 import 'liveCamera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
+import 'firebase_service.dart';
 
 void main() => runApp(MyApp());
 
-Firestore db = Firestore.instance; //Initially getting firestore instance for use in database access
+Firestore db = Firestore
+    .instance; //Initially getting firestore instance for use in database access
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -55,30 +56,32 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   int _bottomNavBarIndex = 0;
   CheckoutPg checkoutPg;
   PageHome pgHome;
   LoginPage loginPg;
   SettingsPage settingpg;
+  FirebaseFirestoreService fbService;
 
   List<Widget> pageList;
   Widget currentPage;
 
   @override
-  void initState(){
+  void initState() {
     checkoutPg = CheckoutPg();
     pgHome = PageHome();
     settingpg = SettingsPage();
+    fbService = FirebaseFirestoreService();
+    fbService.createEquipment("0OiNLxMsZI1cYjgiwdWn", "test", "test");
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
-    pageList = [pgHome,checkoutPg, settingpg];
+    pageList = [pgHome, checkoutPg, settingpg];
     currentPage = pgHome;
     super.initState();
   }
-  void callback(){setState(() {
 
-  });}
-
+  void callback() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,52 +92,47 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
 
-
-    if (loginPg.loginComplete == false)
-      {
-        return loginPg;
-      }
-      else {return Scaffold(
-
-      body: currentPage,
-      bottomNavigationBar: BottomNavigationBar(
-
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _bottomNavBarIndex,
-        onTap: (int index){
-          setState(() {
-            _bottomNavBarIndex = index;
-            //Temp page selector
-            currentPage = index <= 1 ? pageList[_bottomNavBarIndex] : settingpg ;
-          });
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.home),
-            title: new Text('Home'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.input),
-            title: new Text('Input'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.mail),
-            title: new Text('Mail'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.person),
-            title: new Text('Person'),
-          ),
-          BottomNavigationBarItem(
-            icon: new Icon(Icons.settings),
-            title: new Text('Settings'),
-          ),
-        ]
-
-      ),
-    );}
+    if (loginPg.loginComplete == false) {
+      return loginPg;
+    } else {
+      return Scaffold(
+        body: currentPage,
+        bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            currentIndex: _bottomNavBarIndex,
+            onTap: (int index) {
+              fbService.createEquipment("0OiNLxMsZI1cYjgiwdWn", "test", "test");
+              setState(() {
+                _bottomNavBarIndex = index;
+                //Temp page selector
+                currentPage =
+                    index <= 1 ? pageList[_bottomNavBarIndex] : settingpg;
+              });
+            },
+            items: [
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.home),
+                title: new Text('Home'),
+              ),
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.input),
+                title: new Text('Input'),
+              ),
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.mail),
+                title: new Text('Mail'),
+              ),
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.person),
+                title: new Text('Person'),
+              ),
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.settings),
+                title: new Text('Settings'),
+              ),
+            ]),
+      );
+    }
   }
 }
 // Pages and their states
-
-

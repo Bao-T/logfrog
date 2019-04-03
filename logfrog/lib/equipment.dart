@@ -9,15 +9,9 @@ Firestore db = Firestore.instance; //Initially getting firestore instance for us
 
 
 class Equipment {
-  int id;
-  String condition;
-  List<DocumentReference> history;
-  List<String> notes;
-  DocumentReference reference;
-  int barcode;
-  int type;
+  String condition, itemId, itemType, name, notes, purchased, status;
 
-  Equipment(this.id, this.condition, this.history, this.notes, this.reference, this.barcode, this.type);
+  Equipment(this.condition, this.itemId, this.itemType, this.name, this.notes, this.purchased, this.status);
 
 
   //  String get id => _id;
@@ -25,47 +19,53 @@ class Equipment {
   //  String get description => _description;
 
 
-  int get thisId => id;
+  String get thisId => itemId;
   String get thisCondition => condition;
-  List<DocumentReference> get thisHistory => history;
-  List<String> get thisNotes => notes;
-  DocumentReference get thisReference => reference;
-  int get thisBarcode => barcode;
-  int get thisType => type;
+  String get thisNotes => notes;
+  String get thisType => itemType;
+  String get thisName => name;
+  String get thisPurchased => purchased;
+  String get thisStatus => status;
 
   Equipment.map(dynamic obj) {
-    this.id = obj['id'];
-    this.condition = obj['condition'];
-    this.history = obj['history'];
-    this.notes = obj['notes'];
-    this.reference = obj['reference'];
-    this.barcode = obj['barcode'];
-    this.type = obj['type'];
+//    this.id = obj['id'];
+//    this.condition = obj['condition'];
+//    this.history = obj['history'];
+//    this.notes = obj['notes'];
+//    this.reference = obj['reference'];
+//    this.barcode = obj['barcode'];
+//    this.type = obj['type'];
   }
 
   static Map<String, dynamic> toMap(Equipment equip) {
     var map = new Map<String, dynamic>();
-    if (equip.id != null) {
-      map['id'] = equip.id;
-    }
-    map['condition'] =  equip.condition;
-    map['history'] = equip.history;
-    map['notes'] = equip.notes;
-    map['reference'] = equip.reference;
-    map['barcode'] = equip.barcode;
-    map['type'] = equip.type;
+    map['Condition'] = equip.condition;
+    map['ItemID'] = equip.itemId;
+    map['ItemType'] = equip.itemType;
+    map['Name'] = equip.name;
+    map['Notes'] = equip.notes;
+    map['Purchased'] = equip.purchased;
+    map['Status'] = equip.status;
     return map;
   }
 
 
-  Equipment.fromMap(Map<String, dynamic> map) {
-    this.id = map['id'];
-    this.condition = map['condition'];
-    this.history = map['history'];
-    this.notes = map['notes'];
-    this.reference = map['reference'];
-    this.barcode = map['barcode'];
-    this.type = map['type'];
+  Equipment.fromMap(Map<String, dynamic> dataMap) {
+    this.condition =  dataMap['Condition'];
+    this.itemId=  dataMap['ItemID'];
+    this.itemType  =dataMap['ItemType'];
+    this.name =dataMap['Name'];
+    this.notes= dataMap['Notes'];
+    this.purchased = dataMap['Purchased'];
+    this.status =dataMap['Status'];
+
+
+
+
+
+
+
+
   }
 
 }
