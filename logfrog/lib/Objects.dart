@@ -12,19 +12,19 @@ import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 class Object{
   //declaring the variables that we will be working with in this particular instance
   String _id;
-  String _ClassName;
+  String _className;
 
-  Object(this._id, this._ClassName); //initialize the variables
+  Object(this._id, this._className); //initialize the variables
 
   //map the items to JSON so that it can be sent up to the Firestore
   Object.map(dynamic obj){
     this._id = obj['id'];
-    this._ClassName = obj['classname'];
+    this._className = obj['ClassName'];
   }
 
   //get functions so that we can work with our private variables
   String get id => _id;
-  String get className => _ClassName;
+  String get className => _className;
 
   //translate JSON to something our program can understand
   Map<String, dynamic> toMap(){
@@ -32,7 +32,7 @@ class Object{
     if( _id != null){
       map['id'] = _id;
     }
-    map['classname'] = _ClassName;
+    map['ClassName'] = _className;
 
     return map;
 
@@ -40,7 +40,7 @@ class Object{
   //translate dart to something JSON will understand
  Object.fromMap(Map<String, dynamic> map){
     this._id = map['id'];
-    this._ClassName = map['classname'];
+    this._className = map['ClassName'];
  }
 }
 
