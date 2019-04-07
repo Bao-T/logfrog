@@ -30,7 +30,7 @@ dependencies:
   firebase_auth:
   firebase_ml_vision:
   camera:
-
+  dio:
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'liveCamera.dart';
-import 'dart:math' as math;
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
+import 'firebase_service.dart';
+import 'equipment.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CheckoutPg extends StatefulWidget {
   CheckoutPg({Key key}) : super(key: key);
@@ -47,17 +51,13 @@ class CheckoutPgState extends State<CheckoutPg> {
           color: Colors.red,
           child: Text("User Info")),
     );
-
   }
-
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-        appBar: AppBar(
-            title: Text('Check-out')
-        ),
+        appBar: AppBar(title: Text('Check-out')),
         body: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Scaffold(
@@ -72,8 +72,8 @@ class CheckoutPgState extends State<CheckoutPg> {
                   )),
               Expanded(
                   flex: 6,
-                  child: Card(child:
-                  ListView.builder(
+                  child: Card(
+                      child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible(
@@ -96,10 +96,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                             Divider()
                           ]));
                     },
-                  )
-
-
-                  ))
+                  )))
             ]))));
   }
 }
@@ -286,15 +283,120 @@ class SettingsPage extends StatelessWidget {
 }
 
 class DatabasePg extends StatefulWidget {
-  DatabasePg({Key key}) : super(key: key);
+  DatabasePg({Key key, this.site}) : super(key: key);
+  final String site;
   @override
-  DatabasePgState createState() => DatabasePgState();
+  DatabasePgState createState() => DatabasePgState(site);
 }
 
 class DatabasePgState extends State<DatabasePg> {
+  final TextEditingController _filter = new TextEditingController();
+  final dio = new Dio();
+  String _searchText = "";
+  List<Equipment> items;
+  StreamSubscription<QuerySnapshot> itemSub;
+  List<Equipment> filteredItems = new List();
+  Icon _searchIcon = new Icon(Icons.search);
+  Widget _appBarTitle = new Text('Database');
+  String site;
+  FirebaseFirestoreService db = new FirebaseFirestoreService();
+
+  DatabasePgState(String site) {
+    this.site = site;
+    _filter.addListener(() {
+      if (_filter.text.isEmpty) {
+        setState(() {
+          _searchText = "";
+          filteredItems = items;
+        });
+      } else {
+        setState(() {
+          _searchText = _filter.text;
+        });
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    itemSub?.cancel();
+    this.itemSub = db.getItems(site: this.site).listen((QuerySnapshot snapshot) {
+      final List<Equipment> equipment = snapshot.documents
+          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
+          .toList();
+      setState(() {
+        this.items = equipment;
+        this.filteredItems = items;
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    itemSub?.cancel();
+    super.dispose();
+  }
+  Widget _buildList() {
+    if (!(_searchText.isEmpty)) {
+      List<Equipment> tempList = new List();
+      for (int i = 0; i < items.length; i++) {
+        if (items[i].thisName
+            .toLowerCase()
+            .contains(_searchText.toLowerCase())) {
+          tempList.add(items[i]);
+        }
+      }
+      filteredItems = tempList;
+    }
+    return ListView.builder(
+      itemCount: items == null ? 0 : filteredItems.length,
+      itemBuilder: (BuildContext context, int index) {
+        return new ListTile(
+          title: Text(filteredItems[index].thisName),
+          onTap: () => print(filteredItems[index].thisName),
+        );
+      },
+    );
+  }
+
+  void _addPressed(){} //TODO: implement adding new entry
+
+  void _searchPressed() {
+    setState(() {
+      if (this._searchIcon.icon == Icons.search) {
+        this._searchIcon = new Icon(Icons.close);
+        this._appBarTitle = new TextField(
+          controller: _filter,
+          decoration: new InputDecoration(
+              prefixIcon: new Icon(Icons.search), hintText: 'Search...'),
+        );
+      } else {
+        this._searchIcon = new Icon(Icons.search);
+        this._appBarTitle = new Text('Database');
+        filteredItems = items;
+        _filter.clear();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return null;
+    return Scaffold(
+      appBar: AppBar(
+        title: _appBarTitle,
+        leading: new IconButton(
+          icon: _searchIcon,
+          onPressed: _searchPressed,
+        ),
+      ),
+      body: Container(child: _buildList()),
+      resizeToAvoidBottomPadding: false,
+      floatingActionButton: FloatingActionButton(
+          onPressed: _addPressed,
+          child: Icon(Icons.add),
+      ),
+    );
   }
 }

@@ -16,6 +16,21 @@ class FirebaseFirestoreService {
   factory FirebaseFirestoreService() => _instance;
   FirebaseFirestoreService.internal();
 
+  Stream<QuerySnapshot> getItems({String site}) {
+    Stream<QuerySnapshot> snapshots = equipmentCollection.document(site).collection("Items").snapshots();
+
+    /*
+    if (offset != null) {
+      snapshots = snapshots.skip(offset);
+    }
+
+    if (limit != null) {
+      snapshots = snapshots.take(limit);
+    }
+  */
+    return snapshots;
+  }
+
 
   Future<Equipment> createEquipment(String site, String title, String description) async {
     print(equipmentCollection.getDocuments());
