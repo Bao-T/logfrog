@@ -9,9 +9,12 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart';
 import 'package:audioplayers/audio_cache.dart';
+import 'package:intl/intl.dart';
+
 String dataSite;
 FirebaseFirestoreService db;
 const alarmAudioPath = "beep.mp3";
+
 class CheckoutPg extends StatefulWidget {
   CheckoutPg({Key key}) : super(key: key);
   @override
@@ -306,8 +309,6 @@ class DatabasePgState extends State<DatabasePg> {
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
 
-
-
   DatabasePgState(String site) {
     dataSite = site;
     db = new FirebaseFirestoreService(dataSite);
@@ -361,8 +362,8 @@ class DatabasePgState extends State<DatabasePg> {
     }
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
-        color: Colors.black,
-      ),
+            color: Colors.black,
+          ),
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
@@ -373,7 +374,6 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 
-
   void _searchPressed() {
     setState(() {
       if (this._searchIcon.icon == Icons.search) {
@@ -381,8 +381,9 @@ class DatabasePgState extends State<DatabasePg> {
         this._appBarTitle = new TextField(
           controller: _filter,
           decoration: new InputDecoration(
-            border: InputBorder.none,
-              prefixIcon: new Icon(Icons.search), hintText: 'Search...'),
+              border: InputBorder.none,
+              prefixIcon: new Icon(Icons.search),
+              hintText: 'Search...'),
         );
       } else {
         this._searchIcon = new Icon(Icons.search);
@@ -407,9 +408,11 @@ class DatabasePgState extends State<DatabasePg> {
       body: Container(child: _buildList()),
       resizeToAvoidBottomPadding: false,
       floatingActionButton: FloatingActionButton(
-        onPressed: (){Navigator.push(
+        onPressed: () {
+          Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AddItem()),);
+            MaterialPageRoute(builder: (context) => AddItem()),
+          );
         },
         child: Icon(Icons.add),
       ),
@@ -417,58 +420,138 @@ class DatabasePgState extends State<DatabasePg> {
   }
 }
 
+class AddItem extends StatefulWidget {
+  @override
+  AddItemState createState() => AddItemState();
+}
 
+class AddItemState extends State<AddItem> {
+  final DateTime dateNow = DateTime.now();
+  bool validateName = false;
+  @override
+  void initState() {
+    purchased.setString(DateFormat('MM-dd-yyyy').format(DateTime.now()));
+    super.initState();
+  }
 
-
-class AddItem extends StatelessWidget {
-  FieldWidget condition = FieldWidget(title: 'Condition', hint: 'Item Condition:');
-  FieldWidget itemId= FieldWidget(title: 'Item ID', hint: 'Enter Item ID');
-  FieldWidget itemType= FieldWidget(title: 'Item Type', hint: 'Enter Item Type');
-  FieldWidget name= FieldWidget(title: 'Item Name', hint: 'Enter Item Name');
-  FieldWidget notes= FieldWidget(title: 'Notes', hint: 'Item Notes');
-  FieldWidget purchased= FieldWidget(title: 'Purchased Date', hint: 'Date');
-  FieldWidget status= FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
+  FieldWidget condition =
+      FieldWidget(title: 'Condition', hint: 'Item Condition:');
+  FieldWidget itemId = FieldWidget(title: 'Item ID', hint: 'An ID will generate by default');
+  FieldWidget itemType =
+      FieldWidget(title: 'Item Type', hint: 'Enter Item Type');
+  FieldWidget name = FieldWidget(title: 'Item Name', hint: 'Enter Item Name');
+  FieldWidget notes = FieldWidget(title: 'Notes', hint: 'Item Notes');
+  FieldWidget purchased =
+      FieldWidget(title: 'Purchased Date', hint: 'Date',);
+  FieldWidget status =
+      FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
+  bool cameraView = false;
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
         appBar: AppBar(
           leading: Icon(Icons.note_add),
-          actions: <Widget>[IconButton(icon: Icon(Icons.close), onPressed: (){Navigator.pop(context);}) ],
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                })
+          ],
           title: Text("Add Item"),
         ),
-        body: Builder(
-    builder: (context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch,children: <Widget>[Expanded(child: ListView(
-      children: <Widget>[name, itemId, itemType, purchased, status, condition, notes,
-      ],
-    )),
-    RaisedButton(child: Text("Submit"), onPressed:
-        () async {
-      try{
-        await db.createEquipment(
-            name: name.value,
-            itemID: itemId.value,
-            itemType: itemType.value,
-            purchased: purchased.value,
-            status: status.value,
-            condition: condition.value,
-            notes: notes.value
-        );
-        Navigator.pop(context);
-      } catch (e){
-        print(e.toString());
-        _showToast(context);
-      }
+        body: cameraView
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  BarcodeScanner(
+                    onBarcode: (code) {
+                      setState(() {
+                        itemId.setString(code);
+                        cameraView = false;
+                      });
 
-    },)
-    ]))
-    );
+                      return true;
+                    },
+                  ),
+                  RaisedButton(
+                    child: Text("Cancel"),
+                    onPressed: () {
+                      setState(() {
+                        cameraView = false;
+                      });
+                    },
+                  )
+                ],
+              )
+            : Builder(
+                builder: (context) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Expanded(
+                              child: ListView(
+                            children: <Widget>[
+                              name,
+                              Row(children: <Widget>[
+                                Expanded(child: itemId),
+                                IconButton(
+                                    icon: Icon(Icons.camera_alt),
+                                    onPressed: () {
+                                      setState(() {
+                                        cameraView = true;
+                                      });
+                                    })
+                              ]),
+                              itemType,
+                              purchased,
+                              status,
+                              condition,
+                              notes,
+                            ],
+                          )),
+                          RaisedButton(
+                            child: Text("Submit"),
+                            onPressed: () async {
+                              if(name.value.isEmpty)
+                              {
+                                setState(() {
+                                  name.validate = true;
+                                });
+                                _showToast(context,'Error: You must enter item name.');
+                              }
+                              else{
+                                setState(() {
+                                  name.validate = false;
+                                });
+
+                                try {
+                                  await db.createEquipment(
+                                      name: name.value,
+                                      itemID: itemId.value,
+                                      itemType: itemType.value,
+                                      purchased: dateNow,
+                                      status: status.value,
+                                      condition: condition.value,
+                                      notes: notes.value);
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  print(e.toString());
+                                  _showToast(context,e.toString());
+                                }
+                              }
+
+
+
+                            },
+                          )
+                        ])));
   }
-  void _showToast(BuildContext context) {
+
+  void _showToast(BuildContext context, String errorText) {
     final scaffold = Scaffold.of(context);
     scaffold.showSnackBar(
       SnackBar(
-        content: const Text('There was an error, please try again.'),
+        content: Text(errorText),
         action: SnackBarAction(
             label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
       ),

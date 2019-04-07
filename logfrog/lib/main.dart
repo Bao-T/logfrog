@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages.dart';
-import 'liveCamera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 import 'firebase_service.dart';
 
@@ -71,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
     pgHome = PageHome();
     settingpg = SettingsPage();
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
-    pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "0OiNLxMsZI1cYjgiwdWn",), settingpg];
+    pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "Test",), settingpg];
     currentPage = pgHome;
     super.initState();
   }

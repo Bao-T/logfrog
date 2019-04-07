@@ -20,7 +20,7 @@ class FirebaseFirestoreService {
   */
   String site;
 
-  FirebaseFirestoreService(String site){
+  FirebaseFirestoreService(String site) {
     this.site = site;
   }
 
@@ -42,7 +42,7 @@ class FirebaseFirestoreService {
 
   Stream<QuerySnapshot> getMembers() {
     Stream<QuerySnapshot> snapshots =
-    equipmentCollection.document(site).collection("Members").snapshots();
+        equipmentCollection.document(site).collection("Members").snapshots();
 
     /*
     if (offset != null) {
@@ -56,18 +56,27 @@ class FirebaseFirestoreService {
     return snapshots;
   }
 
-  Future<Equipment> createEquipment({
-    String name,
-    String itemID,
-    String itemType,
-    String purchased,
-    String status,
-    String condition,
-    String notes
-  }) async {
+  Future<Equipment> createEquipment(
+      {String name,
+      String itemID,
+      String itemType,
+      DateTime purchased,
+      String status,
+      String condition,
+      String notes}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds = await tx.get(
-          equipmentCollection.document(site).collection("Items").document());
+      DocumentSnapshot ds;
+      if (itemID != "") {
+        ds = await tx.get(equipmentCollection
+            .document(site)
+            .collection("Items")
+            .document(itemID));
+      } else {
+        ds = await tx.get(
+            equipmentCollection.document(site).collection("Items").document());
+        itemID = ds.documentID;
+      }
+
       var dataMap = new Map<String, dynamic>();
       dataMap['Condition'] = condition;
       dataMap['ItemID'] = itemID;
@@ -79,22 +88,46 @@ class FirebaseFirestoreService {
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
-      return Equipment.fromMap(mapData);
-    }).catchError((error) {
-      throw('error: $error');
-    });
+    if (itemID != "") {
+      return equipmentCollection
+          .document(site)
+          .collection("Items")
+          .document(itemID)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          print("DNE");
+          throw ("error: Item ID already exists");
+        } else {
+          return Firestore.instance
+              .runTransaction(createTransaction)
+              .then((mapData) {
+            return Equipment.fromMap(mapData);
+          }).catchError((error) {
+            throw ('error: unable to communicate with server');
+          });
+        }
+      }).catchError((e) {
+        throw (e);
+      });
+    } else {
+      return Firestore.instance
+          .runTransaction(createTransaction)
+          .then((mapData) {
+        return Equipment.fromMap(mapData);
+      }).catchError((error) {
+        throw ('error: unable to communicate with server');
+      });
+    }
   }
 
-  Future<Users> createMember({
-
-    String firstname,
-    String lastname,
-    String memID,
-    String address,
-    String phone,
-    String notes
-}) async {
+  Future<Users> createMember(
+      {String firstname,
+      String lastname,
+      String memID,
+      String address,
+      String phone,
+      String notes}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       final DocumentSnapshot ds = await tx.get(
           equipmentCollection.document(site).collection("Members").document());
@@ -115,7 +148,6 @@ class FirebaseFirestoreService {
       return null;
     });
   }
-
 
   Future<Users> createUser(String title, String description) async {
     final TransactionHandler createTransaction = (Transaction tx) async {

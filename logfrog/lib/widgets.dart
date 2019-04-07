@@ -31,20 +31,27 @@ import 'package:flutter/material.dart';
 
 class FieldWidget extends StatelessWidget{
   TextField tf;
-  final textController = TextEditingController();
   final String title;
   final String hint;
+  final textController = TextEditingController();
+  bool validate = true;
+  bool enabled;
   String get value => this.textController.text;
-  FieldWidget({this.title, this.hint}) {
+
+
+  FieldWidget({this.title, this.hint, this.enabled}) {
     this.tf = TextField(
+      enabled: enabled,
       controller: textController,
         keyboardType: TextInputType.multiline,
         maxLines: null,
         decoration: new InputDecoration(
-        hintText: hint
+        hintText: hint,
+          errorText: !validate ? 'Value Can\'t Be Empty' : null,
     )
     );
   }
+
   void setString(String text){
     this.textController.text = text;
   }

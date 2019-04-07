@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
+import 'package:intl/intl.dart';
 //import 'dart:async';
 
 //Following this tutorial for building the class
@@ -9,7 +10,8 @@ Firestore db = Firestore.instance; //Initially getting firestore instance for us
 
 
 class Equipment {
-  String condition, itemId, itemType, name, notes, purchased, status;
+  String condition, itemId, itemType, name, notes, status;
+  DateTime purchased;
 
   Equipment({this.condition, this.itemId, this.itemType, this.name, this.notes, this.purchased, this.status});
 
@@ -24,7 +26,7 @@ class Equipment {
   String get thisNotes => notes;
   String get thisType => itemType;
   String get thisName => name;
-  String get thisPurchased => purchased;
+  String get thisPurchased => DateFormat('MM-dd-yyyy').format(purchased);
   String get thisStatus => status;
 
   Equipment.map(dynamic obj) {
@@ -37,7 +39,7 @@ class Equipment {
     this.status =obj['Status'];
   }
 
-  static Map<String, dynamic> toMap(Equipment equip) {
+  static Map<dynamic, dynamic> toMap(Equipment equip) {
     var map = new Map<String, dynamic>();
     map['Condition'] = equip.condition;
     map['ItemID'] = equip.itemId;
@@ -50,7 +52,7 @@ class Equipment {
   }
 
 
-  Equipment.fromMap(Map<String, dynamic> dataMap) {
+  Equipment.fromMap(Map<dynamic, dynamic> dataMap) {
     this.condition =  dataMap['Condition'];
     this.itemId=  dataMap['ItemID'];
     this.itemType  =dataMap['ItemType'];
