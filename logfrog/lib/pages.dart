@@ -7,7 +7,11 @@ import 'firebase_service.dart';
 import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'widgets.dart';
+import 'package:audioplayers/audio_cache.dart';
+String dataSite;
+FirebaseFirestoreService db;
+const alarmAudioPath = "beep.mp3";
 class CheckoutPg extends StatefulWidget {
   CheckoutPg({Key key}) : super(key: key);
   @override
@@ -15,6 +19,8 @@ class CheckoutPg extends StatefulWidget {
 }
 
 class CheckoutPgState extends State<CheckoutPg> {
+  static AudioCache player = new AudioCache();
+
   LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
   Set<String> dataSet = {};
@@ -34,6 +40,7 @@ class CheckoutPgState extends State<CheckoutPg> {
           if (dataSet.contains(code) == false) {
             dataSet.add(code);
             dataList.add(code);
+            player.play(alarmAudioPath);
             //Create widgets for scanned items
             //debugPrint(dataWidget.toString());
           }
@@ -298,11 +305,12 @@ class DatabasePgState extends State<DatabasePg> {
   List<Equipment> filteredItems = new List();
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
-  String site;
-  FirebaseFirestoreService db = new FirebaseFirestoreService();
+
+
 
   DatabasePgState(String site) {
-    this.site = site;
+    dataSite = site;
+    db = new FirebaseFirestoreService(dataSite);
     _filter.addListener(() {
       if (_filter.text.isEmpty) {
         setState(() {
@@ -320,7 +328,7 @@ class DatabasePgState extends State<DatabasePg> {
   @override
   void initState() {
     itemSub?.cancel();
-    this.itemSub = db.getItems(site: this.site).listen((QuerySnapshot snapshot) {
+    this.itemSub = db.getItems().listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
           .toList();
@@ -337,11 +345,13 @@ class DatabasePgState extends State<DatabasePg> {
     itemSub?.cancel();
     super.dispose();
   }
+
   Widget _buildList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
       for (int i = 0; i < items.length; i++) {
-        if (items[i].thisName
+        if (items[i]
+            .thisName
             .toLowerCase()
             .contains(_searchText.toLowerCase())) {
           tempList.add(items[i]);
@@ -349,7 +359,10 @@ class DatabasePgState extends State<DatabasePg> {
       }
       filteredItems = tempList;
     }
-    return ListView.builder(
+    return ListView.separated(
+      separatorBuilder: (context, index) => Divider(
+        color: Colors.black,
+      ),
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
@@ -360,7 +373,6 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 
-  void _addPressed(){} //TODO: implement adding new entry
 
   void _searchPressed() {
     setState(() {
@@ -369,6 +381,7 @@ class DatabasePgState extends State<DatabasePg> {
         this._appBarTitle = new TextField(
           controller: _filter,
           decoration: new InputDecoration(
+            border: InputBorder.none,
               prefixIcon: new Icon(Icons.search), hintText: 'Search...'),
         );
       } else {
@@ -394,8 +407,70 @@ class DatabasePgState extends State<DatabasePg> {
       body: Container(child: _buildList()),
       resizeToAvoidBottomPadding: false,
       floatingActionButton: FloatingActionButton(
-          onPressed: _addPressed,
-          child: Icon(Icons.add),
+        onPressed: (){Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddItem()),);
+        },
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+
+
+
+class AddItem extends StatelessWidget {
+  FieldWidget condition = FieldWidget(title: 'Condition', hint: 'Item Condition:');
+  FieldWidget itemId= FieldWidget(title: 'Item ID', hint: 'Enter Item ID');
+  FieldWidget itemType= FieldWidget(title: 'Item Type', hint: 'Enter Item Type');
+  FieldWidget name= FieldWidget(title: 'Item Name', hint: 'Enter Item Name');
+  FieldWidget notes= FieldWidget(title: 'Notes', hint: 'Item Notes');
+  FieldWidget purchased= FieldWidget(title: 'Purchased Date', hint: 'Date');
+  FieldWidget status= FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Scaffold(
+        appBar: AppBar(
+          leading: Icon(Icons.note_add),
+          actions: <Widget>[IconButton(icon: Icon(Icons.close), onPressed: (){Navigator.pop(context);}) ],
+          title: Text("Add Item"),
+        ),
+        body: Builder(
+    builder: (context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch,children: <Widget>[Expanded(child: ListView(
+      children: <Widget>[name, itemId, itemType, purchased, status, condition, notes,
+      ],
+    )),
+    RaisedButton(child: Text("Submit"), onPressed:
+        () async {
+      try{
+        await db.createEquipment(
+            name: name.value,
+            itemID: itemId.value,
+            itemType: itemType.value,
+            purchased: purchased.value,
+            status: status.value,
+            condition: condition.value,
+            notes: notes.value
+        );
+        Navigator.pop(context);
+      } catch (e){
+        print(e.toString());
+        _showToast(context);
+      }
+
+    },)
+    ]))
+    );
+  }
+  void _showToast(BuildContext context) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: const Text('There was an error, please try again.'),
+        action: SnackBarAction(
+            label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
       ),
     );
   }

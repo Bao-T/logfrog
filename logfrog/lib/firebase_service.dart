@@ -4,20 +4,29 @@ import 'package:logfrog/equipment.dart';
 import 'package:logfrog/users.dart';
 import 'package:logfrog/patrons.dart';
 
-final CollectionReference equipmentCollection = Firestore.instance.collection('Objects');
-final CollectionReference usersCollection = Firestore.instance.collection('Users');
-
+final CollectionReference equipmentCollection =
+    Firestore.instance.collection('Objects');
+final CollectionReference usersCollection =
+    Firestore.instance.collection('Users');
 
 class FirebaseFirestoreService {
   //Setup class stuff from tutorial
   //https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview#Initialize_038_Reference
 
-  static final FirebaseFirestoreService _instance = new FirebaseFirestoreService.internal();
+  /*static final FirebaseFirestoreService _instance =
+      new FirebaseFirestoreService.internal();
   factory FirebaseFirestoreService() => _instance;
   FirebaseFirestoreService.internal();
+  */
+  String site;
 
-  Stream<QuerySnapshot> getItems({String site}) {
-    Stream<QuerySnapshot> snapshots = equipmentCollection.document(site).collection("Items").snapshots();
+  FirebaseFirestoreService(String site){
+    this.site = site;
+  }
+
+  Stream<QuerySnapshot> getItems() {
+    Stream<QuerySnapshot> snapshots =
+        equipmentCollection.document(site).collection("Items").snapshots();
 
     /*
     if (offset != null) {
@@ -31,43 +40,94 @@ class FirebaseFirestoreService {
     return snapshots;
   }
 
+  Stream<QuerySnapshot> getMembers() {
+    Stream<QuerySnapshot> snapshots =
+    equipmentCollection.document(site).collection("Members").snapshots();
 
-  Future<Equipment> createEquipment(String site, String title, String description) async {
-    print(equipmentCollection.getDocuments());
+    /*
+    if (offset != null) {
+      snapshots = snapshots.skip(offset);
+    }
 
+    if (limit != null) {
+      snapshots = snapshots.take(limit);
+    }
+  */
+    return snapshots;
+  }
+
+  Future<Equipment> createEquipment({
+    String name,
+    String itemID,
+    String itemType,
+    String purchased,
+    String status,
+    String condition,
+    String notes
+  }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(site).collection("Items").document());
+      final DocumentSnapshot ds = await tx.get(
+          equipmentCollection.document(site).collection("Items").document());
       var dataMap = new Map<String, dynamic>();
-      dataMap['Condition'] = 'title';
-      dataMap['ItemID'] = 'title';
-      dataMap['ItemType'] = 'title';
-      dataMap['Name'] = 'description';
-      dataMap['Notes'] = 'description';
-      dataMap['Purchased'] = 'description';
-      dataMap['Status'] = 'test';
+      dataMap['Condition'] = condition;
+      dataMap['ItemID'] = itemID;
+      dataMap['ItemType'] = itemType;
+      dataMap['Name'] = name;
+      dataMap['Notes'] = notes;
+      dataMap['Purchased'] = purchased;
+      dataMap['Status'] = status;
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    return Firestore.instance.runTransaction(createTransaction).then((mapData)
-    {
+    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
       return Equipment.fromMap(mapData);
+    }).catchError((error) {
+      throw('error: $error');
+    });
+  }
+
+  Future<Users> createMember({
+
+    String firstname,
+    String lastname,
+    String memID,
+    String address,
+    String phone,
+    String notes
+}) async {
+    final TransactionHandler createTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds = await tx.get(
+          equipmentCollection.document(site).collection("Members").document());
+      var dataMap = new Map<String, dynamic>();
+      dataMap['Address'] = address;
+      dataMap['FirstName'] = firstname;
+      dataMap['LastName'] = lastname;
+      dataMap['MemID'] = memID;
+      dataMap['Phone'] = phone;
+      dataMap['Notes'] = notes;
+      await tx.set(ds.reference, dataMap);
+      return dataMap;
+    };
+    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+      return Users.fromMap(mapData);
     }).catchError((error) {
       print('error: $error');
       return null;
     });
   }
 
+
   Future<Users> createUser(String title, String description) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds = await tx.get(db.collection('Users').document());
+      final DocumentSnapshot ds =
+          await tx.get(db.collection('Users').document());
       var dataMap = new Map<String, dynamic>();
       dataMap['title'] = 'title';
       dataMap['description'] = 'description';
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    return Firestore.instance.runTransaction(createTransaction).then((mapData)
-    {
+    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
       return Users.fromMap(mapData);
     }).catchError((error) {
       print('error: $error');
@@ -78,7 +138,8 @@ class FirebaseFirestoreService {
   Future<dynamic> updateEquipment(Equipment equipment) async {
     final TransactionHandler updateTransaction = (Transaction tx) async {
       String idGet = equipment.itemId.toString();
-      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(idGet));
+      final DocumentSnapshot ds =
+          await tx.get(equipmentCollection.document(idGet));
       await tx.update(ds.reference, Equipment.toMap(equipment));
       return {'updated': true};
     };
@@ -91,7 +152,6 @@ class FirebaseFirestoreService {
       return false;
     });
   }
-
 
   Future<dynamic> updateUsers(Users usr) async {
     final TransactionHandler updateTransaction = (Transaction tx) async {
@@ -112,7 +172,8 @@ class FirebaseFirestoreService {
 
   Future<dynamic> deleteEquipment(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(id.toString()));
+      final DocumentSnapshot ds =
+          await tx.get(equipmentCollection.document(id.toString()));
 
       await tx.delete(ds.reference);
       return {'deleted': true};
@@ -126,9 +187,11 @@ class FirebaseFirestoreService {
       return false;
     });
   }
+
   Future<dynamic> deleteUsers(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds = await tx.get(usersCollection.document(id.toString()));
+      final DocumentSnapshot ds =
+          await tx.get(usersCollection.document(id.toString()));
 
       await tx.delete(ds.reference);
       return {'deleted': true};
@@ -143,4 +206,3 @@ class FirebaseFirestoreService {
     });
   }
 }
-

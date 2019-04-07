@@ -61,7 +61,6 @@ class _MyHomePageState extends State<MyHomePage> {
   PageHome pgHome;
   LoginPage loginPg;
   SettingsPage settingpg;
-  FirebaseFirestoreService fbService;
 
   List<Widget> pageList;
   Widget currentPage;
@@ -71,7 +70,6 @@ class _MyHomePageState extends State<MyHomePage> {
     checkoutPg = CheckoutPg();
     pgHome = PageHome();
     settingpg = SettingsPage();
-    fbService = FirebaseFirestoreService();
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
     pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "0OiNLxMsZI1cYjgiwdWn",), settingpg];
     currentPage = pgHome;
@@ -112,15 +110,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 title: new Text('Home'),
               ),
               BottomNavigationBarItem(
-                icon: new Icon(Icons.input),
-                title: new Text('Check-In'),
-              ),
-              BottomNavigationBarItem(
-                icon: new Icon(Icons.mail),
+                icon: new Icon(Icons.file_upload),
                 title: new Text('Check-Out'),
               ),
               BottomNavigationBarItem(
-                icon: new Icon(Icons.person),
+                icon: new Icon(Icons.file_download),
+                title: new Text('Check-In'),
+              ),
+              BottomNavigationBarItem(
+                icon: new Icon(Icons.storage),
                 title: new Text('Database'),
               ),
               BottomNavigationBarItem(

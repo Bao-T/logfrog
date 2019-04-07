@@ -11,7 +11,7 @@ Firestore db = Firestore.instance; //Initially getting firestore instance for us
 class Equipment {
   String condition, itemId, itemType, name, notes, purchased, status;
 
-  Equipment(this.condition, this.itemId, this.itemType, this.name, this.notes, this.purchased, this.status);
+  Equipment({this.condition, this.itemId, this.itemType, this.name, this.notes, this.purchased, this.status});
 
 
   //  String get id => _id;
@@ -28,13 +28,13 @@ class Equipment {
   String get thisStatus => status;
 
   Equipment.map(dynamic obj) {
-//    this.id = obj['id'];
-//    this.condition = obj['condition'];
-//    this.history = obj['history'];
-//    this.notes = obj['notes'];
-//    this.reference = obj['reference'];
-//    this.barcode = obj['barcode'];
-//    this.type = obj['type'];
+    this.condition =  obj['Condition'];
+    this.itemId=  obj['ItemID'];
+    this.itemType  =obj['ItemType'];
+    this.name =obj['Name'];
+    this.notes= obj['Notes'];
+    this.purchased = obj['Purchased'];
+    this.status =obj['Status'];
   }
 
   static Map<String, dynamic> toMap(Equipment equip) {
