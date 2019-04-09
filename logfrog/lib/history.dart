@@ -25,13 +25,13 @@ class History {
 
   //creates history object mapping
   History.map(dynamic obj) {
-    this._itemID = obj['_itemID'];
-    this._itemName = obj['_itemName'];
-    this._memID = obj['_memID'];
-    this._memName = obj['_memName'];
-    this._username = obj['_username'];
-    this._timeCheckedOut= obj['_timeCheckedOut'];
-    this._timeCheckedIn = obj['_timeCheckedIn'];
+    this._itemID = obj['itemID'];
+    this._itemName = obj['itemName'];
+    this._memID = obj['memID'];
+    this._memName = obj['memName'];
+    this._username = obj['username'];
+    this._timeCheckedOut= obj['timeCheckedOut'];
+    this._timeCheckedIn = obj['timeCheckedIn'];
   }
 
   //creates a map from a history object
