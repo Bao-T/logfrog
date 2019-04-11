@@ -5,69 +5,66 @@ import 'package:intl/intl.dart';
 //Following this tutorial for building the class
 // https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview#Initialize_038_Reference
 
-
 Firestore db = Firestore.instance; //Initially getting firestore instance for use in database access
 
-
 class Equipment {
-  String condition, itemId, itemType, name, notes, status;
-  DateTime purchased;
 
-  Equipment({this.condition, this.itemId, this.itemType, this.name, this.notes, this.purchased, this.status});
+  //private string variables except for Datemtime, which is a firebase class
+  String _condition; //condition of equipment
+  String _itemID; //id of object (used in generating QR code)
+  String _itemType; //type of object (camera, lens, etc.)
+  String _name; //object name, if any
+  String _notes; //Any additional notes can go here
+  Datetime _purchased; //Date purchased for equipment (defaults to date added to database if not given)
+  String _status; //Checked in or checked out status
+  
+  //Equipment mapping
+  Equipment(this._condition, this._itemID, this._itemType, this._name, this._notes, this._purchased, this._status);
 
 
-  //  String get id => _id;
-  //  String get title => _title;
-  //  String get description => _description;
+  //get functions to access private variables
+  String get itemID => _itemID;
+  String get condition => _condition;
+  String get notes => _notes;
+  String get itemType => _itemType;
+  String get name => _name;
+  String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased); //reformats the date into MM-dd-yyyy
+  String get status => _status;
 
-
-  String get thisId => itemId;
-  String get thisCondition => condition;
-  String get thisNotes => notes;
-  String get thisType => itemType;
-  String get thisName => name;
-  String get thisPurchased => DateFormat('MM-dd-yyyy').format(purchased);
-  String get thisStatus => status;
-
+  //mapping of object
   Equipment.map(dynamic obj) {
-    this.condition =  obj['Condition'];
-    this.itemId=  obj['ItemID'];
-    this.itemType  =obj['ItemType'];
-    this.name =obj['Name'];
-    this.notes= obj['Notes'];
-    this.purchased = obj['Purchased'];
-    this.status =obj['Status'];
+    this._condition =  obj['Condition'];
+    this._itemId=  obj['ItemID'];
+    this._itemType  =obj['ItemType'];
+    this._name =obj['Name'];
+    this._notes= obj['Notes'];
+    this._purchased = obj['Purchased'];
+    this._status =obj['Status'];
   }
 
+  //creates map of an object for storing on firebase
   static Map<dynamic, dynamic> toMap(Equipment equip) {
     var map = new Map<String, dynamic>();
-    map['Condition'] = equip.condition;
-    map['ItemID'] = equip.itemId;
-    map['ItemType'] = equip.itemType;
-    map['Name'] = equip.name;
-    map['Notes'] = equip.notes;
-    map['Purchased'] = equip.purchased;
-    map['Status'] = equip.status;
+    map['condition'] = equip._condition;
+    map['itemID'] = equip._itemID;
+    map['itemType'] = equip._itemType;
+    map['name'] = equip._name;
+    map['notes'] = equip._notes;
+    map['purchased'] = equip._purchased;
+    map['status'] = equip._status;
     return map;
   }
 
 
-  Equipment.fromMap(Map<dynamic, dynamic> dataMap) {
-    this.condition =  dataMap['Condition'];
-    this.itemId=  dataMap['ItemID'];
-    this.itemType  =dataMap['ItemType'];
-    this.name =dataMap['Name'];
-    this.notes= dataMap['Notes'];
-    this.purchased = dataMap['Purchased'];
-    this.status =dataMap['Status'];
-
-
-
-
-
-
-
-
+  //creates object from stored firebase map
+  Equipment.fromMap(Map<String, dynamic> dataMap) {
+    this._condition =  dataMap['condition'];
+    this._itemID=  dataMap['itemID'];
+    this._itemType  =dataMap['itemType'];
+    this._name =dataMap['name'];
+    this._notes= dataMap['notes'];
+    this._purchased = dataMap['purchased'];
+    this._status =dataMap['status'];
   }
 
 }

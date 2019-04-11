@@ -169,9 +169,10 @@ class FirebaseFirestoreService {
 
   Future<dynamic> updateEquipment(Equipment equipment) async {
     final TransactionHandler updateTransaction = (Transaction tx) async {
-      String idGet = equipment.itemId.toString();
-      final DocumentSnapshot ds =
-          await tx.get(equipmentCollection.document(idGet));
+
+      String idGet = equipment.itemID.toString();
+      final DocumentSnapshot ds = await tx.get(equipmentCollection.document(idGet));
+
       await tx.update(ds.reference, Equipment.toMap(equipment));
       return {'updated': true};
     };
