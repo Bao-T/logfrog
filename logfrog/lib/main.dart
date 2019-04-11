@@ -70,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
     pgHome = PageHome();
     settingpg = SettingsPage();
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
-    pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "Test",), settingpg];
+    pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "Test",), settingpg]; //Change Site to access different sites
     currentPage = pgHome;
     super.initState();
   }
