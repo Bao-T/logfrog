@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 import 'firebase_service.dart';
 
@@ -61,7 +60,6 @@ class _MyHomePageState extends State<MyHomePage> {
   PageHome pgHome;
   LoginPage loginPg;
   SettingsPage settingpg;
-  FirebaseFirestoreService fbService;
 
   List<Widget> pageList;
   Widget currentPage;
@@ -71,9 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
     checkoutPg = CheckoutPg();
     pgHome = PageHome();
     settingpg = SettingsPage();
-    fbService = FirebaseFirestoreService();
     loginPg = LoginPage(title: 'LogFrog Login', callback: this.callback);
-    pageList = [pgHome, checkoutPg, settingpg];
+    pageList = [pgHome, checkoutPg, checkoutPg, new DatabasePg(site: "Test",), settingpg];
     currentPage = pgHome;
     super.initState();
   }
@@ -103,8 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
               setState(() {
                 _bottomNavBarIndex = index;
                 //Temp page selector
-                currentPage =
-                    index <= 1 ? pageList[_bottomNavBarIndex] : settingpg;
+                currentPage = pageList[index];
               });
             },
             items: [
@@ -113,16 +109,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 title: new Text('Home'),
               ),
               BottomNavigationBarItem(
-                icon: new Icon(Icons.input),
-                title: new Text('Input'),
+                icon: new Icon(Icons.file_upload),
+                title: new Text('Check-Out'),
               ),
               BottomNavigationBarItem(
-                icon: new Icon(Icons.mail),
-                title: new Text('Mail'),
+                icon: new Icon(Icons.file_download),
+                title: new Text('Check-In'),
               ),
               BottomNavigationBarItem(
-                icon: new Icon(Icons.person),
-                title: new Text('Person'),
+                icon: new Icon(Icons.storage),
+                title: new Text('Database'),
               ),
               BottomNavigationBarItem(
                 icon: new Icon(Icons.settings),
