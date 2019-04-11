@@ -352,7 +352,7 @@ class DatabasePgState extends State<DatabasePg> {
       List<Equipment> tempList = new List();
       for (int i = 0; i < items.length; i++) {
         if (items[i]
-            .thisName
+            .name
             .toLowerCase()
             .contains(_searchText.toLowerCase())) {
           tempList.add(items[i]);
@@ -367,8 +367,8 @@ class DatabasePgState extends State<DatabasePg> {
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
-          title: Text(filteredItems[index].thisName),
-          onTap: () => print(filteredItems[index].thisName),
+          title: Text(filteredItems[index].name),
+          onTap: () => print(filteredItems[index].name),
         );
       },
     );

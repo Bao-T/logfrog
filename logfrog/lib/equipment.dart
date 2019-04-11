@@ -15,7 +15,7 @@ class Equipment {
   String _itemType; //type of object (camera, lens, etc.)
   String _name; //object name, if any
   String _notes; //Any additional notes can go here
-  Datetime _purchased; //Date purchased for equipment (defaults to date added to database if not given)
+  DateTime _purchased; //Date purchased for equipment (defaults to date added to database if not given)
   String _status; //Checked in or checked out status
   
   //Equipment mapping
@@ -34,7 +34,7 @@ class Equipment {
   //mapping of object
   Equipment.map(dynamic obj) {
     this._condition =  obj['Condition'];
-    this._itemId=  obj['ItemID'];
+    this._itemID =  obj['ItemID'];
     this._itemType  =obj['ItemType'];
     this._name =obj['Name'];
     this._notes= obj['Notes'];
@@ -45,26 +45,26 @@ class Equipment {
   //creates map of an object for storing on firebase
   static Map<dynamic, dynamic> toMap(Equipment equip) {
     var map = new Map<String, dynamic>();
-    map['condition'] = equip._condition;
-    map['itemID'] = equip._itemID;
-    map['itemType'] = equip._itemType;
-    map['name'] = equip._name;
-    map['notes'] = equip._notes;
-    map['purchased'] = equip._purchased;
-    map['status'] = equip._status;
+    map['Condition'] = equip._condition;
+    map['ItemID'] = equip._itemID;
+    map['ItemType'] = equip._itemType;
+    map['Name'] = equip._name;
+    map['Notes'] = equip._notes;
+    map['Purchased'] = equip._purchased;
+    map['Status'] = equip._status;
     return map;
   }
 
 
   //creates object from stored firebase map
   Equipment.fromMap(Map<String, dynamic> dataMap) {
-    this._condition =  dataMap['condition'];
-    this._itemID=  dataMap['itemID'];
-    this._itemType  =dataMap['itemType'];
-    this._name =dataMap['name'];
-    this._notes= dataMap['notes'];
-    this._purchased = dataMap['purchased'];
-    this._status =dataMap['status'];
+    this._condition =  dataMap['Condition'];
+    this._itemID=  dataMap['ItemID'];
+    this._itemType  =dataMap['ItemType'];
+    this._name =dataMap['Name'];
+    this._notes= dataMap['Notes'];
+    this._purchased = dataMap['Purchased'];
+    this._status =dataMap['Status'];
   }
 
 }
