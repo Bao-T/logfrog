@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
+import 'patrons.dart';
 
 String dataSite;
 FirebaseFirestoreService db;
@@ -304,11 +305,14 @@ class DatabasePgState extends State<DatabasePg> {
   final dio = new Dio();
   String _searchText = "";
   List<Equipment> items;
+  List<Patrons> mems;
   StreamSubscription<QuerySnapshot> itemSub;
+  StreamSubscription<QuerySnapshot> memSub;
   List<Equipment> filteredItems = new List();
+  List<Patrons> filteredMems = new List();
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
-
+  String _mode = "Items";
   DatabasePgState(String site) {
     dataSite = site;
     db = new FirebaseFirestoreService(dataSite);
@@ -338,6 +342,18 @@ class DatabasePgState extends State<DatabasePg> {
         this.filteredItems = items;
       });
     });
+
+    memSub?.cancel();
+    this.memSub = db.getMembers().listen((QuerySnapshot snapshot) {
+      final List<Patrons> members = snapshot.documents
+          .map((documentSnapshot) => Patrons.fromMap(documentSnapshot.data))
+          .toList();
+      setState(() {
+        this.mems = members;
+        this.filteredMems = mems;
+      });
+    });
+
     super.initState();
   }
 
@@ -347,14 +363,11 @@ class DatabasePgState extends State<DatabasePg> {
     super.dispose();
   }
 
-  Widget _buildList() {
+  Widget _buildItemsList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
       for (int i = 0; i < items.length; i++) {
-        if (items[i]
-            .name
-            .toLowerCase()
-            .contains(_searchText.toLowerCase())) {
+        if (items[i].name.toLowerCase().contains(_searchText.toLowerCase())) {
           tempList.add(items[i]);
         }
       }
@@ -368,7 +381,53 @@ class DatabasePgState extends State<DatabasePg> {
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
           title: Text(filteredItems[index].name),
-          onTap: () => print(filteredItems[index].name),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ViewItem(item: filteredItems[index])),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMembersList() {
+    if (!(_searchText.isEmpty)) {
+      List<Patrons> tempList = new List();
+      for (int i = 0; i < mems.length; i++) {
+        print(i.toString());
+        if (mems[i]
+                .firstName
+                .toLowerCase()
+                .contains(_searchText.toLowerCase()) ||
+            mems[i]
+                .lastName
+                .toLowerCase()
+                .contains(_searchText.toLowerCase())) {
+          tempList.add(mems[i]);
+        }
+      }
+      filteredMems = tempList;
+    }
+    return ListView.separated(
+      separatorBuilder: (context, index) => Divider(
+            color: Colors.black,
+          ),
+      itemCount: items == null ? 0 : filteredMems.length,
+      itemBuilder: (BuildContext context, int index) {
+        return new ListTile(
+          title: Text(filteredMems[index].firstName +
+              " " +
+              filteredMems[index].lastName),
+          onTap:  () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ViewMember(mem: filteredMems[index])),
+            );
+          },
         );
       },
     );
@@ -404,14 +463,35 @@ class DatabasePgState extends State<DatabasePg> {
           icon: _searchIcon,
           onPressed: _searchPressed,
         ),
+        actions: <Widget>[
+          DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                  value: _mode,
+                  items: <DropdownMenuItem<String>>[
+                    DropdownMenuItem(
+                      child: Text('Items'),
+                      value: 'Items',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('Members'),
+                      value: 'Members',
+                    )
+                  ],
+                  onChanged: (String mode) {
+                    setState(() => _mode = mode);
+                  }))
+        ],
       ),
-      body: Container(child: _buildList()),
+      body: Container(
+          child: _mode == "Items" ? _buildItemsList() : _buildMembersList()),
       resizeToAvoidBottomPadding: false,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AddItem()),
+            MaterialPageRoute(
+                builder: (context) =>
+                    _mode == "Items" ? AddItem() : AddMember()),
           );
         },
         child: Icon(Icons.add),
@@ -436,13 +516,16 @@ class AddItemState extends State<AddItem> {
 
   FieldWidget condition =
       FieldWidget(title: 'Condition', hint: 'Item Condition:');
-  FieldWidget itemId = FieldWidget(title: 'Item ID', hint: 'An ID will generate by default');
+  FieldWidget itemId = FieldWidget(
+      title: 'Item ID', hint: 'An ID will generate by default', enabled: false);
   FieldWidget itemType =
       FieldWidget(title: 'Item Type', hint: 'Enter Item Type');
   FieldWidget name = FieldWidget(title: 'Item Name', hint: 'Enter Item Name');
   FieldWidget notes = FieldWidget(title: 'Notes', hint: 'Item Notes');
-  FieldWidget purchased =
-      FieldWidget(title: 'Purchased Date', hint: 'Date',);
+  FieldWidget purchased = FieldWidget(
+    title: 'Purchased Date',
+    hint: 'Date',
+  );
   FieldWidget status =
       FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
   bool cameraView = false;
@@ -512,18 +595,13 @@ class AddItemState extends State<AddItem> {
                           RaisedButton(
                             child: Text("Submit"),
                             onPressed: () async {
-                              if(name.value.isEmpty)
-                              {
-                                setState(() {
-                                  name.validate = true;
-                                });
-                                _showToast(context,'Error: You must enter item name.');
-                              }
-                              else{
+                              if (name.value.isEmpty) {
                                 setState(() {
                                   name.validate = false;
                                 });
-
+                                _showToast(context,
+                                    'Error: You must enter item name.');
+                              } else {
                                 try {
                                   await db.createEquipment(
                                       name: name.value,
@@ -536,14 +614,519 @@ class AddItemState extends State<AddItem> {
                                   Navigator.pop(context);
                                 } catch (e) {
                                   print(e.toString());
-                                  _showToast(context,e.toString());
+                                  _showToast(context, e.toString());
                                 }
                               }
-
-
-
                             },
                           )
+                        ])));
+  }
+
+  void _showToast(BuildContext context, String errorText) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(errorText),
+        action: SnackBarAction(
+            label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
+}
+
+class AddMember extends StatefulWidget {
+  @override
+  AddMemberState createState() => AddMemberState();
+}
+
+class AddMemberState extends State<AddMember> {
+  final DateTime dateNow = DateTime.now();
+  bool validateName = false;
+
+  @override
+  void initState() {
+    //purchased.setString(DateFormat('MM-dd-yyyy').format(DateTime.now()));
+    super.initState();
+  }
+
+  FieldWidget firstName =
+      FieldWidget(title: 'First Name', hint: 'Member First Name');
+  FieldWidget lastName =
+      FieldWidget(title: 'Last Name', hint: 'Member Last Name');
+  FieldWidget memberID = FieldWidget(
+      title: 'Member ID',
+      hint: 'A random ID will be generated if left empty',
+      enabled: false);
+  FieldWidget address =
+      FieldWidget(title: 'Address', hint: 'Address of Member');
+  FieldWidget phone =
+      FieldWidget(title: 'Phone Number', hint: 'Phone Contact of Member');
+  FieldWidget notes = FieldWidget(title: 'Notes', hint: 'Notes:');
+
+  bool cameraView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: Icon(Icons.edit),
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                })
+          ],
+          title: Text("Add Member"),
+        ),
+        body: cameraView
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  BarcodeScanner(
+                    onBarcode: (code) {
+                      setState(() {
+                        memberID.setString(code);
+                        cameraView = false;
+                      });
+
+                      return true;
+                    },
+                  ),
+                  RaisedButton(
+                    child: Text("Cancel"),
+                    onPressed: () {
+                      setState(() {
+                        cameraView = false;
+                      });
+                    },
+                  )
+                ],
+              )
+            : Builder(
+                builder: (context) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Expanded(
+                              child: ListView(
+                            children: <Widget>[
+                              firstName,
+                              lastName,
+                              Row(children: <Widget>[
+                                Expanded(child: memberID),
+                                IconButton(
+                                    icon: Icon(Icons.camera_alt),
+                                    onPressed: () {
+                                      setState(() {
+                                        cameraView = true;
+                                      });
+                                    })
+                              ]),
+                              phone,
+                              address,
+                              notes,
+                            ],
+                          )),
+                          RaisedButton(
+                            child: Text("Submit"),
+                            onPressed: () async {
+                              if (firstName.value.isEmpty) {
+                                setState(() {
+                                  firstName.validate = false;
+                                });
+                                _showToast(context,
+                                    'Error: You must enter item name.');
+                              } else {
+                                try {
+                                  await db.createPatron(
+                                      id: memberID.value,
+                                      firstName: firstName.value,
+                                      lastName: lastName.value,
+                                      address: address.value,
+                                      phone: phone.value,
+                                      notes: notes.value);
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  print(e.toString());
+                                  _showToast(context, e.toString());
+                                }
+                              }
+                            },
+                          )
+                        ])));
+  }
+
+  void _showToast(BuildContext context, String errorText) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(errorText),
+        action: SnackBarAction(
+            label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
+}
+
+class ViewItem extends StatefulWidget {
+  ViewItem({Key key, this.item}) : super(key: key);
+  final Equipment item;
+  @override
+  ViewItemState createState() => ViewItemState();
+}
+
+class ViewItemState extends State<ViewItem> {
+  final DateTime dateNow = DateTime.now();
+  bool validateName = false;
+  bool editMode = false;
+  @override
+  void initState() {
+    condition.setString(widget.item.condition);
+    itemId.setString(widget.item.itemID);
+    itemType.setString(widget.item.itemType);
+    name.setString(widget.item.name);
+    notes.setString(widget.item.notes);
+    purchased.setString(widget.item.thisPurchased);
+    super.initState();
+  }
+
+  void updateWidget() {
+    setState(() {});
+  }
+
+  FieldWidget condition = FieldWidget(
+    title: 'Condition',
+    hint: 'Item Condition:',
+    enabled: false,
+  );
+  FieldWidget itemId = FieldWidget(
+      title: 'Item ID', hint: 'An ID will generate by default', enabled: false);
+  FieldWidget itemType =
+      FieldWidget(title: 'Item Type', hint: 'Enter Item Type', enabled: false);
+  FieldWidget name =
+      FieldWidget(title: 'Item Name', hint: 'Enter Item Name', enabled: false);
+  FieldWidget notes =
+      FieldWidget(title: 'Notes', hint: 'Item Notes', enabled: false);
+  FieldWidget purchased =
+      FieldWidget(title: 'Purchased Date', hint: 'Date', enabled: false);
+  FieldWidget status = FieldWidget(
+      title: 'Item Status', hint: '(Available, Unavailable)', enabled: false);
+  bool cameraView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                editMode = true;
+                setState(() {
+                  itemId = FieldWidget(
+                      title: 'Item ID',
+                      hint: 'An ID will generate by default',
+                      enabled: false);
+                  itemType = FieldWidget(
+                      title: 'Item Type',
+                      hint: 'Enter Item Type',
+                      enabled: true);
+                  name = FieldWidget(
+                      title: 'Item Name',
+                      hint: 'Enter Item Name',
+                      enabled: true);
+                  notes = FieldWidget(
+                      title: 'Notes', hint: 'Item Notes', enabled: true);
+                  purchased = FieldWidget(
+                      title: 'Purchased Date', hint: 'Date', enabled: true);
+                  status = FieldWidget(
+                      title: 'Item Status',
+                      hint: '(Available, Unavailable)',
+                      enabled: true);
+                  condition.setString(widget.item.condition);
+                  itemId.setString(widget.item.itemID);
+                  itemType.setString(widget.item.itemType);
+                  name.setString(widget.item.name);
+                  notes.setString(widget.item.notes);
+                  purchased.setString(widget.item.thisPurchased);
+                });
+              }),
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                })
+          ],
+          title:
+              editMode == false ? Text("Item Details") : Text("Edit Details"),
+        ),
+        body: cameraView
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  BarcodeScanner(
+                    onBarcode: (code) {
+                      setState(() {
+                        itemId.setString(code);
+                        cameraView = false;
+                      });
+
+                      return true;
+                    },
+                  ),
+                  RaisedButton(
+                    child: Text("Cancel"),
+                    onPressed: () {
+                      setState(() {
+                        cameraView = false;
+                      });
+                    },
+                  )
+                ],
+              )
+            : Builder(
+                builder: (context) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Expanded(
+                              child: ListView(
+                            children: <Widget>[
+                              name,
+                              Row(children: <Widget>[
+                                Expanded(child: itemId),
+                                editMode == false
+                                    ? Container()
+                                    : IconButton(
+                                        icon: Icon(Icons.camera_alt),
+                                        onPressed: () {
+                                          setState(() {
+                                            cameraView = true;
+                                          });
+                                        })
+                              ]),
+                              itemType,
+                              purchased,
+                              status,
+                              condition,
+                              notes,
+                            ],
+                          )),
+                          editMode == false
+                              ? Container()
+                              : RaisedButton(
+                                  child: Text("Update"),
+                                  onPressed: () async {
+                                    if (name.value.isEmpty) {
+                                      setState(() {
+                                        name = FieldWidget(
+                                            title: 'Item Name',
+                                            hint: 'Enter Item Name',
+                                            validate: true);
+                                      });
+                                      _showToast(context,
+                                          'Error: You must enter item name.');
+                                    } else {
+                                      try {
+                                        await db.updateEquipment(
+                                            name: name.value,
+                                            itemID: itemId.value,
+                                            itemType: itemType.value,
+                                            purchased: dateNow,
+                                            status: status.value,
+                                            condition: condition.value,
+                                            notes: notes.value);
+                                        Navigator.pop(context);
+                                      } catch (e) {
+                                        print(e.toString());
+                                        _showToast(context, e.toString());
+                                      }
+                                    }
+                                  },
+                                )
+                        ])));
+  }
+
+  void _showToast(BuildContext context, String errorText) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(errorText),
+        action: SnackBarAction(
+            label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
+}
+
+class ViewMember extends StatefulWidget {
+  ViewMember({Key key, this.mem}) : super(key: key);
+  final Patrons mem;
+  @override
+  ViewMemberState createState() => ViewMemberState();
+}
+
+class ViewMemberState extends State<ViewMember> {
+  final DateTime dateNow = DateTime.now();
+  bool validateName = false;
+  bool editMode = false;
+  @override
+  void initState() {
+    id.setString(widget.mem.id);
+    firstName.setString(widget.mem.firstName);
+    lastName.setString(widget.mem.lastName);
+    address.setString(widget.mem.emailAddress);
+    phone.setString(widget.mem.phone);
+    notes.setString(widget.mem.notes);
+    super.initState();
+  }
+
+  void updateWidget() {
+    setState(() {});
+  }
+
+  FieldWidget id = FieldWidget(
+      title: 'Item ID', hint: 'An ID will generate by default', enabled: false);
+  FieldWidget firstName = FieldWidget(
+      title: 'First Name', hint: 'Member First Name', enabled: false);
+  FieldWidget lastName =
+      FieldWidget(title: 'Last Name', hint: 'Member Last Name', enabled: false);
+  FieldWidget address =
+      FieldWidget(title: 'Email Address', hint: 'Email', enabled: false);
+  FieldWidget phone = FieldWidget(
+      title: 'Phone Number', hint: '(###) ###-####', enabled: false);
+  FieldWidget notes =
+      FieldWidget(title: 'Notes', hint: 'Member notes:', enabled: false);
+  bool cameraView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                editMode = true;
+                setState(() {
+                  id = FieldWidget(
+                      title: 'Item ID',
+                      hint: 'An ID will generate by default',
+                      enabled: false);
+                  firstName = FieldWidget(
+                      title: 'First Name',
+                      hint: 'Member First Name',
+                      enabled: true);
+                  lastName = FieldWidget(
+                      title: 'Last Name',
+                      hint: 'Member Last Name',
+                      enabled: true);
+                  address = FieldWidget(
+                      title: 'Email Address', hint: 'Email', enabled: true);
+                  phone = FieldWidget(
+                      title: 'Phone Number',
+                      hint: '(###) ###-####',
+                      enabled: true);
+                  notes = FieldWidget(
+                      title: 'Notes', hint: 'Member notes:', enabled: true);
+                  id.setString(widget.mem.id);
+                  firstName.setString(widget.mem.firstName);
+                  lastName.setString(widget.mem.lastName);
+                  address.setString(widget.mem.emailAddress);
+                  phone.setString(widget.mem.phone);
+                  notes.setString(widget.mem.notes);
+                });
+              }),
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                })
+          ],
+          title:
+              editMode == false ? Text("Item Details") : Text("Edit Details"),
+        ),
+        body: cameraView
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  BarcodeScanner(
+                    onBarcode: (code) {
+                      setState(() {
+                        id.setString(code);
+                        cameraView = false;
+                      });
+
+                      return true;
+                    },
+                  ),
+                  RaisedButton(
+                    child: Text("Cancel"),
+                    onPressed: () {
+                      setState(() {
+                        cameraView = false;
+                      });
+                    },
+                  )
+                ],
+              )
+            : Builder(
+                builder: (context) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Expanded(
+                              child: ListView(
+                            children: <Widget>[
+                              firstName,
+                              lastName,
+                              Row(children: <Widget>[
+                                Expanded(child: id),
+                                editMode == false
+                                    ? Container()
+                                    : IconButton(
+                                        icon: Icon(Icons.camera_alt),
+                                        onPressed: () {
+                                          setState(() {
+                                            cameraView = true;
+                                          });
+                                        })
+                              ]),
+                              address,
+                              phone,
+                              notes,
+                            ],
+                          )),
+                          editMode == false
+                              ? Container()
+                              : RaisedButton(
+                                  child: Text("Update"),
+                                  onPressed: () async {
+                                    if (firstName.value.isEmpty) {
+                                      setState(() {
+                                        firstName = FieldWidget(
+                                            title: 'Item Name',
+                                            hint: 'Enter Item Name',
+                                            validate: true);
+                                      });
+                                      _showToast(context,
+                                          'Error: You must enter item name.');
+                                    } else {
+                                      try {
+//                                        await db.updateEquipment(
+//                                            name: name.value,
+//                                            itemID: itemId.value,
+//                                            itemType: itemType.value,
+//                                            purchased: dateNow,
+//                                            status: status.value,
+//                                            condition: condition.value,
+//                                            notes: notes.value);
+//                                        Navigator.pop(context);
+                                      } catch (e) {
+                                        print(e.toString());
+                                        _showToast(context, e.toString());
+                                      }
+                                    }
+                                  },
+                                )
                         ])));
   }
 

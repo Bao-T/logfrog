@@ -2,24 +2,24 @@ import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 
 
 class Patrons {
-  int _id;
+  String _id;
   String _firstName;
   String _lastName;
-  String _emailAddress;
-  String _username;
-  String _password;
-  List<DocumentReference> _checkOutHistory;
-  List<DocumentReference> _checkedOutEquipment;
+  String _address;
+  String _phone;
+  String _notes;
+  List<dynamic> _checkOutHistory;
+  List<dynamic> _checkedOutEquipment;
 
-  Patrons(this._id, this._firstName, this._lastName, this._emailAddress, this._username, this._password, this._checkOutHistory, this._checkedOutEquipment);
+  Patrons(this._id, this._firstName, this._lastName, this._address, this._phone, this._notes, this._checkOutHistory, this._checkedOutEquipment);
 
   //get methods to access private variables
-  int get id => _id;
+  String get id => _id;
   String get firstName => _firstName;
   String get lastName => _lastName;
-  String get emailAddress => _emailAddress;
-  String get username => _username;
-  String get password => _password;
+  String get emailAddress => _address;
+  String get phone => _phone;
+  String get notes => _notes;
   List<DocumentReference> get checkOutHistory => _checkOutHistory;
   List<DocumentReference> get checkedOutEquipment => _checkedOutEquipment;
 
@@ -27,9 +27,9 @@ class Patrons {
     this._id = obj['id'];
     this._firstName = obj['firstName'];
     this._lastName = obj['lastName'];
-    this._emailAddress = obj['emailAddress'];
-    this._username = obj['username'];
-    this._password = obj['password'];
+    this._address = obj['emailAddress'];
+    this._phone = obj['phone'];
+    this._notes = obj['notes'];
     this._checkOutHistory = obj['checkOutHistory'];
     this._checkedOutEquipment = obj['checkedOutEquipment'];
   }
@@ -41,9 +41,9 @@ class Patrons {
     }
     map['firstName'] = pat._firstName;
     map['lastName'] = pat._lastName;
-    map['emailAddress'] = pat._emailAddress;
-    map['username'] = pat._username;
-    map['password'] = pat._password;
+    map['emailAddress'] = pat._address;
+    map['phone'] = pat._phone;
+    map['notes'] = pat._notes;
     map['checkOutHistory'] = pat._checkOutHistory;
     map['checkedOutEquipment'] = pat._checkedOutEquipment;
     return map;
@@ -53,9 +53,9 @@ class Patrons {
     this._id = map['id'];
     this._firstName = map['firstName'];
     this._lastName = map['lastName'];
-    this._emailAddress = map['emaileAddress'];
-    this._username = map['username'];
-    this._password = map['password'];
+    this._address = map['emaileAddress'];
+    this._phone = map['phone'];
+    this._notes = map['notes'];
     this._checkOutHistory = map['checkOutHistory'];
     this._checkedOutEquipment = map['checkedOutEquipment'];
   }
