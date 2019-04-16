@@ -3,58 +3,55 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logfrog/equipment.dart';
 import 'package:logfrog/users.dart';
 import 'package:logfrog/patrons.dart';
+import 'package:logfrog/history.dart';
 
 final CollectionReference equipmentCollection =
     Firestore.instance.collection('Objects');
 final CollectionReference usersCollection =
     Firestore.instance.collection('Users');
 
+
+/*
+Firebase structure:
+
+1) Objects (AKA Sites)------/History
+                            Items (AKA Equipment)
+                            Members (AKA Patron)
+
+2) Users
+ */
+
+
+
+
 class FirebaseFirestoreService {
   //Setup class stuff from tutorial
   //https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview#Initialize_038_Reference
 
-  /*static final FirebaseFirestoreService _instance =
-      new FirebaseFirestoreService.internal();
-  factory FirebaseFirestoreService() => _instance;
-  FirebaseFirestoreService.internal();
-  */
+  //One variable for the FirebaseFirestoreService class, site name (will be associated with user login)
   String site;
 
+  //
   FirebaseFirestoreService(String site) {
     this.site = site;
   }
+
+  //Returns stream of snapshots for items collection (owned by a site)
   Stream<QuerySnapshot> getItems() {
     Stream<QuerySnapshot> snapshots =
         equipmentCollection.document(site).collection("Items").snapshots();
-
-    /*
-    if (offset != null) {
-      snapshots = snapshots.skip(offset);
-    }
-
-    if (limit != null) {
-      snapshots = snapshots.take(limit);
-    }
-  */
     return snapshots;
   }
 
+  //Returns stream of snapshots for members collection (owned by a site)
   Stream<QuerySnapshot> getMembers() {
     Stream<QuerySnapshot> snapshots =
         equipmentCollection.document(site).collection("Members").snapshots();
-
-    /*
-    if (offset != null) {
-      snapshots = snapshots.skip(offset);
-    }
-
-    if (limit != null) {
-      snapshots = snapshots.take(limit);
-    }
-  */
     return snapshots;
   }
 
+  //create an equipment asynchronously
+  //input of Equipment type map
   Future<Equipment> createEquipment(
       {String name,
       String itemID,
@@ -63,16 +60,16 @@ class FirebaseFirestoreService {
       String status,
       String condition,
       String notes}) async {
-    final TransactionHandler createTransaction = (Transaction tx) async {
+    final TransactionHandler createTransaction = (Transaction tx) async { //creating firestore transaction
       DocumentSnapshot ds;
-      if (itemID != "") {
+      if (itemID != "") { //Default itemID is "" ????
         ds = await tx.get(equipmentCollection
             .document(site)
             .collection("Items")
             .document(itemID));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("Items").document());
+            equipmentCollection.document(site).collection("Items").document()); //Note that the Equipment class is named 'Items' in collections
         itemID = ds.documentID;
       }
 
@@ -84,7 +81,7 @@ class FirebaseFirestoreService {
       dataMap['Notes'] = notes;
       dataMap['Purchased'] = purchased;
       dataMap['Status'] = status;
-      await tx.set(ds.reference, dataMap);
+      await tx.set(ds.reference, dataMap); //set data map to the reference for the transaction
       return dataMap;
     };
     if (itemID != "") {
@@ -96,7 +93,7 @@ class FirebaseFirestoreService {
           .then((doc) {
         if (doc.exists) {
           print("DNE");
-          throw ("error: Item ID already exists");
+          throw ("error: Item ID already exists"); //error for pre-created items being re-created
         } else {
           return Firestore.instance
               .runTransaction(createTransaction)
@@ -120,6 +117,8 @@ class FirebaseFirestoreService {
     }
   }
 
+  //create a Patron (AKA a member) asynch
+  //input of patron class mapping
   Future<Patrons> createPatron(
       {  String id,
       String firstName,
@@ -135,8 +134,7 @@ class FirebaseFirestoreService {
             .collection("Members")
             .document(id));
       } else {
-        ds = await tx.get(
-            equipmentCollection.document(site).collection("Members").document());
+        ds = await tx.get(equipmentCollection.document(site).collection("Members").document());
         id = ds.documentID;
       }
 
@@ -184,23 +182,109 @@ class FirebaseFirestoreService {
     }
   }
 
-  Future<Users> createUser(String title, String description) async {
+  //Create a user object and send to firebase
+  //User == Teacher or those who login to app
+  Future<Users> createUser(
+      { String id,
+        String firstName,
+        String lastName,
+        String emailAddress,
+        String username,
+        String password,}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-          await tx.get(db.collection('Users').document());
+      DocumentSnapshot ds;
+      if (id != "") {
+        ds = await tx.get(usersCollection.document(id));
+      } else {
+        ds = await tx.get(usersCollection.document(id));
+        id = ds.documentID;
+      }
+
       var dataMap = new Map<String, dynamic>();
-      dataMap['title'] = 'title';
-      dataMap['description'] = 'description';
+      dataMap['id'] = id;
+      dataMap['firstName'] = firstName;
+      dataMap['lastName'] = lastName;
+      dataMap['emailAddress'] = emailAddress;
+      dataMap['username'] = username;
+      dataMap['password'] = password;
+      await tx.set(ds.reference, dataMap);
+      return dataMap;
+
+    };
+    if (id != "") {
+    return usersCollection.document(id).get().then((doc) {
+      if (doc.exists){
+        throw ("error: Item ID already exists");
+      } else {
+        return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+          return Users.fromMap(mapData);
+        }).catchError((error) {
+          throw ('error: unable to communicate with server');
+        });
+      }
+    }).catchError((e){
+      throw (e);
+    });
+    } else {
+      return Firestore.instance.runTransaction(createTransaction).then((mapData){
+        return Users.fromMap(mapData);
+      }).catchError((error) {
+        throw ('error: unable to communicate with server');
+      });
+    }
+  }
+
+  //Creates a History object given a patron id and a equipment id
+  Future<History> createHistory (
+      {String historyID,
+        String itemID,
+        String itemName,
+        String memID,
+        String memName,
+        Timestamp timeCheckedIn,
+        Timestamp timeCheckedOut }) async {
+    final TransactionHandler createTransaction = (Transaction tx) async {
+      DocumentSnapshot ds;
+      if (historyID != ""){
+        ds = await tx.get(equipmentCollection.document(site).collection("History").document(historyID));
+      } else {
+        ds = await tx.get(equipmentCollection.document(site).collection("History").document());
+        historyID = ds.documentID;
+      }
+      var dataMap = new Map<String, dynamic>();
+      dataMap['historyID'] = historyID;
+      dataMap['itemID'] = itemID;
+      dataMap['itemName'] = itemName;
+      dataMap['memID'] = memID;
+      dataMap['memName'] = memName;
+      dataMap['timeCheckedIn'] = timeCheckedIn;
+      dataMap['timeCheckedOut'] = timeCheckedOut;
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
-      return Users.fromMap(mapData);
-    }).catchError((error) {
-      print('error: $error');
-      return null;
-    });
+    if (historyID != "") {
+      return equipmentCollection.document(site).collection("History").document(historyID).get().then((doc) {
+        if (doc.exists){
+          throw ("error: Item ID already exists");
+        } else {
+          return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+            return History.fromMap(mapData);
+          }).catchError((error) {
+            throw ('error: unable to communicate with server');
+          });
+        }
+      }).catchError((e){
+        throw (e);
+      });
+    } else {
+      return Firestore.instance.runTransaction(createTransaction).then((mapData){
+        return History.fromMap(mapData);
+      }).catchError((error) {
+        throw ('error: unable to communicate with server');
+      });
+    }
   }
+
 
   Future<dynamic> updateEquipment(
       {String name,
@@ -219,7 +303,7 @@ class FirebaseFirestoreService {
             .document(itemID));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("Items").document());
+            equipmentCollection.document(site).collection("Items").document()); //Note that Equipment was changed to 'Items'
         itemID = ds.documentID;
       }
 
