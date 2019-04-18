@@ -23,6 +23,7 @@ Firebase structure:
 
 
 
+//Class for pushing and pulling app data from Firebase database
 
 class FirebaseFirestoreService {
   //Setup class stuff from tutorial

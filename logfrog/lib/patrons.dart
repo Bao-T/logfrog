@@ -1,15 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 
+//Class for Patrons of a objects site
+//So, class for students at a classroom site
+
 
 class Patrons {
-  String _id;
-  String _firstName;
-  String _lastName;
-  String _address;
-  String _phone;
-  String _notes;
-  List<dynamic> _checkOutHistory;
-  List<dynamic> _checkedOutEquipment;
+  String _id; //student id
+  String _firstName; //student first name
+  String _lastName; //student last name
+  String _address; //student address
+  String _phone; //student phone number
+  String _notes; //extra notes to be entered
+  List<dynamic> _checkOutHistory; //list of recent checkOutHistory objects associated with
+  List<dynamic> _checkedOutEquipment; //list of currently checked out equipment
 
   Patrons(this._id, this._firstName, this._lastName, this._address, this._phone, this._notes, this._checkOutHistory, this._checkedOutEquipment);
 

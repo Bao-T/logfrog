@@ -2,9 +2,11 @@ import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
+//import 'package:logfrog/firebase_service.dart'; //importing to generate history objects
 import 'detector_painters.dart';
 import 'utils.dart';
+
+
 
 void main() => runApp(MaterialApp(home: _MyHomePage()));
 
@@ -12,6 +14,7 @@ class _MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
+
 
 //creates a camera to scan barcodes with
 //dependencies: camera/camera.dart
@@ -176,6 +179,7 @@ class _MyHomePageState extends State<_MyHomePage> {
     _initializeCamera();
   }
 
+
   //choose which detector the program will use
   @override
   Widget build(BuildContext context) {
@@ -221,4 +225,6 @@ class _MyHomePageState extends State<_MyHomePage> {
       ),
     );
   }
+
+
 }

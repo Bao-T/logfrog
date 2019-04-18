@@ -1,23 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
-
 //adapted from: https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview
 //date accessed: 4/4/2019
 
-//Firestore db = Firestore.instance; //set up the database to recieve information
+//Class for each site where logfrog will be used to track photography equipment
+//Each Site will be connected to a User, and will have Patrons (students), Equipment, and History objects
 
-//CollectionReference objectCollectionRef = db.collection('Objects'); //Reference which collection we will be using
-
-//DocumentReference jsaDocumentRef = db.collection('Objects').document('History');
-
-class Object{
+class Objects{
   //declaring the variables that we will be working with in this particular instance
-  String _id;
-  String _className;
+  String _id; //ID of the equipment site/classroom
+  String _className; //name given to classroom for easier searching
 
-  Object(this._id, this._className); //initialize the variables
+  Objects(this._id, this._className); //initialize the variables
 
   //map the items to JSON so that it can be sent up to the Firestore
-  Object.map(dynamic obj){
+  Objects.map(dynamic obj){
     this._id = obj['id'];
     this._className = obj['ClassName'];
   }
@@ -38,30 +33,8 @@ class Object{
 
   }
   //translate dart to something JSON will understand
- Object.fromMap(Map<String, dynamic> map){
+ Objects.fromMap(Map<String, dynamic> map){
     this._id = map['id'];
     this._className = map['ClassName'];
  }
 }
-
-
-//class Sites {
-//  String classname;
-//
-//  Sites(this.classname);
-//
-//  Sites.map(dynamic obj) {
-//    this.classname = obj['Classname'];
-//  }
-//
-//  static Map<String, dynamic> toMap(Sites site) {
-//    var map = new Map<String, dynamic>();
-//    map['Classname'] = site.classname;
-//
-//    return map;
-//  }
-//
-//  Sites.fromMap(Map<String, dynamic> map) {
-//    this.classname = map['Classname'];
-//  }
-//}

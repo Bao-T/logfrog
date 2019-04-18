@@ -1,5 +1,7 @@
 //import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 
+//Class for Users of logfrog, Users are connected to a site and will be logging on to the app itself
+
 
 class Users {
   int _id;

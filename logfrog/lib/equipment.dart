@@ -1,15 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 import 'package:intl/intl.dart';
-//import 'dart:async';
+
 
 //Following this tutorial for building the class
 // https://grokonez.com/flutter/flutter-firestore-example-firebase-firestore-crud-operations-with-listview#Initialize_038_Reference
 
-Firestore db = Firestore.instance; //Initially getting firestore instance for use in database access
+//Class for equipment (cameras, tripods, etc) at a given Objects site
+
 
 class Equipment {
 
-  //private string variables except for Datemtime, which is a firebase class
+  //private string variables except for Datetime, which is a firebase class
   String _condition; //condition of equipment
   String _itemID; //id of object (used in generating QR code)
   String _itemType; //type of object (camera, lens, etc.)
