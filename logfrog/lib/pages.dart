@@ -12,6 +12,7 @@ import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
 
+FirebaseAuth _mAuth = FirebaseAuth.instance;
 String dataSite;
 FirebaseFirestoreService db;
 const alarmAudioPath = "beep.mp3";
@@ -34,9 +35,15 @@ class CheckoutPgState extends State<CheckoutPg> {
   Expanded userInfo;
   CustomScrollView database;
 
+
+
   @override
   void initState() {
     super.initState();
+    Future <FirebaseUser> currentUser = _mAuth.currentUser();
+    if (currentUser == null){
+       new LoginPage();
+    }
     _Bscanner = LiveBarcodeScanner(
       onBarcode: (code) {
         //print(code);
@@ -208,6 +215,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  //adapted from: https://flutterdoc.com/mobileauthenticating-users-with-firebase-and-flutter-240c5557ac7f
+  //date accessed: 4/18/2019
+  @override
+  Widget _handleCurrentScreen() {
+    return new StreamBuilder<FirebaseUser>(
+        stream: FirebaseAuth.instance.onAuthStateChanged,
+        builder: (BuildContext context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return new PageHome();
+          } else {
+            if (snapshot.hasData) {
+              return new PageHome();
+            }
+            return new LoginPage();
+          }
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -286,7 +311,7 @@ class SettingsPage extends StatelessWidget {
             ),
             ListTile(
               title: Text("Log Out"),
-              onTap: () {},
+              onTap: _mAuth.signOut,
             ),
           ],
         ));
@@ -421,7 +446,7 @@ class DatabasePgState extends State<DatabasePg> {
           title: Text(filteredMems[index].firstName +
               " " +
               filteredMems[index].lastName),
-          onTap:  () {
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(

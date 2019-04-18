@@ -10,7 +10,6 @@ final CollectionReference equipmentCollection =
 final CollectionReference usersCollection =
     Firestore.instance.collection('Users');
 
-
 /*
 Firebase structure:
 
@@ -20,7 +19,6 @@ Firebase structure:
 
 2) Users
  */
-
 
 
 //Class for pushing and pulling app data from Firebase database
