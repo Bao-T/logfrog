@@ -1,10 +1,8 @@
 //https://github.com/mskrip/live_barcode_scanner/blob/master/lib/live_barcode_scanner.dart
 import 'dart:core';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
-import 'package:flutter/material.dart';
 
 final BarcodeDetector barcodeDetector =
     FirebaseVision.instance.barcodeDetector();
@@ -77,17 +75,6 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
     for (int i = 0; i < scannedBarcode.length; i++) {
       if (widget.onBarcode(scannedBarcode[i].rawValue)) {
         setState(() => widget.codes.add(scannedBarcode[i].rawValue));
-        //debugPrint(codeString);
-        /*
-        controller.stopImageStream().catchError((e) {
-          switch (e.runtimeType) {
-            case CameraException:
-              return;
-            default:
-              throw (e);
-          }
-        });
-        */
       }
     }
   }
@@ -99,22 +86,9 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
         child: CircularProgressIndicator(),
       );
     }
-    /*
-    return AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: Transform.rotate(angle: -math.pi/2, child: CameraPreview(controller)));
-  */
     return AspectRatio(
                     aspectRatio: controller.value.aspectRatio,
                     child: Transform.scale(scale: 1, child: Transform.rotate(angle: 0, child: CameraPreview(controller))));
-
-
-    /*
-    return Column(
-        children: [AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: CameraPreview(controller),
-      ), Text(codeString)] */
   }
 }
 
@@ -196,7 +170,6 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
         break;
       }
     }
-    //print("imagestreamhandler");
   }
 
   @override
@@ -206,21 +179,8 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
         child: CircularProgressIndicator(),
       );
     }
-    /*
-    return AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: Transform.rotate(angle: -math.pi/2, child: CameraPreview(controller)));
-  */
     return AspectRatio(
         aspectRatio: controller.value.aspectRatio,
         child: Transform.scale(scale: 1, child: Transform.rotate(angle: 0, child: CameraPreview(controller))));
-
-
-    /*
-    return Column(
-        children: [AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: CameraPreview(controller),
-      ), Text(codeString)] */
   }
 }

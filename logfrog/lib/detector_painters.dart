@@ -8,7 +8,10 @@ import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+
 enum Detector { barcode, face, label, cloudLabel, text }
+
+//Extending CustomPainter for use in camera.dart for displays
 
 class BarcodeDetectorPainter extends CustomPainter {
   BarcodeDetectorPainter(this.imageSize, this.barcodes);
@@ -154,6 +157,7 @@ class TextDetectorPainter extends CustomPainter {
   }
 }
 
+//Two rectangles in check in/ check out section
 Rect _scaleRect({
   @required Rect rect,
   @required Size imageSize,

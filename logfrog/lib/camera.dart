@@ -19,10 +19,9 @@ class _MyHomePage extends StatefulWidget {
 //creates a camera to scan barcodes with
 //dependencies: camera/camera.dart
 class _MyHomePageState extends State<_MyHomePage> {
-  dynamic _scanResults; //
+  dynamic _scanResults; //barcode scan results
   CameraController _camera; //creates a camera view for the user to see on the device screen
-
-  Detector _currentDetector = Detector.text; //prints out the information that the camera scans from the barcode
+  Detector _currentDetector = Detector.text; //Type of detector (Face, Text, Barcorde, etc.) being used by the camera
   bool _isDetecting = false;
   CameraLensDirection _direction = CameraLensDirection.back; //tells the program that we want to use the back camera, and not the front.
 
@@ -47,19 +46,19 @@ class _MyHomePageState extends State<_MyHomePage> {
     );
     await _camera.initialize(); //initialize the camera
 
-    //returns the images that the camera is picking up to screen in a continious stream
+    //returns the images that the camera is picking up to screen in a continuous stream
     _camera.startImageStream((CameraImage image) {
       if (_isDetecting) return; //if the camera is active, show the camera feed on the screen
 
       _isDetecting = true;
 
       //try catch block to catch errors and exceptions in the camera interface
+      //Actual camera scanning occurs here
       detect(image, _getDetectionMethod(), rotation).then(
             (dynamic result) {
           setState(() {
             _scanResults = result;
           });
-
           _isDetecting = false;
         },
       ).catchError(
@@ -72,19 +71,20 @@ class _MyHomePageState extends State<_MyHomePage> {
 
   //setting up the barcode detection part of the program
   HandleDetection _getDetectionMethod() {
-    final FirebaseVision mlVision = FirebaseVision.instance; //use firebase's object detection interface
+    final FirebaseVision mlVision = FirebaseVision.instance;
 
+    //TODO: Remove cases we don't need for our app (we should only be doing barcodes???)
     switch (_currentDetector) {
-      case Detector.text: //use if the program will be detecting text
+      case Detector.text: //use if the program will be detecting text //TODO: NOT USING?
         return mlVision.textRecognizer().processImage;
       case Detector.barcode: //use if the program will be detecting barcodes
         return mlVision.barcodeDetector().detectInImage;
-      case Detector.label: //use if the program will be detecting objects
+      case Detector.label: //use if the program will be detecting objects //TODO: NOT USING?
         return mlVision.labelDetector().detectInImage;
-      case Detector.cloudLabel: //use if the program will be detecting clouds(?)
+      case Detector.cloudLabel: //use if the program will be detecting clouds(?) //TODO: NOT USING?
         return mlVision.cloudLabelDetector().detectInImage;
       default:
-        assert(_currentDetector == Detector.face); //use if the program will be detecting human faces
+        assert(_currentDetector == Detector.face); //use if the program will be detecting human faces //TODO: NOT USING?
         return mlVision.faceDetector().processImage;
     }
   }
@@ -114,15 +114,15 @@ class _MyHomePageState extends State<_MyHomePage> {
         if (_scanResults is! List<Barcode>) return noResultsText;
         painter = BarcodeDetectorPainter(imageSize, _scanResults);
         break;
-      case Detector.face:
+      case Detector.face: //TODO : NOT USING???
         if (_scanResults is! List<Face>) return noResultsText;
         painter = FaceDetectorPainter(imageSize, _scanResults);
         break;
-      case Detector.label:
+      case Detector.label: //TODO: NOT USING???
         if (_scanResults is! List<Label>) return noResultsText;
         painter = LabelDetectorPainter(imageSize, _scanResults);
         break;
-      case Detector.cloudLabel:
+      case Detector.cloudLabel: //TODO: NOT USING??
         if (_scanResults is! List<Label>) return noResultsText;
         painter = LabelDetectorPainter(imageSize, _scanResults);
         break;
@@ -131,7 +131,7 @@ class _MyHomePageState extends State<_MyHomePage> {
         if (_scanResults is! VisionText) return noResultsText;
         painter = TextDetectorPainter(imageSize, _scanResults);
     }
-
+  //TODO: REMOVE SWITCH STATEMENT????
     return CustomPaint(
       painter: painter,
     );
