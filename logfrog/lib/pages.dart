@@ -40,10 +40,6 @@ class CheckoutPgState extends State<CheckoutPg> {
   @override
   void initState() {
     super.initState();
-    Future <FirebaseUser> currentUser = _mAuth.currentUser();
-    if (currentUser == null){
-       new LoginPage();
-    }
     _Bscanner = LiveBarcodeScanner(
       onBarcode: (code) {
         //print(code);
@@ -169,11 +165,17 @@ class LoginPage extends StatefulWidget {
 
   @override
   _LoginPageState createState() => new _LoginPageState();
+
 }
 
 class _LoginPageState extends State<LoginPage> {
   static final formKey = new GlobalKey<FormState>();
-
+  Future <FirebaseUser> currentUser = _mAuth.currentUser();
+  void initState() {
+    super.initState();
+     //adapted from: https://stackoverflow.com/questions/45353730/firebase-login-with-flutter-using-onauthstatechanged
+    //date accessed: 4/18/2019
+      }
   String _email;
   String _password;
   String _authHint = '';
@@ -197,7 +199,7 @@ class _LoginPageState extends State<LoginPage> {
   void validateAndSubmit() async {
     if (validateAndSave()) {
       try {
-        FirebaseUser user = await FirebaseAuth.instance
+        FirebaseUser user = await _mAuth
             .signInWithEmailAndPassword(email: _email, password: _password);
         setState(() {
           loginComplete();
@@ -218,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
   //adapted from: https://flutterdoc.com/mobileauthenticating-users-with-firebase-and-flutter-240c5557ac7f
   //date accessed: 4/18/2019
   @override
-  Widget _handleCurrentScreen() {
+  Widget _handleCurrentScreen(BuildContext context) {
     return new StreamBuilder<FirebaseUser>(
         stream: FirebaseAuth.instance.onAuthStateChanged,
         builder: (BuildContext context, snapshot) {
@@ -288,7 +290,7 @@ class _LoginPageState extends State<LoginPage> {
 class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    // TODO: implement build; I think it already has been -Julia
     return Scaffold(
         appBar: AppBar(title: Text('Settings')),
         body: ListView(

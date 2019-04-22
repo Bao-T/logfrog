@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'pages.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; //adding firebase stuff
 import 'firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() => runApp(MyApp());
 
@@ -11,6 +12,22 @@ Firestore db = Firestore
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+  //adapted from: https://flutterdoc.com/mobileauthenticating-users-with-firebase-and-flutter-240c5557ac7f
+  //date accessed: 4/18/2019
+  Widget _handleCurrentPage() {
+    return new StreamBuilder<FirebaseUser>(
+        stream: FirebaseAuth.instance.onAuthStateChanged,
+        builder: (BuildContext context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return new PageHome();
+          } else {
+            if (snapshot.hasData) {
+              return new PageHome();
+            }
+            return new LoginPage();
+          }
+        });
+  }
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -31,7 +48,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.green,
       ),
-      home: MyHomePage(title: 'LogFrog'),
+      home: MyHomePage(title: "LogFrog"),
     );
   }
 }
@@ -60,9 +77,25 @@ class _MyHomePageState extends State<MyHomePage> {
   PageHome pgHome;
   LoginPage loginPg;
   SettingsPage settingpg;
-
   List<Widget> pageList;
   Widget currentPage;
+
+  //adapted from: https://flutterdoc.com/mobileauthenticating-users-with-firebase-and-flutter-240c5557ac7f
+  //date accessed: 4/18/2019
+  Widget _handleCurrentScreen() {
+    return new StreamBuilder<FirebaseUser>(
+        stream: FirebaseAuth.instance.onAuthStateChanged,
+        builder: (BuildContext context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return new PageHome();
+          } else {
+            if (snapshot.hasData) {
+              return new PageHome();
+            }
+            return new LoginPage();
+          }
+        });
+  }
 
   @override
   void initState() {
@@ -88,9 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
 
-    if (loginPg.loginComplete == false) {
-      return loginPg;
-    } else {
+    _handleCurrentScreen();
       return Scaffold(
         body: currentPage,
         bottomNavigationBar: BottomNavigationBar(
@@ -128,5 +159,5 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
   }
-}
+
 // Pages and their states
