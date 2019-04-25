@@ -377,11 +377,11 @@ class FirebaseFirestoreService {
       if (historyID != "") {
         ds = await tx.get(equipmentCollection
             .document(site)
-            .collection("History")
+            .collection("History") //TODO:update this to reflect current structure
             .document(historyID));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("History").document()); //Note that Equipment was changed to 'Items'
+            equipmentCollection.document(site).collection("History").document());//TODO:update this to reflect current structure
         historyID = ds.documentID;
       }
 
@@ -397,17 +397,17 @@ class FirebaseFirestoreService {
       return dataMap;
     };
     if (historyID != "") {
-      return equipmentCollection
+      return equipmentCollection //TODO:update this to reflect current structure
           .document(site)
-          .collection("Items")
-          .document(historyID)
+          .collection("Items") //TODO:update this to reflect current structure
+          .document(historyID) //TODO:update this to reflect current structure
           .get()
           .then((doc) {
         if (doc.exists) {
           return Firestore.instance
               .runTransaction(createTransaction)
               .then((mapData) {
-            return Equipment.fromMap(mapData);
+            return Equipment.fromMap(mapData); //TODO:update this to reflect current structure
           }).catchError((error) {
             throw ('error: unable to communicate with server');
           });
@@ -437,11 +437,11 @@ class FirebaseFirestoreService {
       if (id != "") {
         ds = await tx.get(equipmentCollection
             .document(site)
-            .collection("Patrons")
+            .collection("Users") //TODO:update this to reflect current structure
             .document(id));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("Patrons").document()); //Note that Equipment was changed to 'Items'
+            equipmentCollection.document(site).collection("Users").document()); //TODO:update this to reflect current structure
         id = ds.documentID;
       }
 
@@ -457,7 +457,7 @@ class FirebaseFirestoreService {
       return dataMap;
     };
     if (id != "") {
-      return equipmentCollection
+      return equipmentCollection //TODO:update this to reflect current structure
           .document(site)
           .collection("Patrons")
           .document(id)
