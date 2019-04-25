@@ -3,7 +3,7 @@ import 'liveCamera.dart';
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-import 'firebase_service.dart';
+import 'firebase_service.dart'; //Database access methods
 import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,7 +24,6 @@ class CheckoutPg extends StatefulWidget {
 
 class CheckoutPgState extends State<CheckoutPg> {
   static AudioCache player = new AudioCache();
-
   LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
   Set<String> dataSet = {};
@@ -34,12 +33,34 @@ class CheckoutPgState extends State<CheckoutPg> {
   Expanded userInfo;
   CustomScrollView database;
 
+  String patronBarcode;
+  String equipmentBarcode;
+
   @override
   void initState() {
     super.initState();
     _Bscanner = LiveBarcodeScanner(
       onBarcode: (code) {
-        //print(code);
+        //checking if there is a stored student barcode
+        if (code != null && db.patronExists(code)) { //if true, then valid student barcode and set the new patron to the barcode owner
+          patronBarcode = code;
+        } else if (code != null && db.equipmentExists(code)) { //if not a user, see if it is a equipment
+          if (patronBarcode != null) {
+            equipmentBarcode = code;
+          } else {
+            //TODO: create a splash screen displaying "must scan student ID first before equipment can be scanned"
+          }
+        } else {
+          //TODO: add a screen displaying not a valid student or not a valid equipment barcode (ask user to contact teacher)
+        }
+
+        if (patronBarcode != null && equipmentBarcode != null) {
+          //make a history object?  Then add to transaction?  OR: store equipment barcodes for later in another variable then create and push all transactions at the end
+        }
+        //
+        //TODO:  make a way for students to remove student ID from the patronBarcode
+
+
         setState(() {
           if (dataSet.contains(code) == false) {
             dataSet.add(code);
@@ -47,6 +68,7 @@ class CheckoutPgState extends State<CheckoutPg> {
             player.play(alarmAudioPath);
             //Create widgets for scanned items
             //debugPrint(dataWidget.toString());
+
           }
         });
         return true;

@@ -58,7 +58,7 @@ class _MyHomePageState extends State<_MyHomePage> {
       //Actual camera scanning occurs here
       detect(image, _getDetectionMethod(), rotation).then((dynamic result) {
         setState(() {
-          _scanResults = result;
+          _scanResults = result; //is this where it is scanning???
         });
         _isDetecting = false;
       },).catchError((_) {
@@ -77,8 +77,7 @@ class _MyHomePageState extends State<_MyHomePage> {
 
   //displays the results of the camera image detection
   Widget _buildResults() {
-    const Text noResultsText = const Text(
-        'No results!'); //if nothing is being detected, print "No results!" to screen
+    const Text noResultsText = const Text('No results!'); //if nothing is being detected, print "No results!" to screen
     //if no barcodes are being detected, if the camera has not been initialized, or if the camera does not exist in the program, return "No results!"
     if (_scanResults == null || _camera == null ||
         !_camera.value.isInitialized) {

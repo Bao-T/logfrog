@@ -3,11 +3,14 @@ import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+import 'package:logfrog/firebase_service.dart';
 
-final BarcodeDetector barcodeDetector =
-    FirebaseVision.instance.barcodeDetector();
+
+final BarcodeDetector barcodeDetector = FirebaseVision.instance.barcodeDetector();
 
 typedef bool BarcodeFoundCallback(String code);
+
+
 
 class LiveBarcodeScanner extends StatefulWidget {
   LiveBarcodeScanner({
@@ -69,6 +72,7 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
           }).toList(),
         ));
 
+    //SCANNING BARCODE HERE
     final List<Barcode> scannedBarcode =
         await barcodeDetector.detectInImage(visionImage);
 
@@ -77,6 +81,7 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
         setState(() => widget.codes.add(scannedBarcode[i].rawValue));
       }
     }
+    //or do checks here???
   }
 
   @override
@@ -102,6 +107,7 @@ class BarcodeScanner extends StatefulWidget {
   /// This will be called with newly found barcode
   /// and should return [true] if the scanning can stop
   final BarcodeFoundCallback onBarcode;
+
 
   @override
   _BarcodeScannerState createState() => _BarcodeScannerState();
@@ -153,11 +159,10 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
           }).toList(),
         ));
 
-    final List<Barcode> scannedBarcode =
-    await barcodeDetector.detectInImage(visionImage);
+    final List<Barcode> scannedBarcode = await barcodeDetector.detectInImage(visionImage);
 
     for (int i = 0; i < scannedBarcode.length; i++) {
-      if (widget.onBarcode(scannedBarcode[i].rawValue)) {
+      if (widget.onBarcode(scannedBarcode[i].rawValue)) { //using onBarcode
         controller.stopImageStream().catchError((e) {
           switch (e.runtimeType) {
             case CameraException:

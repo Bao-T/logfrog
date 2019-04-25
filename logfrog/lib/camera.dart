@@ -2,7 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-//import 'package:logfrog/firebase_service.dart'; //importing to generate history objects
+import 'package:logfrog/firebase_service.dart'; //importing to generate history objects
 import 'detector_painters.dart';
 import 'utils.dart';
 
@@ -80,9 +80,9 @@ class _MyHomePageState extends State<_MyHomePage> {
       case Detector.barcode: //use if the program will be detecting barcodes
         return mlVision.barcodeDetector().detectInImage;
       case Detector.label: //use if the program will be detecting objects //TODO: NOT USING?
-        return mlVision.labelDetector().detectInImage;
+        return mlVision.imageLabeler().processImage;
       case Detector.cloudLabel: //use if the program will be detecting clouds(?) //TODO: NOT USING?
-        return mlVision.cloudLabelDetector().detectInImage;
+        return mlVision.cloudImageLabeler().processImage;
       default:
         assert(_currentDetector == Detector.face); //use if the program will be detecting human faces //TODO: NOT USING?
         return mlVision.faceDetector().processImage;
@@ -119,11 +119,11 @@ class _MyHomePageState extends State<_MyHomePage> {
         painter = FaceDetectorPainter(imageSize, _scanResults);
         break;
       case Detector.label: //TODO: NOT USING???
-        if (_scanResults is! List<Label>) return noResultsText;
+        if (_scanResults is! List<ImageLabel>) return noResultsText;
         painter = LabelDetectorPainter(imageSize, _scanResults);
         break;
       case Detector.cloudLabel: //TODO: NOT USING??
-        if (_scanResults is! List<Label>) return noResultsText;
+        if (_scanResults is! List<ImageLabel>) return noResultsText;
         painter = LabelDetectorPainter(imageSize, _scanResults);
         break;
       default:
