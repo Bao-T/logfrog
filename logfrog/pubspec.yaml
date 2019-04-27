@@ -32,7 +32,7 @@ dependencies:
   camera:
   json_annotation:
   dio:
-  audioplayers:
+  #audioplayers:
 
 dev_dependencies:
   flutter_test:

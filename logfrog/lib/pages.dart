@@ -8,7 +8,7 @@ import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart';
-import 'package:audioplayers/audio_cache.dart';
+//import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
 
@@ -23,7 +23,7 @@ class CheckoutPg extends StatefulWidget {
 }
 
 class CheckoutPgState extends State<CheckoutPg> {
-  static AudioCache player = new AudioCache();
+  //static AudioCache player = new AudioCache();
 
   LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
@@ -44,7 +44,7 @@ class CheckoutPgState extends State<CheckoutPg> {
           if (dataSet.contains(code) == false) {
             dataSet.add(code);
             dataList.add(code);
-            player.play(alarmAudioPath);
+            //player.play(alarmAudioPath);
             //Create widgets for scanned items
             //debugPrint(dataWidget.toString());
           }
