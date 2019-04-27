@@ -73,7 +73,7 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
 
     for (int i = 0; i < scannedBarcode.length; i++) {
       if (widget.onBarcode(scannedBarcode[i].rawValue)) {
-        setState(() => widget.codes.add(scannedBarcode[i].rawValue));
+        setState(() => widget.codes.add(scannedBarcode[i].rawValue)); //this is where the barcodes are generated
       }
     }
   }
