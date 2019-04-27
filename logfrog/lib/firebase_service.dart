@@ -51,6 +51,9 @@ class FirebaseFirestoreService {
     return snapshots;
   }
 
+
+
+
   //create an equipment asynchronously
   //input of Equipment type map
   Future<Equipment> createEquipment(
@@ -187,35 +190,23 @@ class FirebaseFirestoreService {
   //User == Teacher or those who login to app
   Future<Users> createUser(
       { String id,
-        String firstName,
-        String lastName,
         String emailAddress,
-        String username,
-        String password,}) async {
+        List<String> databases,}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-      if (id != "") {
-        ds = await tx.get(usersCollection.document(id));
-      } else {
-        ds = await tx.get(usersCollection.document(id));
-        id = ds.documentID;
-      }
+      ds = await tx.get(usersCollection.document(id));
+
 
       var dataMap = new Map<String, dynamic>();
-      dataMap['id'] = id;
-      dataMap['firstName'] = firstName;
-      dataMap['lastName'] = lastName;
       dataMap['emailAddress'] = emailAddress;
-      dataMap['username'] = username;
-      dataMap['password'] = password;
+      dataMap['databases'] = databases;
       await tx.set(ds.reference, dataMap);
       return dataMap;
 
     };
-    if (id != "") {
     return usersCollection.document(id).get().then((doc) {
       if (doc.exists){
-        throw ("error: Item ID already exists");
+        //throw ("error: Item ID already exists");
       } else {
         return Firestore.instance.runTransaction(createTransaction).then((mapData) {
           return Users.fromMap(mapData);
@@ -226,34 +217,22 @@ class FirebaseFirestoreService {
     }).catchError((e){
       throw (e);
     });
-    } else {
-      return Firestore.instance.runTransaction(createTransaction).then((mapData){
-        return Users.fromMap(mapData);
-      }).catchError((error) {
-        throw ('error: unable to communicate with server');
-      });
-    }
   }
 
   //Creates a History object given a patron id and a equipment id
   Future<History> createHistory (
-      {String historyID,
+      {
         String itemID,
         String itemName,
         String memID,
         String memName,
-        Timestamp timeCheckedIn,
-        Timestamp timeCheckedOut }) async {
+        DateTime timeCheckedIn,
+        DateTime timeCheckedOut }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-      if (historyID != ""){
-        ds = await tx.get(equipmentCollection.document(site).collection("History").document(historyID));
-      } else {
         ds = await tx.get(equipmentCollection.document(site).collection("History").document());
-        historyID = ds.documentID;
-      }
+
       var dataMap = new Map<String, dynamic>();
-      dataMap['historyID'] = historyID;
       dataMap['itemID'] = itemID;
       dataMap['itemName'] = itemName;
       dataMap['memID'] = memID;
@@ -263,27 +242,11 @@ class FirebaseFirestoreService {
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    if (historyID != "") {
-      return equipmentCollection.document(site).collection("History").document(historyID).get().then((doc) {
-        if (doc.exists){
-          throw ("error: Item ID already exists");
-        } else {
-          return Firestore.instance.runTransaction(createTransaction).then((mapData) {
-            return History.fromMap(mapData);
-          }).catchError((error) {
-            throw ('error: unable to communicate with server');
-          });
-        }
-      }).catchError((e){
-        throw (e);
-      });
-    } else {
       return Firestore.instance.runTransaction(createTransaction).then((mapData){
         return History.fromMap(mapData);
       }).catchError((error) {
         throw ('error: unable to communicate with server');
       });
-    }
   }
 
 
@@ -345,22 +308,22 @@ class FirebaseFirestoreService {
     }
   }
 
-  Future<dynamic> updateUsers(Users usr) async {
-    final TransactionHandler updateTransaction = (Transaction tx) async {
-      String idGet = usr.id.toString();
-      final DocumentSnapshot ds = await tx.get(usersCollection.document(idGet));
-      await tx.update(ds.reference, Users.toMap(usr));
-      return {'updated': true};
-    };
-
-    return Firestore.instance
-        .runTransaction(updateTransaction)
-        .then((result) => result['updated'])
-        .catchError((error) {
-      print('error: $error');
-      return false;
-    });
-  }
+//  Future<dynamic> updateUsers(Users usr) async {
+//    final TransactionHandler updateTransaction = (Transaction tx) async {
+//      String idGet = usr.id.toString();
+//      final DocumentSnapshot ds = await tx.get(usersCollection.document(idGet));
+//      await tx.update(ds.reference, Users.toMap(usr));
+//      return {'updated': true};
+//    };
+//
+//    return Firestore.instance
+//        .runTransaction(updateTransaction)
+//        .then((result) => result['updated'])
+//        .catchError((error) {
+//      print('error: $error');
+//      return false;
+//    });
+//  }
 
   Future<dynamic> deleteEquipment(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
