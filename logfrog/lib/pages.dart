@@ -85,7 +85,10 @@ class CheckoutPgState extends State<CheckoutPg> {
         return true;
       },
     );
-    userInfo = Expanded(
+    fs = FirebaseFirestoreService(widget.site);
+
+    camera = new GestureDetector(
+      onTap: changeCamera,
       child: Card(
         margin: EdgeInsets.all(5.0),
         child: LiveBarcodeScanner(
