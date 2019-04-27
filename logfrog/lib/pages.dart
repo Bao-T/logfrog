@@ -11,13 +11,15 @@ import 'widgets.dart';
 //import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
+import 'package:logfrog/services/authentication.dart';
 
 String dataSite;
 FirebaseFirestoreService db;
 const alarmAudioPath = "beep.mp3";
 
 class CheckoutPg extends StatefulWidget {
-  CheckoutPg({Key key}) : super(key: key);
+  CheckoutPg({Key key, this.site}) : super(key: key);
+  final site;
   @override
   CheckoutPgState createState() => CheckoutPgState();
 }
@@ -25,15 +27,46 @@ class CheckoutPg extends StatefulWidget {
 class CheckoutPgState extends State<CheckoutPg> {
   //static AudioCache player = new AudioCache();
 
-  LiveBarcodeScanner _Bscanner;
   var ori = Orientation.portrait;
   Set<String> dataSet = {};
   List<String> dataList = [];
+  List<String> dataNameList = [];
   List<Widget> dataWidget = [];
-  Card camera;
+  GestureDetector camera;
   Expanded userInfo;
+  String currentMemberID;
+  String currentMemberName;
   CustomScrollView database;
-
+  int cameraIndex = 0;
+  FirebaseFirestoreService fs;
+  Stream<QuerySnapshot> itemStream;
+  Stream<QuerySnapshot> memberStream;
+  changeCamera() {
+    setState(() {
+      cameraIndex = (cameraIndex + 1) % 2;
+      print('tap' + cameraIndex.toString());
+    });
+  }
+  Future validate(String code) async{
+    dynamic member = await Firestore.instance.collection('Objects').document(widget.site).collection('Members').document(code).get();
+      if(member.exists){
+        currentMemberName = member.data['firstName'] + ' ' + member.data['lastName'];
+        currentMemberID = code;
+      }
+      else{
+        dynamic items = await Firestore.instance.collection('Objects').document(widget.site).collection('Items').where('ItemID', isEqualTo: code).getDocuments();
+          if(items.documents.isNotEmpty) {
+            setState(() {
+              dataList.add(code);
+              dataNameList.add(items.documents[0]['Name']);
+              player.play(alarmAudioPath);
+            });
+          }
+          else{
+            print('No documents with that id found! v_v');
+          }
+        }
+  }
   @override
   void initState() {
     super.initState();
@@ -52,16 +85,42 @@ class CheckoutPgState extends State<CheckoutPg> {
         return true;
       },
     );
-    camera = Card(
-      margin: EdgeInsets.all(5.0),
-      child: _Bscanner,
-    );
     userInfo = Expanded(
       child: Card(
-          margin: EdgeInsets.all(5.0),
-          color: Colors.red,
-          child: Text("User Info")),
+        margin: EdgeInsets.all(5.0),
+        child: LiveBarcodeScanner(
+          onBarcode: (code) {
+            //print(code);
+              if (dataSet.contains(code) == false) {
+                dataSet.add(code);
+                validate(code);
+
+                //Create widgets for scanned items
+                //debugPrint(dataWidget.toString());
+              }
+            return true;
+          },
+          cameraIndex: cameraIndex,
+        ),
+      ),
     );
+    userInfo = Expanded(
+        child: Card(
+      margin: EdgeInsets.all(5.0),
+      child: Center(child: Text("User Info")),
+    ));
+  }
+
+   Future<dynamic> finalTransaction(String memID, String memName, List<String> itemIds) async {
+    for (int i = 0; i < dataList.length; i++) {
+      String itemID = dataList[i];
+      var item = await Firestore.instance.collection('Objects').document(widget.site).collection('Items').document(itemID).get();
+      String itemName = item.data["Name"].toString();
+      DateTime timeCheckedIn ;
+      DateTime timeCheckedOut = DateTime.now();
+      fs.createHistory(itemID: itemID, itemName: itemName, memID: memID, memName: memName, timeCheckedIn: null, timeCheckedOut: timeCheckedOut);
+    }
+    return null;
   }
 
   @override
@@ -74,7 +133,7 @@ class CheckoutPgState extends State<CheckoutPg> {
             child: Scaffold(
                 body: Column(children: [
               Expanded(
-                  flex: 4,
+                  flex: 8,
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +141,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                     ),
                   )),
               Expanded(
-                  flex: 6,
+                  flex: 10,
                   child: Card(
                       child: ListView.builder(
                     itemCount: dataList.length,
@@ -94,6 +153,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                                 index.toString() + " " + dataList[index]);
                             dataSet.remove(dataList[index]);
                             dataList.removeAt(index);
+                            dataNameList.removeAt(index);
                           },
                           child: Column(children: <Widget>[
                             InkWell(
@@ -103,18 +163,29 @@ class CheckoutPgState extends State<CheckoutPg> {
                                 child: Padding(
                                     padding: const EdgeInsets.all(0.0),
                                     child: ListTile(
-                                        title: Text(dataList[index])))),
+                                        title: Text(dataNameList[index])))),
                             Divider()
                           ]));
                     },
-                  )))
+                  ))),
+              Expanded(
+                  flex: 1,
+                  child: SizedBox.expand(child: RaisedButton(
+                    color: Colors.green,
+                    child: Text("Finish Transaction"),
+                    onPressed: (){finalTransaction(currentMemberID, currentMemberName, dataList);},
+                  ),)
+
+                  )
             ]))));
   }
 }
 // End of page template and page functionality
 
 class PageHome extends StatefulWidget {
-  PageHome({Key key}) : super(key: key);
+  PageHome({Key key, this.referenceSite}) : super(key: key);
+
+  final referenceSite;
   @override
   PageHomeState createState() => PageHomeState();
 }
@@ -125,6 +196,7 @@ class PageHomeState extends State<PageHome> {
     return Scaffold(
       appBar: AppBar(title: Text('LogFrog')),
       body: ListView(children: <Widget>[
+        Card(child: Text(widget.referenceSite)),
         Card(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -260,7 +332,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
+  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
+      : super(key: key);
+
+  final BaseAuth auth;
+  final VoidCallback onSignedOut;
+  final String userId;
+
+  @override
+  State<StatefulWidget> createState() => new _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  _signOut() async {
+    try {
+      await widget.auth.signOut();
+      widget.onSignedOut();
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
@@ -269,24 +362,14 @@ class SettingsPage extends StatelessWidget {
         body: ListView(
           children: <Widget>[
             ListTile(
-              title: Text("Change Username"),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text("Change Password"),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text("Change Email"),
-              onTap: () {},
-            ),
-            ListTile(
               title: Text("Manage Databases"),
               onTap: () {},
             ),
             ListTile(
               title: Text("Log Out"),
-              onTap: () {},
+              onTap: () {
+                _signOut();
+              },
             ),
           ],
         ));
@@ -421,7 +504,7 @@ class DatabasePgState extends State<DatabasePg> {
           title: Text(filteredMems[index].firstName +
               " " +
               filteredMems[index].lastName),
-          onTap:  () {
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -601,6 +684,9 @@ class AddItemState extends State<AddItem> {
                                 });
                                 _showToast(context,
                                     'Error: You must enter item name.');
+                              } else if (itemId.value.isEmpty) {
+                                _showToast(
+                                    context, 'Error: You must scan item code.');
                               } else {
                                 try {
                                   await db.createEquipment(
@@ -824,7 +910,7 @@ class ViewItemState extends State<ViewItem> {
                 setState(() {
                   itemId = FieldWidget(
                       title: 'Item ID',
-                      hint: 'An ID will generate by default',
+                      hint: 'Scan your Image Code',
                       enabled: false);
                   itemType = FieldWidget(
                       title: 'Item Type',
@@ -925,6 +1011,9 @@ class ViewItemState extends State<ViewItem> {
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
+                                    } else if ((itemId.value.isEmpty)) {
+                                      _showToast(context,
+                                          'Error: You must scan an item code.');
                                     } else {
                                       try {
                                         await db.updateEquipment(
