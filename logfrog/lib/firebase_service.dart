@@ -50,7 +50,11 @@ class FirebaseFirestoreService {
         equipmentCollection.document(site).collection("Members").snapshots();
     return snapshots;
   }
-
+  Stream<QuerySnapshot> getMemberHistory(String memID){
+    Stream<QuerySnapshot> snapshots =
+    equipmentCollection.document(site).collection("History").where("memID", isEqualTo: memID).snapshots();
+    return snapshots;
+  }
 
 
 
@@ -332,8 +336,8 @@ class FirebaseFirestoreService {
       String memID, //member checking in/out
       String memName, //name of member checking in/out
       //String _username; //_username of member checking in/out
-      Timestamp timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-      Timestamp timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
+      DateTime timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+      DateTime timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
   ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
@@ -362,7 +366,7 @@ class FirebaseFirestoreService {
     if (historyID != "") {
       return equipmentCollection //TODO:update this to reflect current structure
           .document(site)
-          .collection("Items") //TODO:update this to reflect current structure
+          .collection("History") //TODO:update this to reflect current structure
           .document(historyID) //TODO:update this to reflect current structure
           .get()
           .then((doc) {
@@ -483,10 +487,9 @@ class FirebaseFirestoreService {
 
   Future<dynamic> deleteHistory(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-      await tx.get(.document(id.toString()));
+      //final DocumentSnapshot ds = await tx.get(.document(id.toString()));
 
-      await tx.delete(ds.reference);
+      //await tx.delete(ds.reference);
       return {'deleted': true};
     };
 
@@ -497,4 +500,4 @@ class FirebaseFirestoreService {
       print('error: $error');
       return false;
     });
-}
+}}

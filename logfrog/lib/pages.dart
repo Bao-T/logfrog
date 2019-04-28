@@ -12,6 +12,7 @@ import 'widgets.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
+import 'history.dart';
 
 String dataSite;
 FirebaseFirestoreService db;
@@ -47,44 +48,41 @@ class CheckoutPgState extends State<CheckoutPg> {
       print('tap' + cameraIndex.toString());
     });
   }
-  Future validate(String code) async{
-    dynamic member = await Firestore.instance.collection('Objects').document(widget.site).collection('Members').document(code).get();
-      if(member.exists){
-        currentMemberName = member.data['firstName'] + ' ' + member.data['lastName'];
-        currentMemberID = code;
+
+  Future validate(String code) async {
+    dynamic member = await Firestore.instance
+        .collection('Objects')
+        .document(widget.site)
+        .collection('Members')
+        .document(code)
+        .get();
+    if (member.exists) {
+      currentMemberName =
+          member.data['firstName'] + ' ' + member.data['lastName'];
+      currentMemberID = code;
+    } else {
+      dynamic items = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .where('ItemID', isEqualTo: code)
+          .getDocuments();
+      if (items.documents.isNotEmpty) {
+        setState(() {
+          dataList.add(code);
+          dataNameList.add(items.documents[0]['Name']);
+          //player.play(alarmAudioPath);
+        });
+      } else {
+        print('No documents with that id found! v_v');
       }
-      else{
-        dynamic items = await Firestore.instance.collection('Objects').document(widget.site).collection('Items').where('ItemID', isEqualTo: code).getDocuments();
-          if(items.documents.isNotEmpty) {
-            setState(() {
-              dataList.add(code);
-              dataNameList.add(items.documents[0]['Name']);
-              player.play(alarmAudioPath);
-            });
-          }
-          else{
-            print('No documents with that id found! v_v');
-          }
-        }
+    }
   }
+
   @override
   void initState() {
     super.initState();
-    _Bscanner = LiveBarcodeScanner(
-      onBarcode: (code) {
-        //print(code);
-        setState(() {
-          if (dataSet.contains(code) == false) {
-            dataSet.add(code);
-            dataList.add(code);
-            //player.play(alarmAudioPath);
-            //Create widgets for scanned items
-            //debugPrint(dataWidget.toString());
-          }
-        });
-        return true;
-      },
-    );
+
     fs = FirebaseFirestoreService(widget.site);
 
     camera = new GestureDetector(
@@ -94,13 +92,13 @@ class CheckoutPgState extends State<CheckoutPg> {
         child: LiveBarcodeScanner(
           onBarcode: (code) {
             //print(code);
-              if (dataSet.contains(code) == false) {
-                dataSet.add(code);
-                validate(code);
+            if (dataSet.contains(code) == false) {
+              dataSet.add(code);
+              validate(code);
 
-                //Create widgets for scanned items
-                //debugPrint(dataWidget.toString());
-              }
+              //Create widgets for scanned items
+              //debugPrint(dataWidget.toString());
+            }
             return true;
           },
           cameraIndex: cameraIndex,
@@ -114,14 +112,26 @@ class CheckoutPgState extends State<CheckoutPg> {
     ));
   }
 
-   Future<dynamic> finalTransaction(String memID, String memName, List<String> itemIds) async {
+  Future<dynamic> finalTransaction(
+      String memID, String memName, List<String> itemIds) async {
     for (int i = 0; i < dataList.length; i++) {
       String itemID = dataList[i];
-      var item = await Firestore.instance.collection('Objects').document(widget.site).collection('Items').document(itemID).get();
+      var item = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .document(itemID)
+          .get();
       String itemName = item.data["Name"].toString();
-      DateTime timeCheckedIn ;
+      DateTime timeCheckedIn;
       DateTime timeCheckedOut = DateTime.now();
-      fs.createHistory(itemID: itemID, itemName: itemName, memID: memID, memName: memName, timeCheckedIn: null, timeCheckedOut: timeCheckedOut);
+      fs.createHistory(
+          itemID: itemID,
+          itemName: itemName,
+          memID: memID,
+          memName: memName,
+          timeCheckedIn: null,
+          timeCheckedOut: timeCheckedOut);
     }
     return null;
   }
@@ -173,13 +183,157 @@ class CheckoutPgState extends State<CheckoutPg> {
                   ))),
               Expanded(
                   flex: 1,
-                  child: SizedBox.expand(child: RaisedButton(
-                    color: Colors.green,
-                    child: Text("Finish Transaction"),
-                    onPressed: (){finalTransaction(currentMemberID, currentMemberName, dataList);},
-                  ),)
+                  child: SizedBox.expand(
+                    child: RaisedButton(
+                      color: Colors.green,
+                      child: Text("Finish Transaction"),
+                      onPressed: () {
+                        finalTransaction(
+                            currentMemberID, currentMemberName, dataList);
+                      },
+                    ),
+                  ))
+            ]))));
+  }
+}
+// End of page template and page functionality
 
-                  )
+class CheckinPg extends StatefulWidget {
+  CheckinPg({Key key, this.site}) : super(key: key);
+  final site;
+  @override
+  CheckinPgState createState() => CheckinPgState();
+}
+
+class CheckinPgState extends State<CheckinPg> {
+  //static AudioCache player = new AudioCache();
+
+  var ori = Orientation.portrait;
+  Set<String> dataSet = {};
+  List<String> dataList = [];
+  List<String> dataNameList = [];
+  List<Widget> dataWidget = [];
+  GestureDetector camera;
+  Expanded userInfo;
+  String currentMemberID;
+  String currentMemberName;
+  CustomScrollView database;
+  int cameraIndex = 0;
+  FirebaseFirestoreService fs;
+  Stream<QuerySnapshot> itemStream;
+  Stream<QuerySnapshot> memberStream;
+  changeCamera() {
+    setState(() {
+      cameraIndex = (cameraIndex + 1) % 2;
+      print('tap' + cameraIndex.toString());
+    });
+  }
+
+  Future validate(String code) async {
+    var historyObj = await Firestore.instance
+        .collection('Objects')
+        .document(widget.site)
+        .collection('History')
+        .where("itemID", isEqualTo: code)
+        .orderBy("timeCheckedOut")
+        .limit(1)
+        .getDocuments();
+
+    if (historyObj.documents.isNotEmpty &&
+        historyObj.documents[0].data["timeCheckedIn"] == null) {
+      fs.updateHistory(
+          historyObj.documents[0].documentID,
+          historyObj.documents[0].data["itemID"],
+          historyObj.documents[0].data["itemName"],
+          historyObj.documents[0].data["memID"],
+          historyObj.documents[0].data["memName"],
+          historyObj.documents[0].data["timeCheckedOut"],
+          DateTime.now());
+    } else {
+      print("This item DNE or is currently not checked out yet.");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    fs = FirebaseFirestoreService(widget.site);
+
+    camera = new GestureDetector(
+      onTap: changeCamera,
+      child: Card(
+        margin: EdgeInsets.all(5.0),
+        child: LiveBarcodeScanner(
+          onBarcode: (code) {
+            //print(code);
+            if (dataSet.contains(code) == false) {
+              dataSet.add(code);
+              print(code);
+              validate(code);
+
+              //Create widgets for scanned items
+              //debugPrint(dataWidget.toString());
+            }
+            return true;
+          },
+          cameraIndex: cameraIndex,
+        ),
+      ),
+    );
+    userInfo = Expanded(
+        child: Card(
+      margin: EdgeInsets.all(5.0),
+      child: Center(child: Text("User Info")),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Scaffold(
+        appBar: AppBar(title: Text('Check-in')),
+        body: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Scaffold(
+                body: Column(children: [
+              Expanded(
+                  flex: 8,
+                  child: Container(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[camera, userInfo],
+                    ),
+                  )),
+              Expanded(
+                  flex: 10,
+                  child: Card(
+                      child: ListView.builder(
+                    itemCount: dataList.length,
+                    itemBuilder: (context, int index) {
+                      return Dismissible(
+                          key: Key(UniqueKey().toString()),
+                          onDismissed: (direction) {
+                            debugPrint(
+                                index.toString() + " " + dataList[index]);
+                            dataSet.remove(dataList[index]);
+                            dataList.removeAt(index);
+                            dataNameList.removeAt(index);
+                          },
+                          child: Column(children: <Widget>[
+                            InkWell(
+                                onTap: () {
+                                  print("tapped");
+                                },
+                                child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile(
+                                        title: Text(dataNameList[index])))),
+                            Divider()
+                          ]));
+                    },
+                  ))),
+
             ]))));
   }
 }
@@ -1061,8 +1215,21 @@ class ViewMemberState extends State<ViewMember> {
   final DateTime dateNow = DateTime.now();
   bool validateName = false;
   bool editMode = false;
+  List<History> histories;
+  StreamSubscription<QuerySnapshot> historySub;
   @override
   void initState() {
+    historySub?.cancel();
+    this.historySub =
+        db.getMemberHistory(widget.mem.id).listen((QuerySnapshot snapshot) {
+      final List<History> history = snapshot.documents
+          .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+          .toList();
+      setState(() {
+        this.histories = history;
+      });
+    });
+
     id.setString(widget.mem.id);
     firstName.setString(widget.mem.firstName);
     lastName.setString(widget.mem.lastName);
@@ -1135,7 +1302,7 @@ class ViewMemberState extends State<ViewMember> {
                 })
           ],
           title:
-              editMode == false ? Text("Item Details") : Text("Edit Details"),
+              editMode == false ? Text("Member Details") : Text("Edit Details"),
         ),
         body: cameraView
             ? Column(
@@ -1185,6 +1352,43 @@ class ViewMemberState extends State<ViewMember> {
                               address,
                               phone,
                               notes,
+                              Card(
+                                  child: Padding(
+                                padding: EdgeInsets.all(5.0),
+                                child: Column(
+                                  children: <Widget>[
+                                    Text("History",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Container(
+                                        height: 500,
+                                        child: ListView.separated(
+                                          separatorBuilder: (context, index) =>
+                                              Divider(
+                                                color: Colors.black,
+                                              ),
+                                          itemCount: histories == null
+                                              ? 0
+                                              : histories.length,
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
+                                            return new ListTile(
+                                              title: Text(histories[index]
+                                                  .itemName
+                                                  .toString()),
+                                              onTap: () {
+//                                  Navigator.push(
+//                                    context,
+//                                    MaterialPageRoute(
+//                                        builder: (context) => ViewItem(item: filteredItems[index])),
+//                                  );
+                                              },
+                                            );
+                                          },
+                                        ))
+                                  ],
+                                ),
+                              ))
                             ],
                           )),
                           editMode == false
@@ -1218,7 +1422,7 @@ class ViewMemberState extends State<ViewMember> {
                                       }
                                     }
                                   },
-                                )
+                                ),
                         ])));
   }
 
