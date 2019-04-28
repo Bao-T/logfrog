@@ -50,7 +50,11 @@ class FirebaseFirestoreService {
         equipmentCollection.document(site).collection("Members").snapshots();
     return snapshots;
   }
-
+  Stream<QuerySnapshot> getMemberHistory(String memID){
+    Stream<QuerySnapshot> snapshots =
+    equipmentCollection.document(site).collection("History").where("memID", isEqualTo: memID).snapshots();
+    return snapshots;
+  }
 
 
 
@@ -332,8 +336,8 @@ class FirebaseFirestoreService {
       String memID, //member checking in/out
       String memName, //name of member checking in/out
       //String _username; //_username of member checking in/out
-      Timestamp timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-      Timestamp timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
+      DateTime timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+      DateTime timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
   ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
@@ -362,7 +366,7 @@ class FirebaseFirestoreService {
     if (historyID != "") {
       return equipmentCollection //TODO:update this to reflect current structure
           .document(site)
-          .collection("Items") //TODO:update this to reflect current structure
+          .collection("History") //TODO:update this to reflect current structure
           .document(historyID) //TODO:update this to reflect current structure
           .get()
           .then((doc) {
@@ -481,12 +485,61 @@ class FirebaseFirestoreService {
     });
   }
 
+  //Fuction for scanner livecamera.dart
+  //Checks if a barcode coming in is a student ID
+  //returns true if it is, false if not
+  bool patronExists(String barcodeIn) {
+    bool passes = false;
+    //check if barcode in students using solution adapted from:
+    //https://www.queryxchange.com/q/27_37397205/google-firebase-check-if-child-exists/ (accessed 4/24/19)
+    //https://stackoverflow.com/questions/38948905/how-can-i-check-if-a-value-exists-already-in-a-firebase-data-class-android
+    equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
+      if (doc.exists) {
+        passes = true;
+      }
+    });
+  return passes;
+    }
+
+  //For use in livecamera.dart, checks if a given equipment id exists (use before equipmentNotCheckedOut check to avoid pulling data and generating a Equipment member)
+  bool equipmentExists (String barcodeIn) {
+    bool exists = false;
+    equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) {
+      if (doc.exists) {
+        exists = true;
+      }
+    });
+    return exists;
+  }
+
+  //function which checks if a item is currently checked in or currently checked out for a scanned item barcode in liveCamera.dart
+  //true = is checked in and can be checked out
+  //false = is checked out and was not checked back in OR is not in the system
+  //TODO: Add popups for the two cases to prompt a) scanning item back in to check out or b) entering item in database
+  bool equipmentNotCheckedOut (String barcodeIn) {
+    bool canBeCheckedOut = false;
+    equipmentCollection.document(site).collection("Items")
+        .document(barcodeIn)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        //document exists, and we have the doc data.
+        Equipment dummyEquip = Equipment.fromMap(
+            doc.data); //should fill in equipment dummy with jason map
+        if (dummyEquip.status) {
+          canBeCheckedOut = true; //Is
+        } else {
+          canBeCheckedOut = false; //is "CheckedOut", cannot check out item
+        }
+      }
+    });
+    return canBeCheckedOut;
+  }
   Future<dynamic> deleteHistory(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-      await tx.get(.document(id.toString()));
+      //final DocumentSnapshot ds = await tx.get(.document(id.toString()));
 
-      await tx.delete(ds.reference);
+      //await tx.delete(ds.reference);
       return {'deleted': true};
     };
 
@@ -497,4 +550,5 @@ class FirebaseFirestoreService {
       print('error: $error');
       return false;
     });
-}
+}}
+

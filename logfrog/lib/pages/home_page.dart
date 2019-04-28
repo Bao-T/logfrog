@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage> {
 
   int _bottomNavBarIndex = 0;
   CheckoutPg checkoutPg;
+  CheckinPg checkinPg;
   PageHome pgHome;
   LoginPage loginPg;
   SettingsPage settingpg;
@@ -45,7 +46,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
     _checkEmailVerification();
 
     _todoList = new List();
@@ -63,6 +63,7 @@ class _HomePageState extends State<HomePage> {
         databases = document.data["databases"];
         currentSite = databases[0].toString();
         checkoutPg = CheckoutPg(site: currentSite);
+        checkinPg = CheckinPg(site: currentSite);
         pgHome = PageHome(referenceSite: widget.userId);
         settingpg = SettingsPage(
             userId: widget.userId,
@@ -71,7 +72,7 @@ class _HomePageState extends State<HomePage> {
         pageList = [
           pgHome,
           checkoutPg,
-          checkoutPg,
+          checkinPg,
           new DatabasePg(
             site: currentSite,
           ),
@@ -82,8 +83,12 @@ class _HomePageState extends State<HomePage> {
     }
      //Change Site to access different sites
 
-
-    getDatabases();
+    try {
+      getDatabases();
+    }
+    catch(exception){
+      _signOut();
+    }
   }
 
   void _checkEmailVerification() async {
