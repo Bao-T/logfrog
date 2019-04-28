@@ -88,9 +88,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
 
-    if (loginPg.loginComplete == false) {
-      return loginPg;
-    } else {
+//    if (loginPg.loginComplete == false) {
+//      return loginPg;
+//    } else {
       return Scaffold(
         body: currentPage,
         bottomNavigationBar: BottomNavigationBar(
@@ -128,5 +128,5 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
   }
-}
+
 // Pages and their states
