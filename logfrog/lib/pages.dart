@@ -235,7 +235,7 @@ class CheckinPgState extends State<CheckinPg> {
         .document(widget.site)
         .collection('History')
         .where("itemID", isEqualTo: code)
-        .orderBy("timeCheckedOut")
+        .orderBy("timeCheckedOut",descending: true)
         .limit(1)
         .getDocuments();
 

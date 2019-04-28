@@ -16,7 +16,7 @@ class Equipment {
   String _name; //object name, if any
   String _notes; //Any additional notes can go here
   DateTime _purchased; //Date purchased for equipment (defaults to date added to database if not given)
-  bool _status; //Checked in or checked out status
+  String _status; //Checked in or checked out status
   
   //Equipment mapping
   Equipment(this._condition, this._itemID, this._itemType, this._name, this._notes, this._purchased, this._status);
@@ -29,7 +29,7 @@ class Equipment {
   String get itemType => _itemType;
   String get name => _name;
   String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased); //reformats the date into MM-dd-yyyy
-  bool get status => _status;
+  String get status => _status;
 
   //mapping of object
   Equipment.map(dynamic obj) {

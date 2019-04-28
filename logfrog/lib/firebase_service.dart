@@ -526,7 +526,7 @@ class FirebaseFirestoreService {
         //document exists, and we have the doc data.
         Equipment dummyEquip = Equipment.fromMap(
             doc.data); //should fill in equipment dummy with jason map
-        if (dummyEquip.status) {
+        if (dummyEquip.status.toLowerCase() == "available") {
           canBeCheckedOut = true; //Is
         } else {
           canBeCheckedOut = false; //is "CheckedOut", cannot check out item
