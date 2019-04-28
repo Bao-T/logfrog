@@ -14,10 +14,10 @@ typedef bool BarcodeFoundCallback(String code);
 
 class LiveBarcodeScanner extends StatefulWidget {
   LiveBarcodeScanner({
-    @required this.onBarcode,
+    @required this.onBarcode, this.cameraIndex
   });
   final Set<String> codes = {};
-
+  final cameraIndex;
   /// This will be called with newly found barcode
   /// and should return [true] if the scanning can stop
   final BarcodeFoundCallback onBarcode;
@@ -33,11 +33,10 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
   @override
   void initState() {
     super.initState();
-
     availableCameras().then((newCameras) {
       setState(() {
         cameras = newCameras;
-        controller = CameraController(cameras[0], ResolutionPreset.high);
+        controller = CameraController(cameras[widget.cameraIndex], ResolutionPreset.medium);
         controller.initialize().then((_) async {
           if (!mounted) {
             return;

@@ -3,87 +3,137 @@ import 'liveCamera.dart';
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-import 'firebase_service.dart'; //Database access methods
+import 'firebase_service.dart';
 import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart';
-import 'package:audioplayers/audio_cache.dart';
+//import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
+import 'package:logfrog/services/authentication.dart';
+import 'history.dart';
 
 String dataSite;
 FirebaseFirestoreService db;
 const alarmAudioPath = "beep.mp3";
 
 class CheckoutPg extends StatefulWidget {
-  CheckoutPg({Key key}) : super(key: key);
+  CheckoutPg({Key key, this.site}) : super(key: key);
+  final site;
   @override
   CheckoutPgState createState() => CheckoutPgState();
 }
 
 class CheckoutPgState extends State<CheckoutPg> {
-  static AudioCache player = new AudioCache();
-  LiveBarcodeScanner _Bscanner;
+  //static AudioCache player = new AudioCache();
+
   var ori = Orientation.portrait;
   Set<String> dataSet = {};
   List<String> dataList = [];
+  List<String> dataNameList = [];
   List<Widget> dataWidget = [];
-  Card camera;
+  GestureDetector camera;
   Expanded userInfo;
+  String currentMemberID;
+  String currentMemberName;
   CustomScrollView database;
+  int cameraIndex = 0;
+  FirebaseFirestoreService fs;
+  Stream<QuerySnapshot> itemStream;
+  Stream<QuerySnapshot> memberStream;
+  changeCamera() {
+    setState(() {
+      cameraIndex = (cameraIndex + 1) % 2;
+      print('tap' + cameraIndex.toString());
+    });
+  }
 
-  String patronBarcode;
-  String equipmentBarcode;
+  Future validate(String code) async {
+    dynamic member = await Firestore.instance
+        .collection('Objects')
+        .document(widget.site)
+        .collection('Members')
+        .document(code)
+        .get();
+    if (member.exists) {
+      currentMemberName =
+          member.data['firstName'] + ' ' + member.data['lastName'];
+      currentMemberID = code;
+    } else {
+      dynamic items = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .where('ItemID', isEqualTo: code)
+          .getDocuments();
+      if (items.documents.isNotEmpty) {
+        setState(() {
+          dataList.add(code);
+          dataNameList.add(items.documents[0]['Name']);
+          //player.play(alarmAudioPath);
+        });
+      } else {
+        print('No documents with that id found! v_v');
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _Bscanner = LiveBarcodeScanner(
-      onBarcode: (code) {
-        //checking if there is a stored student barcode
-        if (code != null && db.patronExists(code)) { //if true, then valid student barcode and set the new patron to the barcode owner
-          patronBarcode = code;
-        } else if (code != null && db.equipmentExists(code)) { //if not a user, see if it is a equipment
-          if (patronBarcode != null) {
-            equipmentBarcode = code;
-          } else {
-            //TODO: create a splash screen displaying "must scan student ID first before equipment can be scanned"
-          }
-        } else {
-          //TODO: add a screen displaying not a valid student or not a valid equipment barcode (ask user to contact teacher)
-        }
 
-        if (patronBarcode != null && equipmentBarcode != null) {
-          //make a history object?  Then add to transaction?  OR: store equipment barcodes for later in another variable then create and push all transactions at the end
-        }
-        //
-        //TODO:  make a way for students to remove student ID from the patronBarcode
+    fs = FirebaseFirestoreService(widget.site);
 
+    camera = new GestureDetector(
+      onTap: changeCamera,
+      child: Card(
+        margin: EdgeInsets.all(5.0),
+        child: LiveBarcodeScanner(
+          onBarcode: (code) {
+            //print(code);
+            if (dataSet.contains(code) == false) {
+              dataSet.add(code);
+              validate(code);
 
-        setState(() {
-          if (dataSet.contains(code) == false) {
-            dataSet.add(code);
-            dataList.add(code);
-            player.play(alarmAudioPath);
-            //Create widgets for scanned items
-            //debugPrint(dataWidget.toString());
-
-          }
-        });
-        return true;
-      },
-    );
-    camera = Card(
-      margin: EdgeInsets.all(5.0),
-      child: _Bscanner,
+              //Create widgets for scanned items
+              //debugPrint(dataWidget.toString());
+            }
+            return true;
+          },
+          cameraIndex: cameraIndex,
+        ),
+      ),
     );
     userInfo = Expanded(
-      child: Card(
-          margin: EdgeInsets.all(5.0),
-          color: Colors.red,
-          child: Text("User Info")),
-    );
+        child: Card(
+      margin: EdgeInsets.all(5.0),
+      child: Center(child: Text("User Info")),
+    ));
+  }
+
+  Future<dynamic> finalTransaction(
+      String memID, String memName, List<String> itemIds) async {
+    for (int i = 0; i < dataList.length; i++) {
+      String itemID = dataList[i];
+      var item = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .document(itemID)
+          .get();
+      String itemName = item.data["Name"].toString();
+      DateTime timeCheckedIn;
+      DateTime timeCheckedOut = DateTime.now();
+      fs.createHistory(
+          itemID: itemID,
+          itemName: itemName,
+          memID: memID,
+          memName: memName,
+          timeCheckedIn: null,
+          timeCheckedOut: timeCheckedOut);
+    }
+    return null;
   }
 
   @override
@@ -96,7 +146,7 @@ class CheckoutPgState extends State<CheckoutPg> {
             child: Scaffold(
                 body: Column(children: [
               Expanded(
-                  flex: 4,
+                  flex: 8,
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,7 +154,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                     ),
                   )),
               Expanded(
-                  flex: 6,
+                  flex: 10,
                   child: Card(
                       child: ListView.builder(
                     itemCount: dataList.length,
@@ -116,6 +166,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                                 index.toString() + " " + dataList[index]);
                             dataSet.remove(dataList[index]);
                             dataList.removeAt(index);
+                            dataNameList.removeAt(index);
                           },
                           child: Column(children: <Widget>[
                             InkWell(
@@ -125,18 +176,173 @@ class CheckoutPgState extends State<CheckoutPg> {
                                 child: Padding(
                                     padding: const EdgeInsets.all(0.0),
                                     child: ListTile(
-                                        title: Text(dataList[index])))),
+                                        title: Text(dataNameList[index])))),
                             Divider()
                           ]));
                     },
-                  )))
+                  ))),
+              Expanded(
+                  flex: 1,
+                  child: SizedBox.expand(
+                    child: RaisedButton(
+                      color: Colors.green,
+                      child: Text("Finish Transaction"),
+                      onPressed: () {
+                        finalTransaction(
+                            currentMemberID, currentMemberName, dataList);
+                      },
+                    ),
+                  ))
+            ]))));
+  }
+}
+// End of page template and page functionality
+
+class CheckinPg extends StatefulWidget {
+  CheckinPg({Key key, this.site}) : super(key: key);
+  final site;
+  @override
+  CheckinPgState createState() => CheckinPgState();
+}
+
+class CheckinPgState extends State<CheckinPg> {
+  //static AudioCache player = new AudioCache();
+
+  var ori = Orientation.portrait;
+  Set<String> dataSet = {};
+  List<String> dataList = [];
+  List<String> dataNameList = [];
+  List<Widget> dataWidget = [];
+  GestureDetector camera;
+  Expanded userInfo;
+  String currentMemberID;
+  String currentMemberName;
+  CustomScrollView database;
+  int cameraIndex = 0;
+  FirebaseFirestoreService fs;
+  Stream<QuerySnapshot> itemStream;
+  Stream<QuerySnapshot> memberStream;
+  changeCamera() {
+    setState(() {
+      cameraIndex = (cameraIndex + 1) % 2;
+      print('tap' + cameraIndex.toString());
+    });
+  }
+
+  Future validate(String code) async {
+    var historyObj = await Firestore.instance
+        .collection('Objects')
+        .document(widget.site)
+        .collection('History')
+        .where("itemID", isEqualTo: code)
+        .orderBy("timeCheckedOut")
+        .limit(1)
+        .getDocuments();
+
+    if (historyObj.documents.isNotEmpty &&
+        historyObj.documents[0].data["timeCheckedIn"] == null) {
+      fs.updateHistory(
+          historyObj.documents[0].documentID,
+          historyObj.documents[0].data["itemID"],
+          historyObj.documents[0].data["itemName"],
+          historyObj.documents[0].data["memID"],
+          historyObj.documents[0].data["memName"],
+          historyObj.documents[0].data["timeCheckedOut"],
+          DateTime.now());
+    } else {
+      print("This item DNE or is currently not checked out yet.");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    fs = FirebaseFirestoreService(widget.site);
+
+    camera = new GestureDetector(
+      onTap: changeCamera,
+      child: Card(
+        margin: EdgeInsets.all(5.0),
+        child: LiveBarcodeScanner(
+          onBarcode: (code) {
+            //print(code);
+            if (dataSet.contains(code) == false) {
+              dataSet.add(code);
+              print(code);
+              validate(code);
+
+              //Create widgets for scanned items
+              //debugPrint(dataWidget.toString());
+            }
+            return true;
+          },
+          cameraIndex: cameraIndex,
+        ),
+      ),
+    );
+    userInfo = Expanded(
+        child: Card(
+      margin: EdgeInsets.all(5.0),
+      child: Center(child: Text("User Info")),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Scaffold(
+        appBar: AppBar(title: Text('Check-in')),
+        body: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Scaffold(
+                body: Column(children: [
+              Expanded(
+                  flex: 8,
+                  child: Container(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[camera, userInfo],
+                    ),
+                  )),
+              Expanded(
+                  flex: 10,
+                  child: Card(
+                      child: ListView.builder(
+                    itemCount: dataList.length,
+                    itemBuilder: (context, int index) {
+                      return Dismissible(
+                          key: Key(UniqueKey().toString()),
+                          onDismissed: (direction) {
+                            debugPrint(
+                                index.toString() + " " + dataList[index]);
+                            dataSet.remove(dataList[index]);
+                            dataList.removeAt(index);
+                            dataNameList.removeAt(index);
+                          },
+                          child: Column(children: <Widget>[
+                            InkWell(
+                                onTap: () {
+                                  print("tapped");
+                                },
+                                child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile(
+                                        title: Text(dataNameList[index])))),
+                            Divider()
+                          ]));
+                    },
+                  ))),
+
             ]))));
   }
 }
 // End of page template and page functionality
 
 class PageHome extends StatefulWidget {
-  PageHome({Key key}) : super(key: key);
+  PageHome({Key key, this.referenceSite}) : super(key: key);
+
+  final referenceSite;
   @override
   PageHomeState createState() => PageHomeState();
 }
@@ -147,6 +353,7 @@ class PageHomeState extends State<PageHome> {
     return Scaffold(
       appBar: AppBar(title: Text('LogFrog')),
       body: ListView(children: <Widget>[
+        Card(child: Text(widget.referenceSite)),
         Card(
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -282,7 +489,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
+  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
+      : super(key: key);
+
+  final BaseAuth auth;
+  final VoidCallback onSignedOut;
+  final String userId;
+
+  @override
+  State<StatefulWidget> createState() => new _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  _signOut() async {
+    try {
+      await widget.auth.signOut();
+      widget.onSignedOut();
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
@@ -291,24 +519,14 @@ class SettingsPage extends StatelessWidget {
         body: ListView(
           children: <Widget>[
             ListTile(
-              title: Text("Change Username"),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text("Change Password"),
-              onTap: () {},
-            ),
-            ListTile(
-              title: Text("Change Email"),
-              onTap: () {},
-            ),
-            ListTile(
               title: Text("Manage Databases"),
               onTap: () {},
             ),
             ListTile(
               title: Text("Log Out"),
-              onTap: () {},
+              onTap: () {
+                _signOut();
+              },
             ),
           ],
         ));
@@ -443,7 +661,7 @@ class DatabasePgState extends State<DatabasePg> {
           title: Text(filteredMems[index].firstName +
               " " +
               filteredMems[index].lastName),
-          onTap:  () {
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -623,6 +841,9 @@ class AddItemState extends State<AddItem> {
                                 });
                                 _showToast(context,
                                     'Error: You must enter item name.');
+                              } else if (itemId.value.isEmpty) {
+                                _showToast(
+                                    context, 'Error: You must scan item code.');
                               } else {
                                 try {
                                   await db.createEquipment(
@@ -846,7 +1067,7 @@ class ViewItemState extends State<ViewItem> {
                 setState(() {
                   itemId = FieldWidget(
                       title: 'Item ID',
-                      hint: 'An ID will generate by default',
+                      hint: 'Scan your Image Code',
                       enabled: false);
                   itemType = FieldWidget(
                       title: 'Item Type',
@@ -947,6 +1168,9 @@ class ViewItemState extends State<ViewItem> {
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
+                                    } else if ((itemId.value.isEmpty)) {
+                                      _showToast(context,
+                                          'Error: You must scan an item code.');
                                     } else {
                                       try {
                                         await db.updateEquipment(
@@ -991,8 +1215,21 @@ class ViewMemberState extends State<ViewMember> {
   final DateTime dateNow = DateTime.now();
   bool validateName = false;
   bool editMode = false;
+  List<History> histories;
+  StreamSubscription<QuerySnapshot> historySub;
   @override
   void initState() {
+    historySub?.cancel();
+    this.historySub =
+        db.getMemberHistory(widget.mem.id).listen((QuerySnapshot snapshot) {
+      final List<History> history = snapshot.documents
+          .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+          .toList();
+      setState(() {
+        this.histories = history;
+      });
+    });
+
     id.setString(widget.mem.id);
     firstName.setString(widget.mem.firstName);
     lastName.setString(widget.mem.lastName);
@@ -1065,7 +1302,7 @@ class ViewMemberState extends State<ViewMember> {
                 })
           ],
           title:
-              editMode == false ? Text("Item Details") : Text("Edit Details"),
+              editMode == false ? Text("Member Details") : Text("Edit Details"),
         ),
         body: cameraView
             ? Column(
@@ -1115,6 +1352,43 @@ class ViewMemberState extends State<ViewMember> {
                               address,
                               phone,
                               notes,
+                              Card(
+                                  child: Padding(
+                                padding: EdgeInsets.all(5.0),
+                                child: Column(
+                                  children: <Widget>[
+                                    Text("History",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    Container(
+                                        height: 500,
+                                        child: ListView.separated(
+                                          separatorBuilder: (context, index) =>
+                                              Divider(
+                                                color: Colors.black,
+                                              ),
+                                          itemCount: histories == null
+                                              ? 0
+                                              : histories.length,
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
+                                            return new ListTile(
+                                              title: Text(histories[index]
+                                                  .itemName
+                                                  .toString()),
+                                              onTap: () {
+//                                  Navigator.push(
+//                                    context,
+//                                    MaterialPageRoute(
+//                                        builder: (context) => ViewItem(item: filteredItems[index])),
+//                                  );
+                                              },
+                                            );
+                                          },
+                                        ))
+                                  ],
+                                ),
+                              ))
                             ],
                           )),
                           editMode == false
@@ -1148,7 +1422,7 @@ class ViewMemberState extends State<ViewMember> {
                                       }
                                     }
                                   },
-                                )
+                                ),
                         ])));
   }
 

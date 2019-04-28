@@ -27,12 +27,13 @@ dependencies:
   cupertino_icons: ^0.1.2
   cloud_firestore: #adding for firebase
   charts_flutter: #added for animated charts for statistics
+  firebase_database:
   firebase_auth:
   firebase_ml_vision:
   camera:
   json_annotation:
   dio:
-  audioplayers:
+  #audioplayers:
 
 dev_dependencies:
   flutter_test:
@@ -52,7 +53,7 @@ flutter_icons:
 # The following section is specific to Flutter.
 flutter:
   assets:
-  - assets/beep.mp3
+  - assets/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

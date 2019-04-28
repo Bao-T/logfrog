@@ -50,6 +50,13 @@ class FirebaseFirestoreService {
         equipmentCollection.document(site).collection("Members").snapshots();
     return snapshots;
   }
+  Stream<QuerySnapshot> getMemberHistory(String memID){
+    Stream<QuerySnapshot> snapshots =
+    equipmentCollection.document(site).collection("History").where("memID", isEqualTo: memID).snapshots();
+    return snapshots;
+  }
+
+
 
   //create an equipment asynchronously
   //input of Equipment type map
@@ -187,35 +194,23 @@ class FirebaseFirestoreService {
   //User == Teacher or those who login to app
   Future<Users> createUser(
       { String id,
-        String firstName,
-        String lastName,
         String emailAddress,
-        String username,
-        String password,}) async {
+        List<String> databases,}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-      if (id != "") {
-        ds = await tx.get(usersCollection.document(id));
-      } else {
-        ds = await tx.get(usersCollection.document(id));
-        id = ds.documentID;
-      }
+      ds = await tx.get(usersCollection.document(id));
+
 
       var dataMap = new Map<String, dynamic>();
-      dataMap['id'] = id;
-      dataMap['firstName'] = firstName;
-      dataMap['lastName'] = lastName;
       dataMap['emailAddress'] = emailAddress;
-      dataMap['username'] = username;
-      dataMap['password'] = password;
+      dataMap['databases'] = databases;
       await tx.set(ds.reference, dataMap);
       return dataMap;
 
     };
-    if (id != "") {
     return usersCollection.document(id).get().then((doc) {
       if (doc.exists){
-        throw ("error: Item ID already exists");
+        //throw ("error: Item ID already exists");
       } else {
         return Firestore.instance.runTransaction(createTransaction).then((mapData) {
           return Users.fromMap(mapData);
@@ -226,34 +221,22 @@ class FirebaseFirestoreService {
     }).catchError((e){
       throw (e);
     });
-    } else {
-      return Firestore.instance.runTransaction(createTransaction).then((mapData){
-        return Users.fromMap(mapData);
-      }).catchError((error) {
-        throw ('error: unable to communicate with server');
-      });
-    }
   }
 
   //Creates a History object given a patron id and a equipment id
   Future<History> createHistory (
-      {String historyID,
+      {
         String itemID,
         String itemName,
         String memID,
         String memName,
-        Timestamp timeCheckedIn,
-        Timestamp timeCheckedOut }) async {
+        DateTime timeCheckedIn,
+        DateTime timeCheckedOut }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-      if (historyID != ""){
-        ds = await tx.get(equipmentCollection.document(site).collection("History").document(historyID));
-      } else {
         ds = await tx.get(equipmentCollection.document(site).collection("History").document());
-        historyID = ds.documentID;
-      }
+
       var dataMap = new Map<String, dynamic>();
-      dataMap['historyID'] = historyID;
       dataMap['itemID'] = itemID;
       dataMap['itemName'] = itemName;
       dataMap['memID'] = memID;
@@ -263,27 +246,11 @@ class FirebaseFirestoreService {
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-    if (historyID != "") {
-      return equipmentCollection.document(site).collection("History").document(historyID).get().then((doc) {
-        if (doc.exists){
-          throw ("error: Item ID already exists");
-        } else {
-          return Firestore.instance.runTransaction(createTransaction).then((mapData) {
-            return History.fromMap(mapData);
-          }).catchError((error) {
-            throw ('error: unable to communicate with server');
-          });
-        }
-      }).catchError((e){
-        throw (e);
-      });
-    } else {
       return Firestore.instance.runTransaction(createTransaction).then((mapData){
         return History.fromMap(mapData);
       }).catchError((error) {
         throw ('error: unable to communicate with server');
       });
-    }
   }
 
 
@@ -345,22 +312,22 @@ class FirebaseFirestoreService {
     }
   }
 
-  Future<dynamic> updateUsers(Users usr) async {
-    final TransactionHandler updateTransaction = (Transaction tx) async {
-      String idGet = usr.id.toString();
-      final DocumentSnapshot ds = await tx.get(usersCollection.document(idGet));
-      await tx.update(ds.reference, Users.toMap(usr));
-      return {'updated': true};
-    };
-
-    return Firestore.instance
-        .runTransaction(updateTransaction)
-        .then((result) => result['updated'])
-        .catchError((error) {
-      print('error: $error');
-      return false;
-    });
-  }
+//  Future<dynamic> updateUsers(Users usr) async {
+//    final TransactionHandler updateTransaction = (Transaction tx) async {
+//      String idGet = usr.id.toString();
+//      final DocumentSnapshot ds = await tx.get(usersCollection.document(idGet));
+//      await tx.update(ds.reference, Users.toMap(usr));
+//      return {'updated': true};
+//    };
+//
+//    return Firestore.instance
+//        .runTransaction(updateTransaction)
+//        .then((result) => result['updated'])
+//        .catchError((error) {
+//      print('error: $error');
+//      return false;
+//    });
+//  }
 
   Future<dynamic> updateHistory(
       String historyID, //History ID (autogenerated)
@@ -369,8 +336,8 @@ class FirebaseFirestoreService {
       String memID, //member checking in/out
       String memName, //name of member checking in/out
       //String _username; //_username of member checking in/out
-      Timestamp timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-      Timestamp timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
+      DateTime timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+      DateTime timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
   ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
@@ -399,7 +366,7 @@ class FirebaseFirestoreService {
     if (historyID != "") {
       return equipmentCollection //TODO:update this to reflect current structure
           .document(site)
-          .collection("Items") //TODO:update this to reflect current structure
+          .collection("History") //TODO:update this to reflect current structure
           .document(historyID) //TODO:update this to reflect current structure
           .get()
           .then((doc) {
@@ -570,10 +537,9 @@ class FirebaseFirestoreService {
   }
   Future<dynamic> deleteHistory(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-      await tx.get(.document(id.toString()));
+      //final DocumentSnapshot ds = await tx.get(.document(id.toString()));
 
-      await tx.delete(ds.reference);
+      //await tx.delete(ds.reference);
       return {'deleted': true};
     };
 
@@ -584,4 +550,5 @@ class FirebaseFirestoreService {
       print('error: $error');
       return false;
     });
-  }
+}}
+
