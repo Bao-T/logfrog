@@ -67,46 +67,50 @@ class CheckoutPgState extends State<CheckoutPg> {
         currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
       });
       currentMemberID = code;
-    } else {
+    } else if (currentMemberID != null && equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
-      if (currentMemberID != null ) {
-        if (equipmentNotCheckedOut(code)) {//check if is equipment and it is not checked out
+      //check if is equipment and it is not checked out
           setState(() {
             dataList.add(code);
             equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) { //retrieves snapshot of that student
               dataNameList.add(doc.data['Name']);
             });
             //player.play(alarmAudioPath);
-          });
-
-        }} else {
-        print('No documents with that id found! v_v');
+          }); }
+    else {//If it has reached this point:  The barcode scanned was not a student id
+      //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
+      //We want to alert students if:
+      //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
+      if (currentMemberID == null) {
+        //make widget which shows popup with "scan a member id"
+      } else if (!(equipmentExists(code))) { //Case 2: Invalid equipment ID
+        //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
+      } else if (! (equipmentNotCheckedOut(code))) { //Case 3: Equipment is shown as already checked out
+        //make popup that shows "equipment is currently checked out.  Please checkin first."
+      } else { //default case
+        print ("Unknown error as occured!");
       }
-    }
+      }
+
   }
-  }
+
 
   //init state of checkout page
   @override
   void initState() {
     super.initState();
-
-    fs = FirebaseFirestoreService(widget.site);
-
+    fs = FirebaseFirestoreService(widget.site); //connecting to firebase
+    //setting up camera
     camera = new GestureDetector(
       onTap: changeCamera,
       child: Card(
         margin: EdgeInsets.all(5.0),
         child: LiveBarcodeScanner(
-          onBarcode: (code) {
-            //print(code);
+          onBarcode: (code) { //when a code is scanned
             if (dataSet.contains(code) == false) {
-              dataSet.add(code);
-              validate(code);
-
-              //Create widgets for scanned items
-              //debugPrint(dataWidget.toString());
+              dataSet.add(code); //adds code to codes seen
+              validate(code); //runs validate checks using firebase_service.dart functions
             }
             return true;
           },
@@ -114,6 +118,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         ),
       ),
     );
+    //User info (for scanned users????))
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
