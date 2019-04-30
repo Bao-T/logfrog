@@ -344,11 +344,11 @@ class FirebaseFirestoreService {
       if (historyID != "") {
         ds = await tx.get(equipmentCollection
             .document(site)
-            .collection("History") //TODO:update this to reflect current structure
+            .collection("History")
             .document(historyID));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("History").document());//TODO:update this to reflect current structure
+            equipmentCollection.document(site).collection("History").document());
         historyID = ds.documentID;
       }
 
@@ -364,22 +364,22 @@ class FirebaseFirestoreService {
       return dataMap;
     };
     if (historyID != "") {
-      return equipmentCollection //TODO:update this to reflect current structure
+      return equipmentCollection
           .document(site)
-          .collection("History") //TODO:update this to reflect current structure
-          .document(historyID) //TODO:update this to reflect current structure
+          .collection("History")
+          .document(historyID)
           .get()
           .then((doc) {
         if (doc.exists) {
           return Firestore.instance
               .runTransaction(createTransaction)
               .then((mapData) {
-            return Equipment.fromMap(mapData); //TODO:update this to reflect current structure
+            return History.fromMap(mapData); //TODO:update this to reflect current structure
           }).catchError((error) {
             throw ('error: unable to communicate with server');
           });
         } else {
-          throw ('error: could not find matching item');
+          throw ('error: could not find matching history');
         }
       }).catchError((e) {
         throw (e);
@@ -389,7 +389,7 @@ class FirebaseFirestoreService {
     }
   }
 
-  Future<dynamic> updatePatrons(
+  Future<dynamic> updateUsers(
         String id, //student id
         String firstName, //student first name
         String lastName, //student last name
@@ -402,18 +402,18 @@ class FirebaseFirestoreService {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       if (id != "") {
-        ds = await tx.get(equipmentCollection
+        ds = await tx.get(usersCollection
             .document(site)
-            .collection("Users") //TODO:update this to reflect current structure
+            .collection("Users")
             .document(id));
       } else {
         ds = await tx.get(
-            equipmentCollection.document(site).collection("Users").document()); //TODO:update this to reflect current structure
+            usersCollection.document(site).collection("Users").document());
         id = ds.documentID;
       }
 
       var dataMap = new Map<String, dynamic>();
-          dataMap['id'] = id;
+      dataMap['id'] = id;
       dataMap['firstName'] = firstName;
       dataMap['lastName'] = lastName;
       dataMap['emailAddress'] = address;
@@ -424,9 +424,9 @@ class FirebaseFirestoreService {
       return dataMap;
     };
     if (id != "") {
-      return equipmentCollection //TODO:update this to reflect current structure
+      return usersCollection
           .document(site)
-          .collection("Patrons")
+          .collection("Users")
           .document(id)
           .get()
           .then((doc) {
@@ -434,18 +434,18 @@ class FirebaseFirestoreService {
           return Firestore.instance
               .runTransaction(createTransaction)
               .then((mapData) {
-            return Equipment.fromMap(mapData);
+            return Users.fromMap(mapData);
           }).catchError((error) {
             throw ('error: unable to communicate with server');
           });
         } else {
-          throw ('error: could not find matching item');
+          throw ('error: could not find matching user');
         }
       }).catchError((e) {
         throw (e);
       });
     } else {
-      throw ("error: Patron ID is required to update");
+      throw ("error: User ID is required to update");
     }
   }
 

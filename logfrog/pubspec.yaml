@@ -33,6 +33,7 @@ dependencies:
   camera:
   json_annotation:
   dio:
+  qr_flutter:
   #audioplayers:
 
 dev_dependencies:
