@@ -14,10 +14,20 @@ import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
 
-String dataSite;
-FirebaseFirestoreService db;
-const alarmAudioPath = "beep.mp3";
 
+String dataSite; //site for the user- tells firebase which initial document to access
+FirebaseFirestoreService db;
+const alarmAudioPath = "beep.mp3"; //check in checkout scanner beep
+
+
+//Checkout Page:  Students will open this page to checkout equipment
+/*To checkout:  First scan student id-> barcode will be used to check if student exists in site database
+                                        if student exists, set current student to that student
+                scan equipment -> if equipment exists AND is not checked out, creates history object for transaction
+                                  (ALLOWS STUDENTS TO REMOVE ITEMS BEFORE FINAL PUSH IF THEY CHANGE THEIR MIND???)
+                WHEN SCANNING DONE AND STUDENTS EXIT OUT(??) pushes final transaction up to firebase
+
+                              */
 class CheckoutPg extends StatefulWidget {
   CheckoutPg({Key key, this.site}) : super(key: key);
   final site;
@@ -25,23 +35,24 @@ class CheckoutPg extends StatefulWidget {
   CheckoutPgState createState() => CheckoutPgState();
 }
 
+
 class CheckoutPgState extends State<CheckoutPg> {
   //static AudioCache player = new AudioCache();
-
-  var ori = Orientation.portrait;
-  Set<String> dataSet = {};
-  List<String> dataList = [];
-  List<String> dataNameList = [];
-  List<Widget> dataWidget = [];
-  GestureDetector camera;
-  Expanded userInfo;
-  String currentMemberID;
-  String currentMemberName;
-  CustomScrollView database;
-  int cameraIndex = 0;
+  var ori = Orientation.portrait; //camera orientation
+  Set<String> dataSet = {}; //???
+  List<String> dataList = []; //???
+  List<String> dataNameList = []; //??
+  List<Widget> dataWidget = []; //??
+  GestureDetector camera; //setting up camera
+  Expanded userInfo; //??
+  String currentMemberID; //member ID of student  (AKA patron) checking out equipment
+  String currentMemberName; //name of student currently checking out equipment
+  CustomScrollView database; //??
+  int cameraIndex = 0; //??
   FirebaseFirestoreService fs;
-  Stream<QuerySnapshot> itemStream;
-  Stream<QuerySnapshot> memberStream;
+  Stream<QuerySnapshot> itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
+  Stream<QuerySnapshot> memberStream; //stream for members query (is this ALL students??)
+  //Setting up camera for scanning
   changeCamera() {
     setState(() {
       cameraIndex = (cameraIndex + 1) % 2;
@@ -50,35 +61,33 @@ class CheckoutPgState extends State<CheckoutPg> {
   }
 
   Future validate(String code) async {
-    dynamic member = await Firestore.instance
-        .collection('Objects')
-        .document(widget.site)
-        .collection('Members')
-        .document(code)
-        .get();
-    if (member.exists) {
-      currentMemberName =
-          member.data['firstName'] + ' ' + member.data['lastName'];
+    //checking if a student exists under the current scanned barcode
+    if (patronExists(code)) {
+      equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) { //retrieves snapshot of that student
+        currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
+      });
       currentMemberID = code;
     } else {
-      dynamic items = await Firestore.instance
-          .collection('Objects')
-          .document(widget.site)
-          .collection('Items')
-          .where('ItemID', isEqualTo: code)
-          .getDocuments();
-      if (items.documents.isNotEmpty) {
-        setState(() {
-          dataList.add(code);
-          dataNameList.add(items.documents[0]['Name']);
-          //player.play(alarmAudioPath);
-        });
-      } else {
+      //If not a student, possibly a object
+      //If the currentMemberID shows a student as checking out, allows scan to proceed
+      if (currentMemberID != null ) {
+        if (equipmentNotCheckedOut(code)) {//check if is equipment and it is not checked out
+          setState(() {
+            dataList.add(code);
+            equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) { //retrieves snapshot of that student
+              dataNameList.add(doc.data['Name']);
+            });
+            //player.play(alarmAudioPath);
+          });
+
+        }} else {
         print('No documents with that id found! v_v');
       }
     }
   }
+  }
 
+  //init state of checkout page
   @override
   void initState() {
     super.initState();

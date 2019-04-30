@@ -485,7 +485,7 @@ class FirebaseFirestoreService {
     });
   }
 
-  //Fuction for scanner livecamera.dart
+  //Fuction for checkin and checkout
   //Checks if a barcode coming in is a student ID
   //returns true if it is, false if not
   bool patronExists(String barcodeIn) {
