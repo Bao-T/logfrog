@@ -62,18 +62,28 @@ class CheckoutPgState extends State<CheckoutPg> {
 
   Future validate(String code) async {
     //checking if a student exists under the current scanned barcode
-    if (patronExists(code)) {
-      equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) { //retrieves snapshot of that student
+    print(fs.patronExists(code));
+    if (await fs.patronExists(code)) {
+      Firestore.instance.collection('Objects').document(widget.site).collection("Members").document(code).get().then((doc) { //retrieves snapshot of that student
         currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
+        print(currentMemberName);
+        setState(() {
+          userInfo = Expanded(
+              child: Card(
+                margin: EdgeInsets.all(5.0),
+                child: Center(child: Text(currentMemberName)),
+              ));
+        });
+
       });
       currentMemberID = code;
-    } else if (currentMemberID != null && equipmentNotCheckedOut(code)) {
+    } else if (currentMemberID != null && await fs.equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
           setState(() {
             dataList.add(code);
-            equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) { //retrieves snapshot of that student
+            equipmentCollection.document(widget.site).collection("Items").document(code).get().then((doc) { //retrieves snapshot of that student
               dataNameList.add(doc.data['Name']);
             });
             //player.play(alarmAudioPath);
@@ -84,9 +94,9 @@ class CheckoutPgState extends State<CheckoutPg> {
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == null) {
         //make widget which shows popup with "scan a member id"
-      } else if (!(equipmentExists(code))) { //Case 2: Invalid equipment ID
+      } else if (!(await fs.equipmentExists(code))) { //Case 2: Invalid equipment ID
         //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
-      } else if (! (equipmentNotCheckedOut(code))) { //Case 3: Equipment is shown as already checked out
+      } else if (! (await fs.equipmentNotCheckedOut(code))) { //Case 3: Equipment is shown as already checked out
         //make popup that shows "equipment is currently checked out.  Please checkin first."
       } else { //default case
         print ("Unknown error as occured!");
@@ -229,8 +239,8 @@ class CheckinPgState extends State<CheckinPg> {
   List<Widget> dataWidget = [];
   GestureDetector camera;
   Expanded userInfo;
-  String currentMemberID;
-  String currentMemberName;
+  String currentMemberID='';
+  String currentMemberName='';
   CustomScrollView database;
   int cameraIndex = 0;
   FirebaseFirestoreService fs;

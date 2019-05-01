@@ -488,12 +488,13 @@ class FirebaseFirestoreService {
   //Fuction for checkin and checkout
   //Checks if a barcode coming in is a student ID
   //returns true if it is, false if not
-  bool patronExists(String barcodeIn) {
+  Future<bool> patronExists(String barcodeIn) async {
     bool passes = false;
     //check if barcode in students using solution adapted from:
     //https://www.queryxchange.com/q/27_37397205/google-firebase-check-if-child-exists/ (accessed 4/24/19)
     //https://stackoverflow.com/questions/38948905/how-can-i-check-if-a-value-exists-already-in-a-firebase-data-class-android
-    equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
+    await equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
+
       if (doc.exists) {
         passes = true;
       }
@@ -502,9 +503,9 @@ class FirebaseFirestoreService {
     }
 
   //For use in livecamera.dart, checks if a given equipment id exists (use before equipmentNotCheckedOut check to avoid pulling data and generating a Equipment member)
-  bool equipmentExists (String barcodeIn) {
+  Future<bool> equipmentExists (String barcodeIn) async{
     bool exists = false;
-    equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) {
+    await equipmentCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) {
       if (doc.exists) {
         exists = true;
       }
@@ -516,9 +517,9 @@ class FirebaseFirestoreService {
   //true = is checked in and can be checked out
   //false = is checked out and was not checked back in OR is not in the system
   //TODO: Add popups for the two cases to prompt a) scanning item back in to check out or b) entering item in database
-  bool equipmentNotCheckedOut (String barcodeIn) {
+  Future<bool> equipmentNotCheckedOut (String barcodeIn) async {
     bool canBeCheckedOut = false;
-    equipmentCollection.document(site).collection("Items")
+    await equipmentCollection.document(site).collection("Items")
         .document(barcodeIn)
         .get()
         .then((doc) {
