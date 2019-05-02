@@ -36,7 +36,7 @@ class _LiveBarcodeScannerState extends State<LiveBarcodeScanner> {
     availableCameras().then((newCameras) {
       setState(() {
         cameras = newCameras;
-        controller = CameraController(cameras[widget.cameraIndex], ResolutionPreset.medium);
+        controller = CameraController(cameras[widget.cameraIndex], ResolutionPreset.low);
         controller.initialize().then((_) async {
           if (!mounted) {
             return;
@@ -123,7 +123,7 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
     availableCameras().then((newCameras) {
       setState(() {
         cameras = newCameras;
-        controller = CameraController(cameras[0], ResolutionPreset.high);
+        controller = CameraController(cameras[0], ResolutionPreset.low);
         controller.initialize().then((_) async {
           if (!mounted) {
             return;
