@@ -11,10 +11,8 @@ class Patrons {
   String _address; //student address
   String _phone; //student phone number
   String _notes; //extra notes to be entered
-  List<dynamic> _checkOutHistory; //list of recent checkOutHistory objects associated with
-  List<dynamic> _checkedOutEquipment; //list of currently checked out equipment
 
-  Patrons(this._id, this._firstName, this._lastName, this._address, this._phone, this._notes, this._checkOutHistory, this._checkedOutEquipment);
+  Patrons(this._id, this._firstName, this._lastName, this._address, this._phone, this._notes);
 
   //get methods to access private variables
   String get id => _id;
@@ -23,8 +21,7 @@ class Patrons {
   String get emailAddress => _address;
   String get phone => _phone;
   String get notes => _notes;
-  List<DocumentReference> get checkOutHistory => _checkOutHistory;
-  List<DocumentReference> get checkedOutEquipment => _checkedOutEquipment;
+
 
   Patrons.map(dynamic obj) {
     this._id = obj['id'];
@@ -33,8 +30,7 @@ class Patrons {
     this._address = obj['emailAddress'];
     this._phone = obj['phone'];
     this._notes = obj['notes'];
-    this._checkOutHistory = obj['checkOutHistory'];
-    this._checkedOutEquipment = obj['checkedOutEquipment'];
+
   }
 
   static Map<String, dynamic> toMap(Patrons pat) {
@@ -47,8 +43,7 @@ class Patrons {
     map['emailAddress'] = pat._address;
     map['phone'] = pat._phone;
     map['notes'] = pat._notes;
-    map['checkOutHistory'] = pat._checkOutHistory;
-    map['checkedOutEquipment'] = pat._checkedOutEquipment;
+
     return map;
   }
 
@@ -56,10 +51,8 @@ class Patrons {
     this._id = map['id'];
     this._firstName = map['firstName'];
     this._lastName = map['lastName'];
-    this._address = map['emaileAddress'];
+    this._address = map['emailAddress'];
     this._phone = map['phone'];
     this._notes = map['notes'];
-    this._checkOutHistory = map['checkOutHistory'];
-    this._checkedOutEquipment = map['checkedOutEquipment'];
   }
 }

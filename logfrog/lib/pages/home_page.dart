@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart' as fs;
+import 'package:cloud_firestore/cloud_firestore.dart' as db;
 import 'package:flutter/material.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<Event> _onTodoAddedSubscription;
   StreamSubscription<Event> _onTodoChangedSubscription;
   Query _todoQuery;
-
+  FirebaseFirestoreService fs;
   bool _isEmailVerified = false;
 
   int _bottomNavBarIndex = 0;
@@ -58,10 +58,13 @@ class _HomePageState extends State<HomePage> {
     _onTodoChangedSubscription =
         _todoQuery.onChildChanged.listen(_onEntryChanged);
     Future getDatabases() async{
-      var document = await fs.Firestore.instance.collection('Users').document(widget.userId).get();
+      var document = await db.Firestore.instance.collection('Users').document(widget.userId).get();
       setState(() {
         databases = document.data["databases"];
         currentSite = databases[0].toString();
+
+
+
         checkoutPg = CheckoutPg(site: currentSite);
         checkinPg = CheckinPg(site: currentSite);
         pgHome = PageHome(referenceSite: widget.userId);

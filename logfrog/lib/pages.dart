@@ -14,11 +14,10 @@ import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
 
+String
+    dataSite; //site for the user- tells firebase which initial document to access
 
-String dataSite; //site for the user- tells firebase which initial document to access
-FirebaseFirestoreService db;
 const alarmAudioPath = "beep.mp3"; //check in checkout scanner beep
-
 
 //Checkout Page:  Students will open this page to checkout equipment
 /*To checkout:  First scan student id-> barcode will be used to check if student exists in site database
@@ -35,7 +34,6 @@ class CheckoutPg extends StatefulWidget {
   CheckoutPgState createState() => CheckoutPgState();
 }
 
-
 class CheckoutPgState extends State<CheckoutPg> {
   //static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera orientation
@@ -45,13 +43,16 @@ class CheckoutPgState extends State<CheckoutPg> {
   List<Widget> dataWidget = []; //??
   GestureDetector camera; //setting up camera
   Expanded userInfo; //??
-  String currentMemberID; //member ID of student  (AKA patron) checking out equipment
+  String
+      currentMemberID; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
   CustomScrollView database; //??
   int cameraIndex = 0; //??
   FirebaseFirestoreService fs;
-  Stream<QuerySnapshot> itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
-  Stream<QuerySnapshot> memberStream; //stream for members query (is this ALL students??)
+  Stream<QuerySnapshot>
+      itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
+  Stream<QuerySnapshot>
+      memberStream; //stream for members query (is this ALL students??)
   //Setting up camera for scanning
   changeCamera() {
     setState(() {
@@ -64,47 +65,62 @@ class CheckoutPgState extends State<CheckoutPg> {
     //checking if a student exists under the current scanned barcode
     print(fs.patronExists(code));
     if (await fs.patronExists(code)) {
-      Firestore.instance.collection('Objects').document(widget.site).collection("Members").document(code).get().then((doc) { //retrieves snapshot of that student
+      Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection("Members")
+          .document(code)
+          .get()
+          .then((doc) {
+        //retrieves snapshot of that student
         currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
         print(currentMemberName);
         setState(() {
           userInfo = Expanded(
               child: Card(
-                margin: EdgeInsets.all(5.0),
-                child: Center(child: Text(currentMemberName)),
-              ));
+            margin: EdgeInsets.all(5.0),
+            child: Center(child: Text(currentMemberName)),
+          ));
         });
-
       });
       currentMemberID = code;
-    } else if (currentMemberID != null && await fs.equipmentNotCheckedOut(code)) {
+    } else if (currentMemberID != null &&
+        await fs.equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
-          setState(() {
-            dataList.add(code);
-            equipmentCollection.document(widget.site).collection("Items").document(code).get().then((doc) { //retrieves snapshot of that student
-              dataNameList.add(doc.data['Name']);
-            });
-            //player.play(alarmAudioPath);
-          }); }
-    else {//If it has reached this point:  The barcode scanned was not a student id
+      setState(() {
+        dataList.add(code);
+        objectCollection
+            .document(widget.site)
+            .collection("Items")
+            .document(code)
+            .get()
+            .then((doc) {
+          //retrieves snapshot of that student
+          dataNameList.add(doc.data['Name']);
+        });
+        //player.play(alarmAudioPath);
+      });
+    } else {
+      //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
       //We want to alert students if:
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == null) {
         //make widget which shows popup with "scan a member id"
-      } else if (!(await fs.equipmentExists(code))) { //Case 2: Invalid equipment ID
+      } else if (!(await fs.equipmentExists(code))) {
+        //Case 2: Invalid equipment ID
         //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
-      } else if (! (await fs.equipmentNotCheckedOut(code))) { //Case 3: Equipment is shown as already checked out
+      } else if (!(await fs.equipmentNotCheckedOut(code))) {
+        //Case 3: Equipment is shown as already checked out
         //make popup that shows "equipment is currently checked out.  Please checkin first."
-      } else { //default case
-        print ("Unknown error as occured!");
+      } else {
+        //default case
+        print("Unknown error as occured!");
       }
-      }
-
+    }
   }
-
 
   //init state of checkout page
   @override
@@ -117,10 +133,12 @@ class CheckoutPgState extends State<CheckoutPg> {
       child: Card(
         margin: EdgeInsets.all(5.0),
         child: LiveBarcodeScanner(
-          onBarcode: (code) { //when a code is scanned
+          onBarcode: (code) {
+            //when a code is scanned
             if (dataSet.contains(code) == false) {
               dataSet.add(code); //adds code to codes seen
-              validate(code); //runs validate checks using firebase_service.dart functions
+              validate(
+                  code); //runs validate checks using firebase_service.dart functions
             }
             return true;
           },
@@ -242,8 +260,8 @@ class CheckinPgState extends State<CheckinPg> {
   List<Widget> dataWidget = [];
   GestureDetector camera;
   Expanded userInfo;
-  String currentMemberID='';
-  String currentMemberName='';
+  String currentMemberID = '';
+  String currentMemberName = '';
   CustomScrollView database;
   int cameraIndex = 0;
   FirebaseFirestoreService fs;
@@ -262,7 +280,7 @@ class CheckinPgState extends State<CheckinPg> {
         .document(widget.site)
         .collection('History')
         .where("itemID", isEqualTo: code)
-        .orderBy("timeCheckedOut",descending: true)
+        .orderBy("timeCheckedOut", descending: true)
         .limit(1)
         .getDocuments();
 
@@ -283,10 +301,8 @@ class CheckinPgState extends State<CheckinPg> {
 
   @override
   void initState() {
-    super.initState();
-
     fs = FirebaseFirestoreService(widget.site);
-
+    super.initState();
     camera = new GestureDetector(
       onTap: changeCamera,
       child: Card(
@@ -360,7 +376,6 @@ class CheckinPgState extends State<CheckinPg> {
                           ]));
                     },
                   ))),
-
             ]))));
   }
 }
@@ -573,6 +588,7 @@ class DatabasePgState extends State<DatabasePg> {
   String _searchText = "";
   List<Equipment> items;
   List<Patrons> mems;
+  FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
   StreamSubscription<QuerySnapshot> memSub;
   List<Equipment> filteredItems = new List();
@@ -582,7 +598,7 @@ class DatabasePgState extends State<DatabasePg> {
   String _mode = "Items";
   DatabasePgState(String site) {
     dataSite = site;
-    db = new FirebaseFirestoreService(dataSite);
+    fs = new FirebaseFirestoreService(dataSite);
     _filter.addListener(() {
       if (_filter.text.isEmpty) {
         setState(() {
@@ -600,7 +616,7 @@ class DatabasePgState extends State<DatabasePg> {
   @override
   void initState() {
     itemSub?.cancel();
-    this.itemSub = db.getItems().listen((QuerySnapshot snapshot) {
+    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
           .toList();
@@ -611,7 +627,7 @@ class DatabasePgState extends State<DatabasePg> {
     });
 
     memSub?.cancel();
-    this.memSub = db.getMembers().listen((QuerySnapshot snapshot) {
+    this.memSub = fs.getMembers().listen((QuerySnapshot snapshot) {
       final List<Patrons> members = snapshot.documents
           .map((documentSnapshot) => Patrons.fromMap(documentSnapshot.data))
           .toList();
@@ -652,7 +668,10 @@ class DatabasePgState extends State<DatabasePg> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => ViewItem(item: filteredItems[index])),
+                  builder: (context) => ViewItem(
+                        item: filteredItems[index],
+                        site: widget.site,
+                      )),
             );
           },
         );
@@ -692,7 +711,8 @@ class DatabasePgState extends State<DatabasePg> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => ViewMember(mem: filteredMems[index])),
+                  builder: (context) =>
+                      ViewMember(mem: filteredMems[index], site: widget.site)),
             );
           },
         );
@@ -742,6 +762,10 @@ class DatabasePgState extends State<DatabasePg> {
                     DropdownMenuItem(
                       child: Text('Members'),
                       value: 'Members',
+                    ),
+                    DropdownMenuItem(
+                      child: Text('History'),
+                      value: 'History',
                     )
                   ],
                   onChanged: (String mode) {
@@ -768,6 +792,8 @@ class DatabasePgState extends State<DatabasePg> {
 }
 
 class AddItem extends StatefulWidget {
+  AddItem({Key key, this.site}) : super(key: key);
+  final String site;
   @override
   AddItemState createState() => AddItemState();
 }
@@ -775,12 +801,7 @@ class AddItem extends StatefulWidget {
 class AddItemState extends State<AddItem> {
   final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
-  @override
-  void initState() {
-    purchased.setString(DateFormat('MM-dd-yyyy').format(Timestamp.now().toDate()));
-    super.initState();
-  }
-
+  FirebaseFirestoreService fs;
   FieldWidget condition =
       FieldWidget(title: 'Condition', hint: 'Item Condition:');
   FieldWidget itemId = FieldWidget(
@@ -796,6 +817,15 @@ class AddItemState extends State<AddItem> {
   FieldWidget status =
       FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
   bool cameraView = false;
+
+  @override
+  void initState() {
+    fs = FirebaseFirestoreService(widget.site);
+    purchased
+        .setString(DateFormat('MM-dd-yyyy').format(Timestamp.now().toDate()));
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -873,7 +903,7 @@ class AddItemState extends State<AddItem> {
                                     context, 'Error: You must scan item code.');
                               } else {
                                 try {
-                                  await db.createEquipment(
+                                  await fs.createEquipment(
                                       name: name.value,
                                       itemID: itemId.value,
                                       itemType: itemType.value,
@@ -905,6 +935,8 @@ class AddItemState extends State<AddItem> {
 }
 
 class AddMember extends StatefulWidget {
+  AddMember({Key key, this.site}) : super(key: key);
+  final String site;
   @override
   AddMemberState createState() => AddMemberState();
 }
@@ -912,10 +944,10 @@ class AddMember extends StatefulWidget {
 class AddMemberState extends State<AddMember> {
   final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
-
+  FirebaseFirestoreService fs;
   @override
   void initState() {
-    //purchased.setString(DateFormat('MM-dd-yyyy').format(DateTime.now()));
+    fs = FirebaseFirestoreService(widget.site);
     super.initState();
   }
 
@@ -1008,7 +1040,7 @@ class AddMemberState extends State<AddMember> {
                                     'Error: You must enter item name.');
                               } else {
                                 try {
-                                  await db.createPatron(
+                                  await fs.createPatron(
                                       id: memberID.value,
                                       firstName: firstName.value,
                                       lastName: lastName.value,
@@ -1039,8 +1071,9 @@ class AddMemberState extends State<AddMember> {
 }
 
 class ViewItem extends StatefulWidget {
-  ViewItem({Key key, this.item}) : super(key: key);
+  ViewItem({Key key, this.item, this.site}) : super(key: key);
   final Equipment item;
+  final String site;
   @override
   ViewItemState createState() => ViewItemState();
 }
@@ -1049,8 +1082,10 @@ class ViewItemState extends State<ViewItem> {
   final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   bool editMode = false;
+  FirebaseFirestoreService fs;
   @override
   void initState() {
+    fs = FirebaseFirestoreService(widget.site);
     condition.setString(widget.item.condition);
     itemId.setString(widget.item.itemID);
     itemType.setString(widget.item.itemType);
@@ -1190,9 +1225,11 @@ class ViewItemState extends State<ViewItem> {
                                     if (name.value.isEmpty) {
                                       setState(() {
                                         name = FieldWidget(
-                                            title: 'Item Name',
-                                            hint: 'Enter Item Name',
-                                            validate: true, enabled: true,);
+                                          title: 'Item Name',
+                                          hint: 'Enter Item Name',
+                                          validate: true,
+                                          enabled: true,
+                                        );
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
@@ -1201,7 +1238,7 @@ class ViewItemState extends State<ViewItem> {
                                           'Error: You must scan an item code.');
                                     } else {
                                       try {
-                                        await db.updateEquipment(
+                                        await fs.updateEquipment(
                                             name: name.value,
                                             itemID: itemId.value,
                                             itemType: itemType.value,
@@ -1233,8 +1270,9 @@ class ViewItemState extends State<ViewItem> {
 }
 
 class ViewMember extends StatefulWidget {
-  ViewMember({Key key, this.mem}) : super(key: key);
+  ViewMember({Key key, this.mem, this.site}) : super(key: key);
   final Patrons mem;
+  final String site;
   @override
   ViewMemberState createState() => ViewMemberState();
 }
@@ -1243,13 +1281,15 @@ class ViewMemberState extends State<ViewMember> {
   final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   bool editMode = false;
+  FirebaseFirestoreService fs;
   List<History> histories;
   StreamSubscription<QuerySnapshot> historySub;
   @override
   void initState() {
+    fs = FirebaseFirestoreService(widget.site);
     historySub?.cancel();
     this.historySub =
-        db.getMemberHistory(widget.mem.id).listen((QuerySnapshot snapshot) {
+        fs.getMemberHistory(widget.mem.id).listen((QuerySnapshot snapshot) {
       final List<History> history = snapshot.documents
           .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
           .toList();
@@ -1295,7 +1335,7 @@ class ViewMemberState extends State<ViewMember> {
                 editMode = true;
                 setState(() {
                   id = FieldWidget(
-                      title: 'Item ID',
+                      title: 'ID',
                       hint: 'An ID will generate by default',
                       enabled: false);
                   firstName = FieldWidget(
@@ -1385,9 +1425,12 @@ class ViewMemberState extends State<ViewMember> {
                                 padding: EdgeInsets.all(5.0),
                                 child: Column(
                                   children: <Widget>[
-                                    Text("History",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
+                                    Padding(
+                                        padding: EdgeInsets.all(10.0),
+                                        child: Text("History",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                            fontSize: 16.0))),
                                     Container(
                                         height: 500,
                                         child: ListView.separated(
@@ -1400,18 +1443,30 @@ class ViewMemberState extends State<ViewMember> {
                                               : histories.length,
                                           itemBuilder: (BuildContext context,
                                               int index) {
-                                            return new ListTile(
-                                              title: Text(histories[index]
-                                                  .itemName
-                                                  .toString()),
-                                              onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => ViewHistory(hist: histories[index])),
-                                  );
-                                              },
-                                            );
+                                            return new Container(
+                                                color: histories[index]
+                                                            .timeCheckedInString !=
+                                                        ''
+                                                    ? Colors.green[200]
+                                                    : Colors.red[200],
+                                                child: ListTile(
+                                                  title: Text(histories[index]
+                                                      .itemName
+                                                      .toString()),
+                                                  trailing: Text(histories[
+                                                          index]
+                                                      .timeCheckedOutString),
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ViewHistory(
+                                                                  hist: histories[
+                                                                      index])),
+                                                    );
+                                                  },
+                                                ));
                                           },
                                         ))
                                   ],
@@ -1429,21 +1484,22 @@ class ViewMemberState extends State<ViewMember> {
                                         firstName = FieldWidget(
                                             title: 'Item Name',
                                             hint: 'Enter Item Name',
-                                            validate: true, enabled: true);
+                                            validate: true,
+                                            enabled: true);
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
                                     } else {
                                       try {
-//                                        await db.updateEquipment(
-//                                            name: name.value,
-//                                            itemID: itemId.value,
-//                                            itemType: itemType.value,
-//                                            purchased: dateNow,
-//                                            status: status.value,
-//                                            condition: condition.value,
-//                                            notes: notes.value);
-//                                        Navigator.pop(context);
+                                        print(id.value);
+                                        await fs.updatePatrons(
+                                            id.value,
+                                            firstName.value,
+                                            lastName.value,
+                                            address.value,
+                                            phone.value,
+                                            notes.value);
+                                        Navigator.pop(context);
                                       } catch (e) {
                                         print(e.toString());
                                         _showToast(context, e.toString());
@@ -1466,10 +1522,6 @@ class ViewMemberState extends State<ViewMember> {
   }
 }
 
-
-
-
-
 class ViewHistory extends StatefulWidget {
   ViewHistory({Key key, this.hist}) : super(key: key);
   final History hist;
@@ -1485,7 +1537,6 @@ class ViewHistoryState extends State<ViewHistory> {
   bool memMode = false;
   @override
   void initState() {
-
     itemID.setString(widget.hist.itemID);
     itemName.setString(widget.hist.itemName);
     memID.setString(widget.hist.memID);
@@ -1499,18 +1550,16 @@ class ViewHistoryState extends State<ViewHistory> {
     setState(() {});
   }
 
-  FieldWidget itemID = FieldWidget(
-      title: 'Item ID', hint: '', enabled: false);
-  FieldWidget itemName = FieldWidget(
-      title: 'Item Name', hint: '', enabled: false);
-  FieldWidget memID = FieldWidget(
-      title: 'Member ID', hint: '', enabled: false);
-  FieldWidget memName = FieldWidget(
-      title: 'Member Name', hint: '', enabled: false);
-  FieldWidget timeCheckedIn = FieldWidget(
-      title: 'Time Checked In', hint: '', enabled: false);
-  FieldWidget timeCheckedOut = FieldWidget(
-      title: 'Time Checked Out', hint: '', enabled: false);
+  FieldWidget itemID = FieldWidget(title: 'Item ID', hint: '', enabled: false);
+  FieldWidget itemName =
+      FieldWidget(title: 'Item Name', hint: '', enabled: false);
+  FieldWidget memID = FieldWidget(title: 'Member ID', hint: '', enabled: false);
+  FieldWidget memName =
+      FieldWidget(title: 'Member Name', hint: '', enabled: false);
+  FieldWidget timeCheckedIn =
+      FieldWidget(title: 'Time Checked In', hint: '', enabled: false);
+  FieldWidget timeCheckedOut =
+      FieldWidget(title: 'Time Checked Out', hint: '', enabled: false);
   bool cameraView = false;
 
   @override
@@ -1524,26 +1573,26 @@ class ViewHistoryState extends State<ViewHistory> {
                   Navigator.pop(context);
                 })
           ],
-          title:
-          editMode == false ? Text("History Details") : Text("Edit Details"),
+          title: editMode == false
+              ? Text("History Details")
+              : Text("Edit Details"),
         ),
-        body:
-        Builder(
+        body: Builder(
             builder: (context) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                      child: ListView(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Expanded(
+                          child: ListView(
                         children: <Widget>[
                           itemID,
                           itemName,
-                          itemID,
+                          memID,
                           memName,
                           timeCheckedIn,
                           timeCheckedOut
                         ],
                       )),
-                ])));
+                    ])));
   }
 
   void _showToast(BuildContext context, String errorText) {
