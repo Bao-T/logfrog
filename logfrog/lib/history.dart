@@ -1,6 +1,5 @@
 //History class, will be owned by a 'site'
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:intl/intl.dart';
 
 //History class will have instances of an equipment being checked out at Objects site by a patron
 
@@ -24,9 +23,10 @@ class History {
   String get memID => _memID;
   String get memName => _memName;
   //String get username => _username;
+  String get timeCheckedOutString => _timeCheckedOut == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedOut);
+  String get timeCheckedInString =>  _timeCheckedIn == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedIn);
   DateTime get timeCheckedOut => _timeCheckedOut;
-  DateTime get timeCheckedIn => _timeCheckedIn;
-
+  DateTime get timeCheckedIn => timeCheckedIn;
   //creates history object mapping
   History.map(dynamic obj) {
     this._itemID = obj['itemID'];

@@ -485,6 +485,16 @@ class FirebaseFirestoreService {
     });
   }
 
+  Future<Patrons> getPatron(String barcodeIn) async{
+    Patrons p;
+    await equipmentCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
+      if (doc.exists) {
+        p = Patrons.fromMap(doc.data);
+      }
+    });
+    return p;
+  }
+
   //Fuction for checkin and checkout
   //Checks if a barcode coming in is a student ID
   //returns true if it is, false if not

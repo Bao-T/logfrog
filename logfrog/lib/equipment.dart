@@ -28,7 +28,7 @@ class Equipment {
   String get notes => _notes;
   String get itemType => _itemType;
   String get name => _name;
-  String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased); //reformats the date into MM-dd-yyyy
+  String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased.toLocal()); //reformats the date into MM-dd-yyyy
   String get status => _status;
 
   //mapping of object

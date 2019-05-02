@@ -214,6 +214,9 @@ class CheckoutPgState extends State<CheckoutPg> {
                       onPressed: () {
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
+                        dataNameList.clear();
+                        dataList.clear();
+                        dataSet.clear();
                       },
                     ),
                   ))
@@ -1053,6 +1056,7 @@ class ViewItemState extends State<ViewItem> {
     itemType.setString(widget.item.itemType);
     name.setString(widget.item.name);
     notes.setString(widget.item.notes);
+    status.setString(widget.item.status);
     purchased.setString(widget.item.thisPurchased);
     super.initState();
   }
@@ -1188,7 +1192,7 @@ class ViewItemState extends State<ViewItem> {
                                         name = FieldWidget(
                                             title: 'Item Name',
                                             hint: 'Enter Item Name',
-                                            validate: true);
+                                            validate: true, enabled: true,);
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
@@ -1401,11 +1405,11 @@ class ViewMemberState extends State<ViewMember> {
                                                   .itemName
                                                   .toString()),
                                               onTap: () {
-//                                  Navigator.push(
-//                                    context,
-//                                    MaterialPageRoute(
-//                                        builder: (context) => ViewItem(item: filteredItems[index])),
-//                                  );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => ViewHistory(hist: histories[index])),
+                                  );
                                               },
                                             );
                                           },
@@ -1425,7 +1429,7 @@ class ViewMemberState extends State<ViewMember> {
                                         firstName = FieldWidget(
                                             title: 'Item Name',
                                             hint: 'Enter Item Name',
-                                            validate: true);
+                                            validate: true, enabled: true);
                                       });
                                       _showToast(context,
                                           'Error: You must enter item name.');
@@ -1448,6 +1452,98 @@ class ViewMemberState extends State<ViewMember> {
                                   },
                                 ),
                         ])));
+  }
+
+  void _showToast(BuildContext context, String errorText) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(errorText),
+        action: SnackBarAction(
+            label: 'Okay', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
+}
+
+
+
+
+
+class ViewHistory extends StatefulWidget {
+  ViewHistory({Key key, this.hist}) : super(key: key);
+  final History hist;
+  @override
+  ViewHistoryState createState() => ViewHistoryState();
+}
+
+class ViewHistoryState extends State<ViewHistory> {
+  final DateTime dateNow = DateTime.now();
+  bool validateName = false;
+  bool editMode = false;
+  bool itemMode = false;
+  bool memMode = false;
+  @override
+  void initState() {
+
+    itemID.setString(widget.hist.itemID);
+    itemName.setString(widget.hist.itemName);
+    memID.setString(widget.hist.memID);
+    memName.setString(widget.hist.memName);
+    timeCheckedIn.setString(widget.hist.timeCheckedInString);
+    timeCheckedOut.setString(widget.hist.timeCheckedOutString);
+    super.initState();
+  }
+
+  void updateWidget() {
+    setState(() {});
+  }
+
+  FieldWidget itemID = FieldWidget(
+      title: 'Item ID', hint: '', enabled: false);
+  FieldWidget itemName = FieldWidget(
+      title: 'Item Name', hint: '', enabled: false);
+  FieldWidget memID = FieldWidget(
+      title: 'Member ID', hint: '', enabled: false);
+  FieldWidget memName = FieldWidget(
+      title: 'Member Name', hint: '', enabled: false);
+  FieldWidget timeCheckedIn = FieldWidget(
+      title: 'Time Checked In', hint: '', enabled: false);
+  FieldWidget timeCheckedOut = FieldWidget(
+      title: 'Time Checked Out', hint: '', enabled: false);
+  bool cameraView = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                })
+          ],
+          title:
+          editMode == false ? Text("History Details") : Text("Edit Details"),
+        ),
+        body:
+        Builder(
+            builder: (context) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                      child: ListView(
+                        children: <Widget>[
+                          itemID,
+                          itemName,
+                          itemID,
+                          memName,
+                          timeCheckedIn,
+                          timeCheckedOut
+                        ],
+                      )),
+                ])));
   }
 
   void _showToast(BuildContext context, String errorText) {
