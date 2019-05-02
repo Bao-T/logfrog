@@ -3,7 +3,7 @@ import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 //import 'package:logfrog/firebase_service.dart'; //importing to generate history objects
-import 'condensedDetectorPainters.dart';
+import 'package:logfrog/Depricated Code/condensedDetectorPainters.dart';
 import 'utils.dart';
 
 
