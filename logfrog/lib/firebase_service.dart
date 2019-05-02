@@ -64,7 +64,7 @@ class FirebaseFirestoreService {
       {String name,
       String itemID,
       String itemType,
-      DateTime purchased,
+      Timestamp purchased,
       String status,
       String condition,
       String notes}) async {
@@ -230,8 +230,8 @@ class FirebaseFirestoreService {
         String itemName,
         String memID,
         String memName,
-        DateTime timeCheckedIn,
-        DateTime timeCheckedOut }) async {
+        Timestamp timeCheckedIn,
+        Timestamp timeCheckedOut }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
         ds = await tx.get(equipmentCollection.document(site).collection("History").document());
@@ -258,7 +258,7 @@ class FirebaseFirestoreService {
       {String name,
         String itemID,
         String itemType,
-        DateTime purchased,
+        Timestamp purchased,
         String status,
         String condition,
         String notes}) async {
@@ -336,8 +336,8 @@ class FirebaseFirestoreService {
       String memID, //member checking in/out
       String memName, //name of member checking in/out
       //String _username; //_username of member checking in/out
-      DateTime timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-      DateTime timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
+      Timestamp timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+      Timestamp timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
   ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;

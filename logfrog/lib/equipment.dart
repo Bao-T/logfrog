@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 //Following this tutorial for building the class
@@ -15,7 +16,7 @@ class Equipment {
   String _itemType; //type of object (camera, lens, etc.)
   String _name; //object name, if any
   String _notes; //Any additional notes can go here
-  DateTime _purchased; //Date purchased for equipment (defaults to date added to database if not given)
+  Timestamp _purchased; //Date purchased for equipment (defaults to date added to database if not given)
   String _status; //Checked in or checked out status
   
   //Equipment mapping
@@ -28,7 +29,7 @@ class Equipment {
   String get notes => _notes;
   String get itemType => _itemType;
   String get name => _name;
-  String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased.toLocal()); //reformats the date into MM-dd-yyyy
+  String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased.toDate()); //reformats the date into MM-dd-yyyy
   String get status => _status;
 
   //mapping of object

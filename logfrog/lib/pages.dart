@@ -147,8 +147,8 @@ class CheckoutPgState extends State<CheckoutPg> {
           .document(itemID)
           .get();
       String itemName = item.data["Name"].toString();
-      DateTime timeCheckedIn;
-      DateTime timeCheckedOut = DateTime.now();
+      Timestamp timeCheckedIn;
+      Timestamp timeCheckedOut = Timestamp.now();
       fs.createHistory(
           itemID: itemID,
           itemName: itemName,
@@ -275,7 +275,7 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["memID"],
           historyObj.documents[0].data["memName"],
           historyObj.documents[0].data["timeCheckedOut"],
-          DateTime.now());
+          Timestamp.now());
     } else {
       print("This item DNE or is currently not checked out yet.");
     }
@@ -773,11 +773,11 @@ class AddItem extends StatefulWidget {
 }
 
 class AddItemState extends State<AddItem> {
-  final DateTime dateNow = DateTime.now();
+  final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   @override
   void initState() {
-    purchased.setString(DateFormat('MM-dd-yyyy').format(DateTime.now()));
+    purchased.setString(DateFormat('MM-dd-yyyy').format(Timestamp.now().toDate()));
     super.initState();
   }
 
@@ -910,7 +910,7 @@ class AddMember extends StatefulWidget {
 }
 
 class AddMemberState extends State<AddMember> {
-  final DateTime dateNow = DateTime.now();
+  final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
 
   @override
@@ -1046,7 +1046,7 @@ class ViewItem extends StatefulWidget {
 }
 
 class ViewItemState extends State<ViewItem> {
-  final DateTime dateNow = DateTime.now();
+  final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   bool editMode = false;
   @override
@@ -1240,7 +1240,7 @@ class ViewMember extends StatefulWidget {
 }
 
 class ViewMemberState extends State<ViewMember> {
-  final DateTime dateNow = DateTime.now();
+  final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   bool editMode = false;
   List<History> histories;
@@ -1478,7 +1478,7 @@ class ViewHistory extends StatefulWidget {
 }
 
 class ViewHistoryState extends State<ViewHistory> {
-  final DateTime dateNow = DateTime.now();
+  final Timestamp dateNow = Timestamp.now();
   bool validateName = false;
   bool editMode = false;
   bool itemMode = false;

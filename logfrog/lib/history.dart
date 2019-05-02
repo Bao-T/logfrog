@@ -1,6 +1,6 @@
 //History class, will be owned by a 'site'
 import 'package:intl/intl.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 //History class will have instances of an equipment being checked out at Objects site by a patron
 
 class History {
@@ -11,8 +11,8 @@ class History {
   String _memID; //member checking in/out
   String _memName; //name of member checking in/out
   //String _username; //_username of member checking in/out
-  DateTime _timeCheckedOut;//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-  DateTime _timeCheckedIn; //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)
+  Timestamp _timeCheckedOut;//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+  Timestamp _timeCheckedIn; //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)
 
   //Creates a history object from a map with all fields filled
   History(this._itemID, this._itemName, this._memID, this._memName, this._timeCheckedOut, this._timeCheckedIn);
@@ -23,10 +23,10 @@ class History {
   String get memID => _memID;
   String get memName => _memName;
   //String get username => _username;
-  String get timeCheckedOutString => _timeCheckedOut == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedOut);
-  String get timeCheckedInString =>  _timeCheckedIn == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedIn);
-  DateTime get timeCheckedOut => _timeCheckedOut;
-  DateTime get timeCheckedIn => timeCheckedIn;
+  String get timeCheckedOutString => _timeCheckedOut == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedOut.toDate());
+  String get timeCheckedInString =>  _timeCheckedIn == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedIn.toDate());
+  Timestamp get timeCheckedOut => _timeCheckedOut;
+  Timestamp get timeCheckedIn => timeCheckedIn;
   //creates history object mapping
   History.map(dynamic obj) {
     this._itemID = obj['itemID'];
