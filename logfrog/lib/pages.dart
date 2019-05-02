@@ -604,6 +604,7 @@ class DatabasePgState extends State<DatabasePg> {
         setState(() {
           _searchText = "";
           filteredItems = items;
+          filteredMems = mems;
         });
       } else {
         setState(() {
@@ -735,6 +736,7 @@ class DatabasePgState extends State<DatabasePg> {
         this._searchIcon = new Icon(Icons.search);
         this._appBarTitle = new Text('Database');
         filteredItems = items;
+        filteredMems = mems;
         _filter.clear();
       }
     });
