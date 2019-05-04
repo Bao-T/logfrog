@@ -55,7 +55,27 @@ class FirebaseFirestoreService {
     objectCollection.document(site).collection("History").where("memID", isEqualTo: memID).snapshots();
     return snapshots;
   }
+  Stream<QuerySnapshot> getHistories(){
+    Stream<QuerySnapshot> snapshots =
+    objectCollection.document(site).collection("History").orderBy("timeCheckedOut", descending: true).snapshots();
+    return snapshots;
+  }
+  
+  Stream<QuerySnapshot> getItemsQuery(String itemType, String status, String sortBy, bool desc){
+    CollectionReference docs = objectCollection.document(site).collection("Items");
+    if (itemType != null){
+      docs = docs.where("ItemType", isEqualTo: itemType);
+    }
+    if(status != null){
+      docs = docs.where("Status", isEqualTo: status);
+    }
+    if (sortBy != null && desc!= null)
+      {
+        docs = docs.orderBy(sortBy, descending: desc);
+      }
 
+    return docs.snapshots();
+  }
 
 
   //create an equipment asynchronously
