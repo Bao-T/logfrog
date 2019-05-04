@@ -89,19 +89,18 @@ class CheckoutPgState extends State<CheckoutPg> {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
-      setState(() {
-        dataList.add(code);
-        objectCollection
+        objectCollection //retrieves snapshot of that student
             .document(widget.site)
             .collection("Items")
             .document(code)
             .get()
             .then((doc) {
-          //retrieves snapshot of that student
-          dataNameList.add(doc.data['Name']);
+              setState(() { //adds the valid equipment barcode and name
+                dataList.add(code);
+                dataNameList.add(doc.data['Name']);
+              });
         });
         //player.play(alarmAudioPath);
-      });
     } else {
       //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
@@ -138,7 +137,7 @@ class CheckoutPgState extends State<CheckoutPg> {
             if (dataSet.contains(code) == false) {
               dataSet.add(code); //adds code to codes seen
               validate(
-                  code); //runs validate checks using firebase_service.dart functions
+                  code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
             }
             return true;
           },
@@ -146,7 +145,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         ),
       ),
     );
-    //User info (for scanned users????))
+    //User info for scanned users displayed by camera view
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
@@ -154,8 +153,11 @@ class CheckoutPgState extends State<CheckoutPg> {
     ));
   }
 
+  //Builds transaction when button is pushed
+  //Builds new history object for each scanned barcode
   Future<dynamic> finalTransaction(
       String memID, String memName, List<String> itemIds) async {
+    //For each item scanned, builds a history object
     for (int i = 0; i < dataList.length; i++) {
       String itemID = dataList[i];
       var item = await Firestore.instance
@@ -165,22 +167,23 @@ class CheckoutPgState extends State<CheckoutPg> {
           .document(itemID)
           .get();
       String itemName = item.data["Name"].toString();
-      Timestamp timeCheckedIn;
+      Timestamp timeCheckedIn; //null for now, will be filled when equipment
       Timestamp timeCheckedOut = Timestamp.now();
       fs.createHistory(
           itemID: itemID,
           itemName: itemName,
           memID: memID,
           memName: memName,
-          timeCheckedIn: null,
+          timeCheckedIn: null, //Note that null is the default timeCheckedIn
           timeCheckedOut: timeCheckedOut);
     }
     return null;
   }
 
+
+  //Building context for page: aligning camera view, user info, etc.
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
         appBar: AppBar(title: Text('Check-out')),
         body: Padding(
@@ -192,24 +195,27 @@ class CheckoutPgState extends State<CheckoutPg> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo],
+                      children: <Widget>[camera, userInfo], //top row  of screen has the camera and the userinfo displays
                     ),
                   )),
               Expanded(
                   flex: 10,
-                  child: Card(
+                  child: Card( //Pops up checked out objects when they process below camer and user info
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible(
+                        //For each key, if the box that appears can be dismissed to cancel the transaction
                           key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) {
+                          onDismissed: (direction) { //IF DISMISSED:
                             debugPrint(
                                 index.toString() + " " + dataList[index]);
-                            dataSet.remove(dataList[index]);
+                            dataSet.remove(dataList[index]); //Remove the code
                             dataList.removeAt(index);
-                            dataNameList.removeAt(index);
+                            dataNameList.removeAt(index); //remove the name
                           },
+                          //NOT USED- location for adding a ontap action for the equipment cards
+                          //
                           child: Column(children: <Widget>[
                             InkWell(
                                 onTap: () {
@@ -221,28 +227,37 @@ class CheckoutPgState extends State<CheckoutPg> {
                                         title: Text(dataNameList[index])))),
                             Divider()
                           ]));
+                          //
+                          //NOT USED
                     },
                   ))),
-              Expanded(
+              Expanded( //Final transaction button widget
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
                       color: Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: () {
+                      onPressed: () {  //When button is pressed, will create history documents for each scanned item under the current user
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
+                        //Clearing transaction fields for next user
                         dataNameList.clear();
                         dataList.clear();
                         dataSet.clear();
+                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
             ]))));
   }
 }
-// End of page template and page functionality
+// End of CheckOutPage
 
+
+//CheckInPage for scanning in checked out items
+//Will not need users to scan their ids to check items back in, just scan item
+//If it is checked out, it will let the user check the item back in
+//If it is not checked out, will throw a popup informing user
 class CheckinPg extends StatefulWidget {
   CheckinPg({Key key, this.site}) : super(key: key);
   final site;
