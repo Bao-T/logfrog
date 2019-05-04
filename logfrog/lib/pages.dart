@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'liveCamera.dart';
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
@@ -17,7 +16,7 @@ import 'package:qr_mobile_vision/qr_camera.dart';
 
 String
     dataSite; //site for the user- tells firebase which initial document to access
-
+bool frontCamera = false;
 const alarmAudioPath = "beep.mp3"; //check in checkout scanner beep
 
 //Checkout Page:  Students will open this page to checkout equipment
@@ -48,19 +47,12 @@ class CheckoutPgState extends State<CheckoutPg> {
       currentMemberID; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
   CustomScrollView database; //??
-  int cameraIndex = 0; //??
   FirebaseFirestoreService fs;
   Stream<QuerySnapshot>
       itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
   Stream<QuerySnapshot>
       memberStream; //stream for members query (is this ALL students??)
   //Setting up camera for scanning
-  changeCamera() {
-    setState(() {
-      cameraIndex = (cameraIndex + 1) % 2;
-      print('tap' + cameraIndex.toString());
-    });
-  }
 
   Future validate(String code) async {
     //checking if a student exists under the current scanned barcode
@@ -90,18 +82,19 @@ class CheckoutPgState extends State<CheckoutPg> {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
-        objectCollection //retrieves snapshot of that student
-            .document(widget.site)
-            .collection("Items")
-            .document(code)
-            .get()
-            .then((doc) {
-              setState(() { //adds the valid equipment barcode and name
-                dataList.add(code);
-                dataNameList.add(doc.data['Name']);
-              });
+      objectCollection //retrieves snapshot of that student
+          .document(widget.site)
+          .collection("Items")
+          .document(code)
+          .get()
+          .then((doc) {
+        setState(() {
+          //adds the valid equipment barcode and name
+          dataList.add(code);
+          dataNameList.add(doc.data['Name']);
         });
-        //player.play(alarmAudioPath);
+      });
+      //player.play(alarmAudioPath);
     } else {
       //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
@@ -129,43 +122,27 @@ class CheckoutPgState extends State<CheckoutPg> {
     fs = FirebaseFirestoreService(widget.site); //connecting to firebase
     //setting up camera
     camera = new GestureDetector(
-      onTap: changeCamera,
+      onTap: () {},
       child: Card(
-        margin: EdgeInsets.all(5.0),
-        child: new SizedBox(
-          width: 300.0,
-          height: 600.0,
-          child: new QrCamera(
-              front: false,
-              onError: (context, error) => Text(
-                error.toString(),
-                style: TextStyle(color: Colors.red),
-              ),
-              qrCodeCallback: (code) {
-                setState(() {
-                  print(code);
-                });
-              }))
-
-
-
-
-//        LiveBarcodeScanner(
-//          onBarcode: (code) {
-//            //when a code is scanned
-//            if (dataSet.contains(code) == false) {
-//              dataSet.add(code); //adds code to codes seen
-//              validate(
-//                  code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
-//            }
-//            return true;
-//          },
-//          cameraIndex: cameraIndex,
-//        ),
-
-
-
-      ),
+          margin: EdgeInsets.all(5.0),
+          child: new SizedBox(
+              width: 200.0,
+              height: 300.0,
+              child: new QrCamera(
+                  front: frontCamera,
+                  onError: (context, error) => Text(
+                        error.toString(),
+                        style: TextStyle(color: Colors.red),
+                      ),
+                  qrCodeCallback: (code) {
+                    setState(() {
+                      if (dataSet.contains(code) == false) {
+                        dataSet.add(code); //adds code to codes seen
+                        validate(
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                      }
+                    });
+                  }))),
     );
     //User info for scanned users displayed by camera view
     userInfo = Expanded(
@@ -202,7 +179,6 @@ class CheckoutPgState extends State<CheckoutPg> {
     return null;
   }
 
-
   //Building context for page: aligning camera view, user info, etc.
   @override
   Widget build(BuildContext context) {
@@ -217,19 +193,24 @@ class CheckoutPgState extends State<CheckoutPg> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo], //top row  of screen has the camera and the userinfo displays
+                      children: <Widget>[
+                        camera,
+                        userInfo
+                      ], //top row  of screen has the camera and the userinfo displays
                     ),
                   )),
               Expanded(
                   flex: 10,
-                  child: Card( //Pops up checked out objects when they process below camer and user info
+                  child: Card(
+                      //Pops up checked out objects when they process below camer and user info
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible(
-                        //For each key, if the box that appears can be dismissed to cancel the transaction
+                          //For each key, if the box that appears can be dismissed to cancel the transaction
                           key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) { //IF DISMISSED:
+                          onDismissed: (direction) {
+                            //IF DISMISSED:
                             debugPrint(
                                 index.toString() + " " + dataList[index]);
                             dataSet.remove(dataList[index]); //Remove the code
@@ -249,24 +230,27 @@ class CheckoutPgState extends State<CheckoutPg> {
                                         title: Text(dataNameList[index])))),
                             Divider()
                           ]));
-                          //
-                          //NOT USED
+                      //
+                      //NOT USED
                     },
                   ))),
-              Expanded( //Final transaction button widget
+              Expanded(
+                  //Final transaction button widget
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
                       color: Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: () {  //When button is pressed, will create history documents for each scanned item under the current user
+                      onPressed: () {
+                        //When button is pressed, will create history documents for each scanned item under the current user
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
                         //Clearing transaction fields for next user
                         dataNameList.clear();
                         dataList.clear();
                         dataSet.clear();
-                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                        currentMemberID =
+                            null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
@@ -274,7 +258,6 @@ class CheckoutPgState extends State<CheckoutPg> {
   }
 }
 // End of CheckOutPage
-
 
 //CheckInPage for scanning in checked out items
 //Will not need users to scan their ids to check items back in, just scan item
@@ -304,12 +287,6 @@ class CheckinPgState extends State<CheckinPg> {
   FirebaseFirestoreService fs;
   Stream<QuerySnapshot> itemStream;
   Stream<QuerySnapshot> memberStream;
-  changeCamera() {
-    setState(() {
-      cameraIndex = (cameraIndex + 1) % 2;
-      print('tap' + cameraIndex.toString());
-    });
-  }
 
   Future validate(String code) async {
     var historyObj = await Firestore.instance
@@ -341,26 +318,29 @@ class CheckinPgState extends State<CheckinPg> {
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
     camera = new GestureDetector(
-      onTap: changeCamera,
+      onTap: () {},
       child: Card(
-        margin: EdgeInsets.all(5.0),
-        child: LiveBarcodeScanner(
-          onBarcode: (code) {
-            //print(code);
-            if (dataSet.contains(code) == false) {
-              dataSet.add(code);
-              print(code);
-              validate(code);
-
-              //Create widgets for scanned items
-              //debugPrint(dataWidget.toString());
-            }
-            return true;
-          },
-          cameraIndex: cameraIndex,
-        ),
-      ),
+          margin: EdgeInsets.all(5.0),
+          child: new SizedBox(
+              width: 200.0,
+              height: 300.0,
+              child: new QrCamera(
+                  front: frontCamera,
+                  onError: (context, error) => Text(
+                        error.toString(),
+                        style: TextStyle(color: Colors.red),
+                      ),
+                  qrCodeCallback: (code) {
+                    setState(() {
+                      if (dataSet.contains(code) == false) {
+                        dataSet.add(code); //adds code to codes seen
+                        validate(
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                      }
+                    });
+                  }))),
     );
+
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
@@ -883,16 +863,21 @@ class AddItemState extends State<AddItem> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        itemId.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              itemId.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1024,16 +1009,21 @@ class AddMemberState extends State<AddMember> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        memberID.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              memberID.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1209,16 +1199,21 @@ class ViewItemState extends State<ViewItem> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        itemId.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              itemId.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1415,16 +1410,21 @@ class ViewMemberState extends State<ViewMember> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        id.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              id.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1469,7 +1469,7 @@ class ViewMemberState extends State<ViewMember> {
                                         child: Text("History",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                            fontSize: 16.0))),
+                                                fontSize: 16.0))),
                                     Container(
                                         height: 500,
                                         child: ListView.separated(
