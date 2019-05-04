@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
+import 'package:qr_mobile_vision/qr_camera.dart';
 
 String
     dataSite; //site for the user- tells firebase which initial document to access
@@ -131,18 +132,39 @@ class CheckoutPgState extends State<CheckoutPg> {
       onTap: changeCamera,
       child: Card(
         margin: EdgeInsets.all(5.0),
-        child: LiveBarcodeScanner(
-          onBarcode: (code) {
-            //when a code is scanned
-            if (dataSet.contains(code) == false) {
-              dataSet.add(code); //adds code to codes seen
-              validate(
-                  code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
-            }
-            return true;
-          },
-          cameraIndex: cameraIndex,
-        ),
+        child: new SizedBox(
+          width: 300.0,
+          height: 600.0,
+          child: new QrCamera(
+              front: false,
+              onError: (context, error) => Text(
+                error.toString(),
+                style: TextStyle(color: Colors.red),
+              ),
+              qrCodeCallback: (code) {
+                setState(() {
+                  print(code);
+                });
+              }))
+
+
+
+
+//        LiveBarcodeScanner(
+//          onBarcode: (code) {
+//            //when a code is scanned
+//            if (dataSet.contains(code) == false) {
+//              dataSet.add(code); //adds code to codes seen
+//              validate(
+//                  code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+//            }
+//            return true;
+//          },
+//          cameraIndex: cameraIndex,
+//        ),
+
+
+
       ),
     );
     //User info for scanned users displayed by camera view
