@@ -506,6 +506,11 @@ class DatabasePgState extends State<DatabasePg> {
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
   String _mode = "Items";
+  List<Widget> itemFilters;
+  String itemType = '';
+  String availability = '';
+  String sort = '';
+  bool order = true;
   DatabasePgState(String site) {
     dataSite = site;
     fs = new FirebaseFirestoreService(dataSite);
@@ -527,7 +532,9 @@ class DatabasePgState extends State<DatabasePg> {
   @override
   void initState() {
     itemSub?.cancel();
-    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
+    this.itemSub = fs
+        .getItemsQuery(itemType, availability, sort, order)
+        .listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
           .toList();
@@ -724,32 +731,184 @@ class DatabasePgState extends State<DatabasePg> {
     return Scaffold(
       appBar: AppBar(
         title: _appBarTitle,
-        leading: new IconButton(
-          icon: _searchIcon,
-          onPressed: _searchPressed,
-        ),
         actions: <Widget>[
-          DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                  value: _mode,
-                  items: <DropdownMenuItem<String>>[
-                    DropdownMenuItem(
-                      child: Text('Items'),
-                      value: 'Items',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('Members'),
-                      value: 'Members',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('History'),
-                      value: 'History',
-                    )
-                  ],
-                  onChanged: (String mode) {
-                    setState(() => _mode = mode);
-                  }))
+          new IconButton(
+            icon: _searchIcon,
+            onPressed: _searchPressed,
+          )
         ],
+      ),
+      drawer: Drawer(
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: 50,
+            ),
+            Divider(),
+            ListTile(
+                title: Text("View"),
+                trailing: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                        value: _mode,
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            child: Text('Items'),
+                            value: 'Items',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('Members'),
+                            value: 'Members',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('History'),
+                            value: 'History',
+                          )
+                        ],
+                        onChanged: (String mode) {
+                          setState(() => _mode = mode);
+                        }))),
+            Divider(),
+            Container(
+              height: 100,
+            ),
+            _mode != "Items"
+                ? Container()
+                : Column(
+                    children: <Widget>[
+                      Center(child: Text("Filters")),
+                      Divider(),
+                      ListTile(
+                        enabled: false,
+                        title: Text('Item Type'),
+                      ),
+                      Divider(),
+                      ListTile(
+                          title: Text('Item Status'),
+                          trailing: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                  value: availability,
+                                  items: <DropdownMenuItem<String>>[
+                                    DropdownMenuItem(
+                                      child: Text('All'),
+                                      value: '',
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Available'),
+                                      value: 'available',
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Unavailable'),
+                                      value: 'unavailable',
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Discontinued'),
+                                      value: 'discontinued',
+                                    )
+                                  ],
+                                  onChanged: (String avail) {
+                                    setState(() {
+                                      availability = avail;
+                                      itemSub?.cancel();
+                                      this.itemSub = fs
+                                          .getItemsQuery(itemType, availability,
+                                              sort, order)
+                                          .listen((QuerySnapshot snapshot) {
+                                        final List<Equipment> equipment =
+                                            snapshot.documents
+                                                .map((documentSnapshot) =>
+                                                    Equipment.fromMap(
+                                                        documentSnapshot.data))
+                                                .toList();
+                                        setState(() {
+                                          this.items = equipment;
+                                          this.filteredItems = items;
+                                        });
+                                      });
+                                    });
+                                  }))),
+                      Divider(),
+                      ListTile(
+                          title: Text('Sort By'),
+                          trailing: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                  value: sort,
+                                  items: <DropdownMenuItem<String>>[
+                                    DropdownMenuItem(
+                                      child: Text('None'),
+                                      value: '',
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Item Name'),
+                                      value: 'Name',
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Date'),
+                                      value: 'Purchased',
+                                    ),
+                                  ],
+                                  onChanged: (String srt) {
+                                    setState(() {
+                                      sort = srt;
+                                      itemSub?.cancel();
+                                      this.itemSub = fs
+                                          .getItemsQuery(itemType, availability,
+                                              sort, order)
+                                          .listen((QuerySnapshot snapshot) {
+                                        final List<Equipment> equipment =
+                                            snapshot.documents
+                                                .map((documentSnapshot) =>
+                                                    Equipment.fromMap(
+                                                        documentSnapshot.data))
+                                                .toList();
+                                        setState(() {
+                                          this.items = equipment;
+                                          this.filteredItems = items;
+                                        });
+                                      });
+                                    });
+                                  }))),
+                      Divider(),
+                      ListTile(
+                          title: Text('Order'),
+                          trailing: DropdownButtonHideUnderline(
+                              child: DropdownButton<bool>(
+                                  value: order,
+                                  items: <DropdownMenuItem<bool>>[
+                                    DropdownMenuItem(
+                                      child: Text('Ascending'),
+                                      value: false,
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Text('Descending'),
+                                      value: true,
+                                    ),
+                                  ],
+                                  onChanged: (bool ord) {
+                                    setState(() {
+                                      order = ord;
+                                      itemSub?.cancel();
+                                      this.itemSub = fs
+                                          .getItemsQuery(itemType, availability,
+                                              sort, order)
+                                          .listen((QuerySnapshot snapshot) {
+                                        final List<Equipment> equipment =
+                                            snapshot.documents
+                                                .map((documentSnapshot) =>
+                                                    Equipment.fromMap(
+                                                        documentSnapshot.data))
+                                                .toList();
+                                        setState(() {
+                                          this.items = equipment;
+                                          this.filteredItems = items;
+                                        });
+                                      });
+                                    });
+                                  }))),
+                      Divider()
+                    ],
+                  )
+          ],
+        ),
       ),
       body: Container(child: _buildListView(_mode)),
       resizeToAvoidBottomPadding: false,
