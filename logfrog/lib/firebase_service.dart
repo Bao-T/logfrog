@@ -68,8 +68,7 @@ class FirebaseFirestoreService {
 
   Stream<QuerySnapshot> getItemsQuery(
       String itemType, String status, String sortBy, bool desc) {
-    Query docs =
-        objectCollection.document(site).collection("Items");
+    Query docs = objectCollection.document(site).collection("Items");
     if (itemType != "") {
       docs = docs.where("ItemType", isEqualTo: itemType);
       print("Type");
@@ -98,6 +97,7 @@ class FirebaseFirestoreService {
       String notes}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       //creating firestore transaction
+      print(site);
       DocumentSnapshot ds;
       if (itemID != "") {
         //Default itemID is "" ????
@@ -600,6 +600,49 @@ class FirebaseFirestoreService {
         .catchError((error) {
       print('error: $error');
       return false;
+    });
+  }
+
+  Future<void> updateItemTypes(String newItemType) async {
+//    final DocumentReference doc = objectCollection.document(site);
+//    try {
+//      Firestore.instance.runTransaction((Transaction tx) async {
+//      DocumentSnapshot docSnapshot = await tx.get(doc).then(onValue);
+//      if (docSnapshot.exists) {
+//        List<String> itemTypes = docSnapshot["ItemTypes"];
+//        if (!itemTypes.contains(newItemType)) {
+//          print("here");
+//          await tx.update(doc,
+//              <String, dynamic>{
+//                'ItemTypes': docSnapshot.data['ItemTyps'] + newItemType
+//              });
+//        }
+//      }
+//      });
+//    } catch (e) {print(e.toString());}
+    final DocumentReference postRef = objectCollection.document(site);
+
+    Firestore.instance.runTransaction((Transaction tx) async {
+      try {
+        DocumentSnapshot postSnapshot = await tx.get(postRef);
+        if (postSnapshot.exists) {
+          if (!postSnapshot.data.containsKey('ItemTypes')) {
+            print("here");
+            await tx.set(postRef, <String, dynamic>{
+              'ItemTypes': [newItemType]
+            });
+            postSnapshot = await tx.get(postRef);
+          } else if (postSnapshot.data.containsKey('ItemTypes')) {
+            if (!postSnapshot.data['ItemTypes'].contains(newItemType)) {
+              await tx.update(postRef, <String, dynamic>{
+                'ItemTypes': postSnapshot.data['ItemTypes'] + [newItemType]
+              });
+            }
+          }
+        }
+      } catch (e) {
+        print(e.toString());
+      }
     });
   }
 }
