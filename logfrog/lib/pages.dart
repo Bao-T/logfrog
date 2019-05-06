@@ -268,20 +268,27 @@ class CheckinPg extends StatefulWidget {
 class CheckinPgState extends State<CheckinPg> {
   //static AudioCache player = new AudioCache();
 
-  var ori = Orientation.portrait;
+  var ori = Orientation.portrait; //camera set up
+  //Updating history stuff
   Set<String> dataSet = {};
   List<String> dataList = [];
   List<String> dataNameList = [];
   List<Widget> dataWidget = [];
+  //
   GestureDetector camera;
+  //User info
   Expanded userInfo;
   String currentMemberID = '';
   String currentMemberName = '';
+  //
   CustomScrollView database;
   int cameraIndex = 0;
+  //Firebase database and streams
   FirebaseFirestoreService fs;
   Stream<QuerySnapshot> itemStream;
   Stream<QuerySnapshot> memberStream;
+  //
+  //Setup camera
   changeCamera() {
     setState(() {
       cameraIndex = (cameraIndex + 1) % 2;
@@ -289,8 +296,9 @@ class CheckinPgState extends State<CheckinPg> {
     });
   }
 
+  //Upon code being scanned, update the history
   Future validate(String code) async {
-    var historyObj = await Firestore.instance
+    var historyObj = await Firestore.instance //get the historyObj from firebase (search by itemID)
         .collection('Objects')
         .document(widget.site)
         .collection('History')
@@ -298,7 +306,7 @@ class CheckinPgState extends State<CheckinPg> {
         .orderBy("timeCheckedOut", descending: true)
         .limit(1)
         .getDocuments();
-
+    //Note that this must search through all items stored with that ID
     if (historyObj.documents.isNotEmpty &&
         historyObj.documents[0].data["timeCheckedIn"] == null) {
       fs.updateHistory(
