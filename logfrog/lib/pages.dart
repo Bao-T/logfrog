@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'liveCamera.dart';
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
@@ -89,18 +88,19 @@ class CheckoutPgState extends State<CheckoutPg> {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
-        objectCollection //retrieves snapshot of that student
-            .document(widget.site)
-            .collection("Items")
-            .document(code)
-            .get()
-            .then((doc) {
-              setState(() { //adds the valid equipment barcode and name
-                dataList.add(code);
-                dataNameList.add(doc.data['Name']);
-              });
+      objectCollection //retrieves snapshot of that student
+          .document(widget.site)
+          .collection("Items")
+          .document(code)
+          .get()
+          .then((doc) {
+        setState(() {
+          //adds the valid equipment barcode and name
+          dataList.add(code);
+          dataNameList.add(doc.data['Name']);
         });
-        //player.play(alarmAudioPath);
+      });
+      //player.play(alarmAudioPath);
     } else {
       //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
@@ -128,22 +128,27 @@ class CheckoutPgState extends State<CheckoutPg> {
     fs = FirebaseFirestoreService(widget.site); //connecting to firebase
     //setting up camera
     camera = new GestureDetector(
-      onTap: changeCamera,
+      onTap: () {},
       child: Card(
-        margin: EdgeInsets.all(5.0),
-        child: LiveBarcodeScanner(
-          onBarcode: (code) {
-            //when a code is scanned
-            if (dataSet.contains(code) == false) {
-              dataSet.add(code); //adds code to codes seen
-              validate(
-                  code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
-            }
-            return true;
-          },
-          cameraIndex: cameraIndex,
-        ),
-      ),
+          margin: EdgeInsets.all(5.0),
+          child: new SizedBox(
+              width: 200.0,
+              height: 300.0,
+              child: new QrCamera(
+                  front: frontCamera,
+                  onError: (context, error) => Text(
+                        error.toString(),
+                        style: TextStyle(color: Colors.red),
+                      ),
+                  qrCodeCallback: (code) {
+                    setState(() {
+                      if (dataSet.contains(code) == false) {
+                        dataSet.add(code); //adds code to codes seen
+                        validate(
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                      }
+                    });
+                  }))),
     );
     //User info for scanned users displayed by camera view
     userInfo = Expanded(
@@ -180,7 +185,6 @@ class CheckoutPgState extends State<CheckoutPg> {
     return null;
   }
 
-
   //Building context for page: aligning camera view, user info, etc.
   @override
   Widget build(BuildContext context) {
@@ -195,19 +199,24 @@ class CheckoutPgState extends State<CheckoutPg> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo], //top row  of screen has the camera and the userinfo displays
+                      children: <Widget>[
+                        camera,
+                        userInfo
+                      ], //top row  of screen has the camera and the userinfo displays
                     ),
                   )),
               Expanded(
                   flex: 10,
-                  child: Card( //Pops up checked out objects when they process below camer and user info
+                  child: Card(
+                      //Pops up checked out objects when they process below camer and user info
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible(
-                        //For each key, if the box that appears can be dismissed to cancel the transaction
+                          //For each key, if the box that appears can be dismissed to cancel the transaction
                           key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) { //IF DISMISSED:
+                          onDismissed: (direction) {
+                            //IF DISMISSED:
                             debugPrint(
                                 index.toString() + " " + dataList[index]);
                             dataSet.remove(dataList[index]); //Remove the code
@@ -227,24 +236,27 @@ class CheckoutPgState extends State<CheckoutPg> {
                                         title: Text(dataNameList[index])))),
                             Divider()
                           ]));
-                          //
-                          //NOT USED
+                      //
+                      //NOT USED
                     },
                   ))),
-              Expanded( //Final transaction button widget
+              Expanded(
+                  //Final transaction button widget
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
                       color: Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: () {  //When button is pressed, will create history documents for each scanned item under the current user
+                      onPressed: () {
+                        //When button is pressed, will create history documents for each scanned item under the current user
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
                         //Clearing transaction fields for next user
                         dataNameList.clear();
                         dataList.clear();
                         dataSet.clear();
-                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                        currentMemberID =
+                            null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
@@ -252,7 +264,6 @@ class CheckoutPgState extends State<CheckoutPg> {
   }
 }
 // End of CheckOutPage
-
 
 //CheckInPage for scanning in checked out items
 //Will not need users to scan their ids to check items back in, just scan item
@@ -327,26 +338,29 @@ class CheckinPgState extends State<CheckinPg> {
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
     camera = new GestureDetector(
-      onTap: changeCamera,
+      onTap: () {},
       child: Card(
-        margin: EdgeInsets.all(5.0),
-        child: LiveBarcodeScanner(
-          onBarcode: (code) {
-            //print(code);
-            if (dataSet.contains(code) == false) {
-              dataSet.add(code);
-              print(code);
-              validate(code);
-
-              //Create widgets for scanned items
-              //debugPrint(dataWidget.toString());
-            }
-            return true;
-          },
-          cameraIndex: cameraIndex,
-        ),
-      ),
+          margin: EdgeInsets.all(5.0),
+          child: new SizedBox(
+              width: 200.0,
+              height: 300.0,
+              child: new QrCamera(
+                  front: frontCamera,
+                  onError: (context, error) => Text(
+                        error.toString(),
+                        style: TextStyle(color: Colors.red),
+                      ),
+                  qrCodeCallback: (code) {
+                    setState(() {
+                      if (dataSet.contains(code) == false) {
+                        dataSet.add(code); //adds code to codes seen
+                        validate(
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                      }
+                    });
+                  }))),
     );
+
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
@@ -444,116 +458,6 @@ class PageHomeState extends State<PageHome> {
   }
 }
 
-//adapted from: https://medium.com/coding-with-flutter/take-your-flutter-tests-to-the-next-level-e2fb15641809
-//date accessed: 3/21/2019
-
-class LoginPage extends StatefulWidget {
-  LoginPage({Key key, this.title, this.callback}) : super(key: key);
-  Function callback;
-  final String title;
-  bool testMode = false;
-  bool loginComplete = false;
-
-  @override
-  _LoginPageState createState() => new _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  static final formKey = new GlobalKey<FormState>();
-
-  String _email;
-  String _password;
-  String _authHint = '';
-
-  bool validateAndSave() {
-    final form = formKey.currentState;
-    if (form.validate()) {
-      form.save();
-      return true;
-    }
-    return false;
-  }
-
-  //TODO: Execute when username and password are successfully validated.
-  void loginComplete() {
-    widget.loginComplete = true;
-    widget.callback();
-  }
-
-  //TODO: Connect with firebase Users document.
-  void validateAndSubmit() async {
-    if (validateAndSave()) {
-      try {
-        FirebaseUser user = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(email: _email, password: _password);
-        setState(() {
-          loginComplete();
-          _authHint = 'Success\n\nUser id: ${user.uid}';
-        });
-      } catch (e) {
-        setState(() {
-          _authHint = 'Sign In Error\n\n${e.toString()}';
-        });
-      }
-    } else {
-      setState(() {
-        _authHint = '';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
-        appBar: new AppBar(
-          title: new Text(widget.title),
-        ),
-        body: new Container(
-            padding: const EdgeInsets.all(16.0),
-            child: new Form(
-                key: formKey,
-                child: new Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    new TextFormField(
-                      key: new Key('email'),
-                      decoration: new InputDecoration(labelText: 'Email'),
-                      validator: (val) =>
-                          val.isEmpty ? 'Email can\'t be empty.' : null,
-                      onSaved: (val) => _email = val,
-                    ),
-                    new TextFormField(
-                      key: new Key('password'),
-                      decoration: new InputDecoration(labelText: 'Password'),
-                      obscureText: true,
-                      validator: (val) =>
-                          val.isEmpty ? 'Password can\'t be empty.' : null,
-                      onSaved: (val) => _password = val,
-                    ),
-                    new RaisedButton(
-                        key: new Key('login'),
-                        child: new Text('Login',
-                            style: new TextStyle(fontSize: 20.0)),
-                        //testMode will enable or disable validation of username and password.
-                        onPressed: widget.testMode == false
-                            ? validateAndSubmit
-                            : loginComplete),
-                    new Container(
-                        height: 80.0,
-                        padding: const EdgeInsets.all(32.0),
-                        child: buildHintText())
-                  ],
-                ))));
-  }
-
-  Widget buildHintText() {
-    return new Text(_authHint,
-        key: new Key('hint'),
-        style: new TextStyle(fontSize: 18.0, color: Colors.grey),
-        textAlign: TextAlign.center);
-  }
-}
-
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
       : super(key: key);
@@ -611,14 +515,25 @@ class DatabasePgState extends State<DatabasePg> {
   String _searchText = "";
   List<Equipment> items;
   List<Patrons> mems;
+  List<History> hist;
+  List<Equipment> filteredItems = new List();
+  List<Patrons> filteredMems = new List();
+  List<History> filteredHist = new List();
+  List<Widget> itemFilters;
+
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
   StreamSubscription<QuerySnapshot> memSub;
-  List<Equipment> filteredItems = new List();
-  List<Patrons> filteredMems = new List();
+  StreamSubscription<QuerySnapshot> histSub;
+
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
   String _mode = "Items";
+  String itemType = '';
+  String availability = '';
+  String sort = '';
+  bool order = true;
+
   DatabasePgState(String site) {
     dataSite = site;
     fs = new FirebaseFirestoreService(dataSite);
@@ -640,13 +555,26 @@ class DatabasePgState extends State<DatabasePg> {
   @override
   void initState() {
     itemSub?.cancel();
-    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
+    this.itemSub = fs
+        .getItemsQuery(itemType, availability, sort, order)
+        .listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
           .toList();
       setState(() {
         this.items = equipment;
         this.filteredItems = items;
+      });
+    });
+
+    histSub?.cancel();
+    this.histSub = fs.getHistories().listen((QuerySnapshot snapshot) {
+      final List<History> histories = snapshot.documents
+          .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+          .toList();
+      setState(() {
+        this.hist = histories;
+        this.filteredHist = hist;
       });
     });
 
@@ -667,6 +595,8 @@ class DatabasePgState extends State<DatabasePg> {
   @override
   void dispose() {
     itemSub?.cancel();
+    memSub?.cancel();
+    histSub?.cancel();
     super.dispose();
   }
 
@@ -707,7 +637,6 @@ class DatabasePgState extends State<DatabasePg> {
     if (!(_searchText.isEmpty)) {
       List<Patrons> tempList = new List();
       for (int i = 0; i < mems.length; i++) {
-        print(i.toString());
         if (mems[i]
                 .firstName
                 .toLowerCase()
@@ -725,7 +654,7 @@ class DatabasePgState extends State<DatabasePg> {
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
           ),
-      itemCount: items == null ? 0 : filteredMems.length,
+      itemCount: mems == null ? 0 : filteredMems.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile(
           title: Text(filteredMems[index].firstName +
@@ -742,6 +671,60 @@ class DatabasePgState extends State<DatabasePg> {
         );
       },
     );
+  }
+
+  Widget _buildHistoriesList() {
+    if (!(_searchText.isEmpty)) {
+      List<History> tempList = new List();
+      for (int i = 0; i < hist.length; i++) {
+        if (hist[i]
+                .itemName
+                .toLowerCase()
+                .contains(_searchText.toLowerCase()) ||
+            hist[i].memName.toLowerCase().contains(_searchText.toLowerCase())) {
+          tempList.add(hist[i]);
+        }
+      }
+      filteredHist = tempList;
+    }
+
+    return ListView.separated(
+      separatorBuilder: (context, index) => Divider(
+            color: Colors.black,
+          ),
+      itemCount: hist == null ? 0 : filteredHist.length,
+      itemBuilder: (BuildContext context, int index) {
+        return new Container(
+            color: filteredHist[index].timeCheckedInString == ""
+                ? Colors.red[200]
+                : Colors.green[200],
+            child: ListTile(
+              title: Text(filteredHist[index].memName),
+              leading: Text(filteredHist[index].itemName),
+              trailing: Text(filteredHist[index].timeCheckedOutString),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          ViewHistory(hist: filteredHist[index])),
+                );
+              },
+            ));
+      },
+    );
+  }
+
+  Widget _buildListView(String mode) {
+    if (mode == "Items") {
+      return _buildItemsList();
+    } else if (mode == "Members") {
+      return _buildMembersList();
+    } else if (mode == "History") {
+      return _buildHistoriesList();
+    } else {
+      return Container();
+    }
   }
 
   void _searchPressed() {
@@ -765,53 +748,213 @@ class DatabasePgState extends State<DatabasePg> {
     });
   }
 
+  Widget _getFilters(String filterType) {
+    if (filterType == "Items") {
+      return Column(
+        children: <Widget>[
+          Center(child: Text("Filters")),
+          Divider(),
+          ListTile(
+            enabled: false,
+            title: Text('Item Type'),
+          ),
+          Divider(),
+          ListTile(
+              title: Text('Item Status'),
+              trailing: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                      value: availability,
+                      items: <DropdownMenuItem<String>>[
+                        DropdownMenuItem(
+                          child: Text('All'),
+                          value: '',
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Available'),
+                          value: 'available',
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Unavailable'),
+                          value: 'unavailable',
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Discontinued'),
+                          value: 'discontinued',
+                        )
+                      ],
+                      onChanged: (String avail) {
+                        setState(() {
+                          availability = avail;
+                          itemSub?.cancel();
+                          this.itemSub = fs
+                              .getItemsQuery(
+                                  itemType, availability, sort, order)
+                              .listen((QuerySnapshot snapshot) {
+                            final List<Equipment> equipment = snapshot.documents
+                                .map((documentSnapshot) =>
+                                    Equipment.fromMap(documentSnapshot.data))
+                                .toList();
+                            setState(() {
+                              this.items = equipment;
+                              this.filteredItems = items;
+                            });
+                          });
+                        });
+                      }))),
+          Divider(),
+          ListTile(
+              title: Text('Sort By'),
+              trailing: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                      value: sort,
+                      items: <DropdownMenuItem<String>>[
+                        DropdownMenuItem(
+                          child: Text('None'),
+                          value: '',
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Item Name'),
+                          value: 'Name',
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Date'),
+                          value: 'Purchased',
+                        ),
+                      ],
+                      onChanged: (String srt) {
+                        setState(() {
+                          sort = srt;
+                          itemSub?.cancel();
+                          this.itemSub = fs
+                              .getItemsQuery(
+                                  itemType, availability, sort, order)
+                              .listen((QuerySnapshot snapshot) {
+                            final List<Equipment> equipment = snapshot.documents
+                                .map((documentSnapshot) =>
+                                    Equipment.fromMap(documentSnapshot.data))
+                                .toList();
+                            setState(() {
+                              this.items = equipment;
+                              this.filteredItems = items;
+                            });
+                          });
+                        });
+                      }))),
+          Divider(),
+          ListTile(
+              title: Text('Order'),
+              trailing: DropdownButtonHideUnderline(
+                  child: DropdownButton<bool>(
+                      value: order,
+                      items: <DropdownMenuItem<bool>>[
+                        DropdownMenuItem(
+                          child: Text('Ascending'),
+                          value: false,
+                        ),
+                        DropdownMenuItem(
+                          child: Text('Descending'),
+                          value: true,
+                        ),
+                      ],
+                      onChanged: (bool ord) {
+                        setState(() {
+                          order = ord;
+                          itemSub?.cancel();
+                          this.itemSub = fs
+                              .getItemsQuery(
+                                  itemType, availability, sort, order)
+                              .listen((QuerySnapshot snapshot) {
+                            final List<Equipment> equipment = snapshot.documents
+                                .map((documentSnapshot) =>
+                                    Equipment.fromMap(documentSnapshot.data))
+                                .toList();
+                            setState(() {
+                              this.items = equipment;
+                              this.filteredItems = items;
+                            });
+                          });
+                        });
+                      }))),
+          Divider()
+        ],
+      );
+    } else if (filterType == "Members") {
+      return Container();
+    } else if (filterType == "History") {
+      return Container();
+    } else {
+      return Container();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         title: _appBarTitle,
-        leading: new IconButton(
-          icon: _searchIcon,
-          onPressed: _searchPressed,
-        ),
         actions: <Widget>[
-          DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                  value: _mode,
-                  items: <DropdownMenuItem<String>>[
-                    DropdownMenuItem(
-                      child: Text('Items'),
-                      value: 'Items',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('Members'),
-                      value: 'Members',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('History'),
-                      value: 'History',
-                    )
-                  ],
-                  onChanged: (String mode) {
-                    setState(() => _mode = mode);
-                  }))
+          new IconButton(
+            icon: _searchIcon,
+            onPressed: _searchPressed,
+          )
         ],
       ),
-      body: Container(
-          child: _mode == "Items" ? _buildItemsList() : _buildMembersList()),
-      resizeToAvoidBottomPadding: false,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    _mode == "Items" ? AddItem() : AddMember()),
-          );
-        },
-        child: Icon(Icons.add),
+      drawer: Drawer(
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: 50,
+            ),
+            Divider(),
+            ListTile(
+                title: Text("View"),
+                trailing: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                        value: _mode,
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem(
+                            child: Text('Items'),
+                            value: 'Items',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('Members'),
+                            value: 'Members',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('History'),
+                            value: 'History',
+                          )
+                        ],
+                        onChanged: (String mode) {
+                          setState(() => _mode = mode);
+                        }))),
+            Divider(),
+            Container(
+              height: 100,
+            ),
+            _getFilters(_mode)
+          ],
+        ),
       ),
+      body: Container(child: _buildListView(_mode)),
+      resizeToAvoidBottomPadding: false,
+      floatingActionButton: _mode == "History"
+          ? FloatingActionButton(
+              child: Icon(Icons.filter_list),
+              onPressed: () {},
+            )
+          : FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          _mode == "Items" ? AddItem(site: widget.site) : AddMember(site: widget.site)),
+                );
+              },
+              child: Icon(Icons.add),
+            ),
     );
   }
 }
@@ -845,6 +988,7 @@ class AddItemState extends State<AddItem> {
 
   @override
   void initState() {
+    print(widget.site);
     fs = FirebaseFirestoreService(widget.site);
     purchased
         .setString(DateFormat('MM-dd-yyyy').format(Timestamp.now().toDate()));
@@ -869,16 +1013,21 @@ class AddItemState extends State<AddItem> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        itemId.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              itemId.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -936,6 +1085,8 @@ class AddItemState extends State<AddItem> {
                                       status: status.value,
                                       condition: condition.value,
                                       notes: notes.value);
+                                  await fs.updateItemTypes(itemType.value.toLowerCase());
+
                                   Navigator.pop(context);
                                 } catch (e) {
                                   print(e.toString());
@@ -1010,16 +1161,21 @@ class AddMemberState extends State<AddMember> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        memberID.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              memberID.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1195,16 +1351,21 @@ class ViewItemState extends State<ViewItem> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        itemId.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              itemId.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1401,16 +1562,21 @@ class ViewMemberState extends State<ViewMember> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  BarcodeScanner(
-                    onBarcode: (code) {
-                      setState(() {
-                        id.setString(code);
-                        cameraView = false;
-                      });
-
-                      return true;
-                    },
-                  ),
+                  new SizedBox(
+                      width: 200.0,
+                      height: 300.0,
+                      child: new QrCamera(
+                          front: frontCamera,
+                          onError: (context, error) => Text(
+                                error.toString(),
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          qrCodeCallback: (code) {
+                            setState(() {
+                              id.setString(code);
+                              cameraView = false;
+                            });
+                          })),
                   RaisedButton(
                     child: Text("Cancel"),
                     onPressed: () {
@@ -1455,7 +1621,7 @@ class ViewMemberState extends State<ViewMember> {
                                         child: Text("History",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                            fontSize: 16.0))),
+                                                fontSize: 16.0))),
                                     Container(
                                         height: 500,
                                         child: ListView.separated(
@@ -1516,7 +1682,7 @@ class ViewMemberState extends State<ViewMember> {
                                           'Error: You must enter item name.');
                                     } else {
                                       try {
-                                        print(id.value);
+                                        //print(id.value);
                                         await fs.updatePatrons(
                                             id.value,
                                             firstName.value,

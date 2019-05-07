@@ -36,7 +36,6 @@ class _HomePageState extends State<HomePage> {
   CheckoutPg checkoutPg;
   CheckinPg checkinPg;
   PageHome pgHome;
-  LoginPage loginPg;
   SettingsPage settingpg;
   List<Widget> pageList;
   List<dynamic> databases;

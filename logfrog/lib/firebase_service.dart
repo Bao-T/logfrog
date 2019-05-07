@@ -10,7 +10,6 @@ final CollectionReference objectCollection =
 final CollectionReference usersCollection =
     Firestore.instance.collection('Users');
 
-
 /*
 Firebase structure:
 
@@ -20,8 +19,6 @@ Firebase structure:
 
 2) Users -- TODO - update updatePatrons to reflect this structure.
  */
-
-
 
 //Class for pushing and pulling app data from Firebase database
 
@@ -50,13 +47,43 @@ class FirebaseFirestoreService {
         objectCollection.document(site).collection("Members").snapshots();
     return snapshots;
   }
-  Stream<QuerySnapshot> getMemberHistory(String memID){
-    Stream<QuerySnapshot> snapshots =
-    objectCollection.document(site).collection("History").where("memID", isEqualTo: memID).snapshots();
+
+  Stream<QuerySnapshot> getMemberHistory(String memID) {
+    Stream<QuerySnapshot> snapshots = objectCollection
+        .document(site)
+        .collection("History")
+        .where("memID", isEqualTo: memID)
+        .snapshots();
     return snapshots;
   }
 
+  Stream<QuerySnapshot> getHistories() {
+    Stream<QuerySnapshot> snapshots = objectCollection
+        .document(site)
+        .collection("History")
+        .orderBy("timeCheckedOut", descending: true)
+        .snapshots();
+    return snapshots;
+  }
 
+  Stream<QuerySnapshot> getItemsQuery(
+      String itemType, String status, String sortBy, bool desc) {
+    Query docs = objectCollection.document(site).collection("Items");
+    if (itemType != "") {
+      docs = docs.where("ItemType", isEqualTo: itemType);
+      print("Type");
+    }
+    if (status != "") {
+      docs = docs.where("Status", isEqualTo: status);
+      print("Status");
+    }
+    if (sortBy != "" && desc != null) {
+      docs = docs.orderBy(sortBy, descending: desc);
+      print("Sort");
+    }
+    print("here");
+    return docs.snapshots();
+  }
 
   //create an equipment asynchronously
   //input of Equipment type map
@@ -68,16 +95,21 @@ class FirebaseFirestoreService {
       String status,
       String condition,
       String notes}) async {
-    final TransactionHandler createTransaction = (Transaction tx) async { //creating firestore transaction
+    final TransactionHandler createTransaction = (Transaction tx) async {
+      //creating firestore transaction
+      print(site);
       DocumentSnapshot ds;
-      if (itemID != "") { //Default itemID is "" ????
+      if (itemID != "") {
+        //Default itemID is "" ????
         ds = await tx.get(objectCollection
             .document(site)
             .collection("Items")
             .document(itemID));
       } else {
-        ds = await tx.get(
-            objectCollection.document(site).collection("Items").document()); //Note that the Equipment class is named 'Items' in collections
+        ds = await tx.get(objectCollection
+            .document(site)
+            .collection("Items")
+            .document()); //Note that the Equipment class is named 'Items' in collections
         itemID = ds.documentID;
       }
 
@@ -89,7 +121,8 @@ class FirebaseFirestoreService {
       dataMap['Notes'] = notes;
       dataMap['Purchased'] = purchased;
       dataMap['Status'] = status;
-      await tx.set(ds.reference, dataMap); //set data map to the reference for the transaction
+      await tx.set(ds.reference,
+          dataMap); //set data map to the reference for the transaction
       return dataMap;
     };
     if (itemID != "") {
@@ -127,22 +160,22 @@ class FirebaseFirestoreService {
 
   //create a Patron (AKA a member) asynch
   //input of patron class mapping
-  Future<Patrons> createPatron(
-      {  String id,
-      String firstName,
-      String lastName,
-      String address,
-      String phone,
-      String notes,}) async {
+  Future<Patrons> createPatron({
+    String id,
+    String firstName,
+    String lastName,
+    String address,
+    String phone,
+    String notes,
+  }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       if (id != "") {
-        ds = await tx.get(objectCollection
-            .document(site)
-            .collection("Members")
-            .document(id));
+        ds = await tx.get(
+            objectCollection.document(site).collection("Members").document(id));
       } else {
-        ds = await tx.get(objectCollection.document(site).collection("Members").document());
+        ds = await tx.get(
+            objectCollection.document(site).collection("Members").document());
         id = ds.documentID;
       }
 
@@ -190,49 +223,50 @@ class FirebaseFirestoreService {
 
   //Create a user object and send to firebase
   //User == Teacher or those who login to app
-  Future<Users> createUser(
-      { String id,
-        String emailAddress,
-        List<String> databases,}) async {
+  Future<Users> createUser({
+    String id,
+    String emailAddress,
+    List<String> databases,
+  }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       ds = await tx.get(usersCollection.document(id));
-
 
       var dataMap = new Map<String, dynamic>();
       dataMap['emailAddress'] = emailAddress;
       dataMap['databases'] = databases;
       await tx.set(ds.reference, dataMap);
       return dataMap;
-
     };
     return usersCollection.document(id).get().then((doc) {
-      if (doc.exists){
+      if (doc.exists) {
         //throw ("error: Item ID already exists");
       } else {
-        return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+        return Firestore.instance
+            .runTransaction(createTransaction)
+            .then((mapData) {
           return Users.fromMap(mapData);
         }).catchError((error) {
           throw ('error: unable to communicate with server');
         });
       }
-    }).catchError((e){
+    }).catchError((e) {
       throw (e);
     });
   }
 
   //Creates a History object given a patron id and a equipment id
-  Future<History> createHistory (
-      {
-        String itemID,
-        String itemName,
-        String memID,
-        String memName,
-        Timestamp timeCheckedIn,
-        Timestamp timeCheckedOut }) async {
+  Future<History> createHistory(
+      {String itemID,
+      String itemName,
+      String memID,
+      String memName,
+      Timestamp timeCheckedIn,
+      Timestamp timeCheckedOut}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-        ds = await tx.get(objectCollection.document(site).collection("History").document());
+      ds = await tx.get(
+          objectCollection.document(site).collection("History").document());
 
       var dataMap = new Map<String, dynamic>();
       dataMap['itemID'] = itemID;
@@ -244,22 +278,21 @@ class FirebaseFirestoreService {
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
-      return Firestore.instance.runTransaction(createTransaction).then((mapData){
-        return History.fromMap(mapData);
-      }).catchError((error) {
-        throw ('error: unable to communicate with server');
-      });
+    return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+      return History.fromMap(mapData);
+    }).catchError((error) {
+      throw ('error: unable to communicate with server');
+    });
   }
-
 
   Future<dynamic> updateEquipment(
       {String name,
-        String itemID,
-        String itemType,
-        Timestamp purchased,
-        String status,
-        String condition,
-        String notes}) async {
+      String itemID,
+      String itemType,
+      Timestamp purchased,
+      String status,
+      String condition,
+      String notes}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       if (itemID != "") {
@@ -268,8 +301,10 @@ class FirebaseFirestoreService {
             .collection("Items")
             .document(itemID));
       } else {
-        ds = await tx.get(
-            objectCollection.document(site).collection("Items").document()); //Note that Equipment was changed to 'Items'
+        ds = await tx.get(objectCollection
+            .document(site)
+            .collection("Items")
+            .document()); //Note that Equipment was changed to 'Items'
         itemID = ds.documentID;
       }
 
@@ -306,7 +341,7 @@ class FirebaseFirestoreService {
         throw (e);
       });
     } else {
-       throw ("error: Item ID is required to update");
+      throw ("error: Item ID is required to update");
     }
   }
 
@@ -334,9 +369,11 @@ class FirebaseFirestoreService {
       String memID, //member checking in/out
       String memName, //name of member checking in/out
       //String _username; //_username of member checking in/out
-      Timestamp timeCheckedOut,//may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
-      Timestamp timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
-  ) async {
+      Timestamp
+          timeCheckedOut, //may or may not break horribly??? if so, could use this fix: https://stackoverflow.com/questions/52996707/flutter-app-error-type-timestamp-is-not-a-subtype-of-type-datetime
+      Timestamp
+          timeCheckedIn //default of same as checked out timestamp initially (so if they are the same time, the item is not checked back in)}
+      ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       if (historyID != "") {
@@ -372,7 +409,8 @@ class FirebaseFirestoreService {
           return Firestore.instance
               .runTransaction(createTransaction)
               .then((mapData) {
-            return History.fromMap(mapData); //TODO:update this to reflect current structure
+            return History.fromMap(
+                mapData); //TODO:update this to reflect current structure
           }).catchError((error) {
             throw ('error: unable to communicate with server');
           });
@@ -388,19 +426,17 @@ class FirebaseFirestoreService {
   }
 
   Future<dynamic> updatePatrons(
-        String id, //student id
-        String firstName, //student first name
-        String lastName, //student last name
-        String address, //student address
-        String phone, //student phone number
-        String notes, //extra notes to be entered
- ) async {
+    String id, //student id
+    String firstName, //student first name
+    String lastName, //student last name
+    String address, //student address
+    String phone, //student phone number
+    String notes, //extra notes to be entered
+  ) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
-        ds = await tx.get(objectCollection
-            .document(site)
-            .collection("Members")
-            .document(id));
+      ds = await tx.get(
+          objectCollection.document(site).collection("Members").document(id));
       var dataMap = new Map<String, dynamic>();
       dataMap['id'] = id;
       dataMap['firstName'] = firstName;
@@ -439,8 +475,8 @@ class FirebaseFirestoreService {
 
   Future<dynamic> deleteEquipment(String id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
-      final DocumentSnapshot ds =
-          await tx.get(objectCollection.document(site).collection("Items").document(id));
+      final DocumentSnapshot ds = await tx.get(
+          objectCollection.document(site).collection("Items").document(id));
       await tx.delete(ds.reference);
       return {'deleted': true};
     };
@@ -472,9 +508,14 @@ class FirebaseFirestoreService {
     });
   }
 
-  Future<Patrons> getPatron(String barcodeIn) async{
+  Future<Patrons> getPatron(String barcodeIn) async {
     Patrons p;
-    await objectCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
+    await objectCollection
+        .document(site)
+        .collection("Members")
+        .document(barcodeIn)
+        .get()
+        .then((doc) {
       if (doc.exists) {
         p = Patrons.fromMap(doc.data);
       }
@@ -490,19 +531,28 @@ class FirebaseFirestoreService {
     //check if barcode in students using solution adapted from:
     //https://www.queryxchange.com/q/27_37397205/google-firebase-check-if-child-exists/ (accessed 4/24/19)
     //https://stackoverflow.com/questions/38948905/how-can-i-check-if-a-value-exists-already-in-a-firebase-data-class-android
-    await objectCollection.document(site).collection("Members").document(barcodeIn).get().then((doc) {
-
+    await objectCollection
+        .document(site)
+        .collection("Members")
+        .document(barcodeIn)
+        .get()
+        .then((doc) {
       if (doc.exists) {
         passes = true;
       }
     });
-  return passes;
-    }
+    return passes;
+  }
 
   //For use in livecamera.dart, checks if a given equipment id exists (use before equipmentNotCheckedOut check to avoid pulling data and generating a Equipment member)
-  Future<bool> equipmentExists (String barcodeIn) async{
+  Future<bool> equipmentExists(String barcodeIn) async {
     bool exists = false;
-    await objectCollection.document(site).collection("Items").document(barcodeIn).get().then((doc) {
+    await objectCollection
+        .document(site)
+        .collection("Items")
+        .document(barcodeIn)
+        .get()
+        .then((doc) {
       if (doc.exists) {
         exists = true;
       }
@@ -514,9 +564,11 @@ class FirebaseFirestoreService {
   //true = is checked in and can be checked out
   //false = is checked out and was not checked back in OR is not in the system
   //TODO: Add popups for the two cases to prompt a) scanning item back in to check out or b) entering item in database
-  Future<bool> equipmentNotCheckedOut (String barcodeIn) async {
+  Future<bool> equipmentNotCheckedOut(String barcodeIn) async {
     bool canBeCheckedOut = false;
-    await objectCollection.document(site).collection("Items")
+    await objectCollection
+        .document(site)
+        .collection("Items")
         .document(barcodeIn)
         .get()
         .then((doc) {
@@ -533,6 +585,7 @@ class FirebaseFirestoreService {
     });
     return canBeCheckedOut;
   }
+
   Future<dynamic> deleteHistory(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
       //final DocumentSnapshot ds = await tx.get(.document(id.toString()));
@@ -548,5 +601,48 @@ class FirebaseFirestoreService {
       print('error: $error');
       return false;
     });
-}}
+  }
 
+  Future<void> updateItemTypes(String newItemType) async {
+//    final DocumentReference doc = objectCollection.document(site);
+//    try {
+//      Firestore.instance.runTransaction((Transaction tx) async {
+//      DocumentSnapshot docSnapshot = await tx.get(doc).then(onValue);
+//      if (docSnapshot.exists) {
+//        List<String> itemTypes = docSnapshot["ItemTypes"];
+//        if (!itemTypes.contains(newItemType)) {
+//          print("here");
+//          await tx.update(doc,
+//              <String, dynamic>{
+//                'ItemTypes': docSnapshot.data['ItemTyps'] + newItemType
+//              });
+//        }
+//      }
+//      });
+//    } catch (e) {print(e.toString());}
+    final DocumentReference postRef = objectCollection.document(site);
+
+    Firestore.instance.runTransaction((Transaction tx) async {
+      try {
+        DocumentSnapshot postSnapshot = await tx.get(postRef);
+        if (postSnapshot.exists) {
+          if (!postSnapshot.data.containsKey('ItemTypes')) {
+            print("here");
+            await tx.set(postRef, <String, dynamic>{
+              'ItemTypes': [newItemType]
+            });
+            postSnapshot = await tx.get(postRef);
+          } else if (postSnapshot.data.containsKey('ItemTypes')) {
+            if (!postSnapshot.data['ItemTypes'].contains(newItemType)) {
+              await tx.update(postRef, <String, dynamic>{
+                'ItemTypes': postSnapshot.data['ItemTypes'] + [newItemType]
+              });
+            }
+          }
+        }
+      } catch (e) {
+        print(e.toString());
+      }
+    });
+  }
+}
