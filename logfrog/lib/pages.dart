@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import "chartWidgets.dart";
+import "chartWidgets.dart"; //does this do anything???
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import 'firebase_service.dart';
 import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'widgets.dart';
+import 'widgets.dart'; //does this do anything???
 //import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
@@ -18,7 +18,7 @@ String
 
 const alarmAudioPath = "beep.mp3"; //check in checkout scanner beep
 
-//Checkout Page:  Students will open this page to checkout equipment
+//Checkout Page:  Students will open this page to checkout equipment _________________________________________
 /*To checkout:  First scan student id-> barcode will be used to check if student exists in site database
                                         if student exists, set current student to that student
                 scan equipment -> if equipment exists AND is not checked out, creates history object for transaction
@@ -263,9 +263,9 @@ class CheckoutPgState extends State<CheckoutPg> {
             ]))));
   }
 }
-// End of CheckOutPage
+// End of CheckOutPage____________________________________
 
-//CheckInPage for scanning in checked out items
+//CheckInPage for scanning in checked out items__________________________________________
 //Will not need users to scan their ids to check items back in, just scan item
 //If it is checked out, it will let the user check the item back in
 //If it is not checked out, will throw a popup informing user
@@ -319,7 +319,7 @@ class CheckinPgState extends State<CheckinPg> {
         .getDocuments();
     //Note that this must search through all items stored with that ID
     if (historyObj.documents.isNotEmpty &&
-        historyObj.documents[0].data["timeCheckedIn"] == null) {
+        historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
       fs.updateHistory(
           historyObj.documents[0].documentID,
           historyObj.documents[0].data["itemID"],
@@ -329,38 +329,39 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
     } else {
-      print("This item DNE or is currently not checked out yet.");
+      print("This item DNE or is currently not checked out yet."); //TODO: make a popup for this
     }
   }
 
+  //Setting up checkin page
   @override
   void initState() {
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
     camera = new GestureDetector(
       onTap: () {},
-      child: Card(
+      child: Card( //Camera on side
           margin: EdgeInsets.all(5.0),
           child: new SizedBox(
               width: 200.0,
               height: 300.0,
-              child: new QrCamera(
+              child: new QrCamera( //QR scanner
                   front: frontCamera,
                   onError: (context, error) => Text(
                         error.toString(),
                         style: TextStyle(color: Colors.red),
                       ),
-                  qrCodeCallback: (code) {
+                  qrCodeCallback: (code) { //When qr code is scanned
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
-                        validate(
-                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        validate(code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
                     });
                   }))),
     );
 
+    //DO WE NEED THIS HERE?????  Userinfo is not necessary on checkin page
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
@@ -368,9 +369,9 @@ class CheckinPgState extends State<CheckinPg> {
     ));
   }
 
+  //Context for page while running
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
         appBar: AppBar(title: Text('Check-in')),
         body: Padding(
@@ -382,7 +383,7 @@ class CheckinPgState extends State<CheckinPg> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo],
+                      children: <Widget>[camera, userInfo], //Two children at top of page (possible we do not need userInfo here)
                     ),
                   )),
               Expanded(
@@ -391,7 +392,7 @@ class CheckinPgState extends State<CheckinPg> {
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
-                      return Dismissible(
+                      return Dismissible( //Dismissible qr scanned will appear
                           key: Key(UniqueKey().toString()),
                           onDismissed: (direction) {
                             debugPrint(
@@ -416,11 +417,15 @@ class CheckinPgState extends State<CheckinPg> {
             ]))));
   }
 }
-// End of page template and page functionality
+// End of Checkin Page________________________________________________________
 
+//Home AKA Site Statistics Page_____________________________________________________
+//Will provide a quick overview of state of site's supplies
+//Graph for number available and number unavailable of different types of equipment
+//Percentage of checked out material that is overdue
 class PageHome extends StatefulWidget {
-  PageHome({Key key, this.referenceSite}) : super(key: key);
-
+  PageHome({Key key, this.referenceSite, this.checkoutPeriod}) : super(key: key);
+  final checkoutPeriod; //adding a allowed checkoutPeriod time frame (ex: 10 days) for equipment
   final referenceSite;
   @override
   PageHomeState createState() => PageHomeState();
@@ -430,10 +435,10 @@ class PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('LogFrog')),
+      appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
       body: ListView(children: <Widget>[
-        Card(child: Text(widget.referenceSite)),
-        Card(
+        Card(child: Text(widget.referenceSite)), //displays site name at top
+        Card( //Pie chart -> items in vs. items out vs. items out and late
             child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(children: <Widget>[
@@ -441,23 +446,24 @@ class PageHomeState extends State<PageHome> {
                   Container(
                       width: MediaQuery.of(context).size.width / 2,
                       height: MediaQuery.of(context).size.height / 4,
-                      child: DonutAutoLabelChart.withSampleData())
+                      child: DonutAutoLabelChart.withSampleData()) //pie chart
                 ]))),
         Card(
-            child: Padding(
+            child: Padding( //Bar chart ->  seperate items into types by keywords, then graph bars of in vs out
                 padding: const EdgeInsets.all(16.0),
                 child: Row(children: <Widget>[
                   Text("Chart  2"),
                   Container(
                       width: MediaQuery.of(context).size.width / 2,
                       height: MediaQuery.of(context).size.height / 4,
-                      child: StackedFillColorBarChart.withSampleData())
+                      child: StackedFillColorBarChart.withSampleData()) //barchart
                 ])))
       ]),
     );
   }
 }
 
+//Settings page for adjusting firebase content
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
       : super(key: key);

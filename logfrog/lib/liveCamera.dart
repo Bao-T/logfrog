@@ -10,8 +10,6 @@ final BarcodeDetector barcodeDetector = FirebaseVision.instance.barcodeDetector(
 
 typedef bool BarcodeFoundCallback(String code);
 
-
-
 class LiveBarcodeScanner extends StatefulWidget {
   LiveBarcodeScanner({
     @required this.onBarcode, this.cameraIndex

@@ -227,6 +227,7 @@ class FirebaseFirestoreService {
     String id,
     String emailAddress,
     List<String> databases,
+    int checkoutPeriod,
   }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
@@ -235,6 +236,7 @@ class FirebaseFirestoreService {
       var dataMap = new Map<String, dynamic>();
       dataMap['emailAddress'] = emailAddress;
       dataMap['databases'] = databases;
+      dataMap['checkoutPeriod'] = checkoutPeriod,
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
