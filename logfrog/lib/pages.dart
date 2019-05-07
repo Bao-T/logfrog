@@ -13,6 +13,10 @@ import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
 
+
+
+
+
 String
     dataSite; //site for the user- tells firebase which initial document to access
 
@@ -318,8 +322,7 @@ class CheckinPgState extends State<CheckinPg> {
         .limit(1)
         .getDocuments();
     //Note that this must search through all items stored with that ID
-    if (historyObj.documents.isNotEmpty &&
-        historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
+    if (historyObj.documents.isNotEmpty && historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
       fs.updateHistory(
           historyObj.documents[0].documentID,
           historyObj.documents[0].data["itemID"],
@@ -383,7 +386,7 @@ class CheckinPgState extends State<CheckinPg> {
                   child: Container(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo], //Two children at top of page (possible we do not need userInfo here)
+                      children: <Widget>[camera, userInfo], //Two children at top of page TODO: (possible we do not need userInfo here)
                     ),
                   )),
               Expanded(
@@ -463,11 +466,11 @@ class PageHomeState extends State<PageHome> {
   }
 }
 
-//Settings page for adjusting firebase content
+//Settings page for viewing/adjusting site content
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
       : super(key: key);
-
+  //Login information for re-verifying user in app before allowing them to make edits
   final BaseAuth auth;
   final VoidCallback onSignedOut;
   final String userId;
@@ -476,6 +479,8 @@ class SettingsPage extends StatefulWidget {
   State<StatefulWidget> createState() => new _SettingsPageState();
 }
 
+//Log in/log out mechanics
+//uses on sign out tapped in the Widget(build)
 class _SettingsPageState extends State<SettingsPage> {
   _signOut() async {
     try {
@@ -488,19 +493,19 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    //Scaffold of settings page
     return Scaffold(
         appBar: AppBar(title: Text('Settings')),
         body: ListView(
           children: <Widget>[
-            ListTile(
-              title: Text("Manage Databases"),
+            ListTile(  //two options
+              title: Text("Manage Databases"), //enter management/edit mode
               onTap: () {},
             ),
             ListTile(
-              title: Text("Log Out"),
+              title: Text("Log Out"), //sign out of edit mode
               onTap: () {
-                _signOut();
+                _signOut(); //calls above sign out function
               },
             ),
           ],
@@ -508,6 +513,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
+//Setting up database page
 class DatabasePg extends StatefulWidget {
   DatabasePg({Key key, this.site}) : super(key: key);
   final String site;
@@ -516,9 +522,11 @@ class DatabasePg extends StatefulWidget {
 }
 
 class DatabasePgState extends State<DatabasePg> {
+  //search bar set up
   final TextEditingController _filter = new TextEditingController();
   final dio = new Dio();
   String _searchText = "";
+  //Site members/items/histories set up for searching
   List<Equipment> items;
   List<Patrons> mems;
   List<History> hist;
@@ -527,6 +535,7 @@ class DatabasePgState extends State<DatabasePg> {
   List<History> filteredHist = new List();
   List<Widget> itemFilters;
 
+  //Setting up query snapshots for the three collections of the site
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
   StreamSubscription<QuerySnapshot> memSub;
@@ -540,6 +549,7 @@ class DatabasePgState extends State<DatabasePg> {
   String sort = '';
   bool order = true;
 
+  //Listener for search bar, detects if there is text in the bar
   DatabasePgState(String site) {
     dataSite = site;
     fs = new FirebaseFirestoreService(dataSite);
@@ -559,6 +569,7 @@ class DatabasePgState extends State<DatabasePg> {
   }
 
   @override
+  //searching items
   void initState() {
     itemSub?.cancel();
     this.itemSub = fs
@@ -573,6 +584,7 @@ class DatabasePgState extends State<DatabasePg> {
       });
     });
 
+    //searching checkout/checkin histories
     histSub?.cancel();
     this.histSub = fs.getHistories().listen((QuerySnapshot snapshot) {
       final List<History> histories = snapshot.documents
@@ -584,6 +596,7 @@ class DatabasePgState extends State<DatabasePg> {
       });
     });
 
+    //searching members
     memSub?.cancel();
     this.memSub = fs.getMembers().listen((QuerySnapshot snapshot) {
       final List<Patrons> members = snapshot.documents
@@ -606,6 +619,7 @@ class DatabasePgState extends State<DatabasePg> {
     super.dispose();
   }
 
+  //searching items for search text
   Widget _buildItemsList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
@@ -616,6 +630,7 @@ class DatabasePgState extends State<DatabasePg> {
       }
       filteredItems = tempList;
     }
+    //Sets up search results for items
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
@@ -639,6 +654,7 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 
+  //searching members list with search text by first and last name
   Widget _buildMembersList() {
     if (!(_searchText.isEmpty)) {
       List<Patrons> tempList = new List();
@@ -650,12 +666,13 @@ class DatabasePgState extends State<DatabasePg> {
             mems[i]
                 .lastName
                 .toLowerCase()
-                .contains(_searchText.toLowerCase())) {
+                .contains(_searchText.toLowerCase())) { //searches first and last name
           tempList.add(mems[i]);
         }
       }
       filteredMems = tempList;
     }
+    //Setting up member name search results
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
@@ -679,6 +696,7 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 
+  //Searching histories with search text for item name
   Widget _buildHistoriesList() {
     if (!(_searchText.isEmpty)) {
       List<History> tempList = new List();
@@ -693,7 +711,7 @@ class DatabasePgState extends State<DatabasePg> {
       }
       filteredHist = tempList;
     }
-
+    //Setting up list to view histories when search is complete
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
@@ -701,7 +719,7 @@ class DatabasePgState extends State<DatabasePg> {
       itemCount: hist == null ? 0 : filteredHist.length,
       itemBuilder: (BuildContext context, int index) {
         return new Container(
-            color: filteredHist[index].timeCheckedInString == ""
+            color: filteredHist[index].timeCheckedInString == "" //Green if checked in, red if checked out for current history state
                 ? Colors.red[200]
                 : Colors.green[200],
             child: ListTile(
@@ -721,6 +739,7 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 
+  //Building overall list view depending on search mode
   Widget _buildListView(String mode) {
     if (mode == "Items") {
       return _buildItemsList();
@@ -733,6 +752,7 @@ class DatabasePgState extends State<DatabasePg> {
     }
   }
 
+  //Called when search icon pressed in search bar
   void _searchPressed() {
     setState(() {
       if (this._searchIcon.icon == Icons.search) {
@@ -754,6 +774,7 @@ class DatabasePgState extends State<DatabasePg> {
     });
   }
 
+  //Filtering options for searching items
   Widget _getFilters(String filterType) {
     if (filterType == "Items") {
       return Column(
@@ -885,7 +906,7 @@ class DatabasePgState extends State<DatabasePg> {
         ],
       );
     } else if (filterType == "Members") {
-      return Container();
+      return Container(); 
     } else if (filterType == "History") {
       return Container();
     } else {
