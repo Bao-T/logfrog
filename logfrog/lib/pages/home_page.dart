@@ -73,7 +73,8 @@ class _HomePageState extends State<HomePage> {
         settingpg = SettingsPage(
             userId: widget.userId,
             auth: widget.auth,
-            onSignedOut: widget.onSignedOut);
+            onSignedOut: widget.onSignedOut,
+            site: currentSite,);
         pageList = [
           pgHome,
           checkoutPg,

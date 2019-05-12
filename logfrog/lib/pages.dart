@@ -518,9 +518,10 @@ class PageHomeState extends State<PageHome> {
 
 //Settings page for viewing/adjusting site content
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
+  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut, this.site})
       : super(key: key);
   //Login information for re-verifying user in app before allowing them to make edits
+  final String site;
   final BaseAuth auth;
   final VoidCallback onSignedOut;
   final String userId;
@@ -552,8 +553,12 @@ class _SettingsPageState extends State<SettingsPage> {
           children: <Widget>[
             ListTile(
               //two options in setting page
-              title: Text("Manage Databases"), //enter management/edit mode
-              onTap: () {},
+              title: Text("Email History"), //enter management/edit mode
+              onTap: () {
+               FirebaseFirestoreService fs = FirebaseFirestoreService(widget.site);
+               fs..getHistoryLog(); //TODO
+
+              },
             ),
             ListTile(
               title: Text("Log Out"), //sign out of edit mode
@@ -648,7 +653,7 @@ class DatabasePgState extends State<DatabasePg> {
       });
     });
     itemTypeSub?.cancel();
-    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot){
+    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
       itemTypes = snapshot.data["ItemTypes"];
       itemTypesMenu.add(DropdownMenuItem(
         child: Text('All'),
@@ -658,7 +663,7 @@ class DatabasePgState extends State<DatabasePg> {
         child: Text('None'),
         value: '_null_',
       ));
-      for(int i = 0; i< itemTypes.length; i++ ){
+      for (int i = 0; i < itemTypes.length; i++) {
         itemTypesMenu.add(DropdownMenuItem(
           child: Text(itemTypes[i].toString()),
           value: itemTypes[i].toString(),
@@ -800,7 +805,9 @@ class DatabasePgState extends State<DatabasePg> {
                 .itemName
                 .toLowerCase()
                 .contains(_searchText.toLowerCase()) ||
-            hist[i].memName.toLowerCase().contains(_searchText.toLowerCase())) {
+            hist[i].memName.toLowerCase().contains(_searchText.toLowerCase()) ||
+            hist[i].itemID.contains(_searchText) ||
+            hist[i].memID.contains(_searchText)) {
           tempList.add(hist[i]);
         }
       }
@@ -880,26 +887,28 @@ class DatabasePgState extends State<DatabasePg> {
           Divider(),
           ListTile(
             title: Text('Item Type'),
-            trailing: DropdownButtonHideUnderline(child: DropdownButton(value: itemType, items: itemTypesMenu, onChanged: (String type){
-              setState(() {
-                itemType = type;
-                itemSub?.cancel();
-                this.itemSub = fs
-                    .getItemsQuery(
-                    itemType, availability, sort, order)
-                    .listen((QuerySnapshot snapshot) {
-                  final List<Equipment> equipment = snapshot.documents
-                      .map((documentSnapshot) =>
-                      Equipment.fromMap(documentSnapshot.data))
-                      .toList();
-                  setState(() {
-                    this.items = equipment;
-                    this.filteredItems = items;
-                  });
-                });
-              });
-
-            })),
+            trailing: DropdownButtonHideUnderline(
+                child: DropdownButton(
+                    value: itemType,
+                    items: itemTypesMenu,
+                    onChanged: (String type) {
+                      setState(() {
+                        itemType = type;
+                        itemSub?.cancel();
+                        this.itemSub = fs
+                            .getItemsQuery(itemType, availability, sort, order)
+                            .listen((QuerySnapshot snapshot) {
+                          final List<Equipment> equipment = snapshot.documents
+                              .map((documentSnapshot) =>
+                                  Equipment.fromMap(documentSnapshot.data))
+                              .toList();
+                          setState(() {
+                            this.items = equipment;
+                            this.filteredItems = items;
+                          });
+                        });
+                      });
+                    })),
           ),
           Divider(),
           ListTile(
