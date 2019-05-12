@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> databases;
   String currentSite;
   Widget currentPage;
+  int checkoutPeriodActual;
 
   @override
   void initState() {

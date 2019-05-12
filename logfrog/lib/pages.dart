@@ -12,10 +12,10 @@ import 'package:intl/intl.dart';
 import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
+import "package:qr_mobile_vision/qr_camera.dart";
 
 
-
-
+bool frontCamera = true;
 
 String
     dataSite; //site for the user- tells firebase which initial document to access
