@@ -632,7 +632,8 @@ class DatabasePgState extends State<DatabasePg> {
   Widget _buildItemsList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
-      for (int i = 0; i < items.length; i++) {
+      //Searches items for those with names containing the search phrase
+      for (int i = 0; i < items.length; i++) { //convert names to lower case to standardize searching
         if (items[i].name.toLowerCase().contains(_searchText.toLowerCase())) {
           tempList.add(items[i]);
         }
@@ -640,15 +641,16 @@ class DatabasePgState extends State<DatabasePg> {
       filteredItems = tempList;
     }
     //Sets up search results for items
+    //displaying them in a list
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
           ),
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
-        return new ListTile(
+        return new ListTile( //setting up the list entries
           title: Text(filteredItems[index].name),
-          onTap: () {
+          onTap: () { //ontap, pull up item details
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -668,6 +670,7 @@ class DatabasePgState extends State<DatabasePg> {
     if (!(_searchText.isEmpty)) {
       List<Patrons> tempList = new List();
       for (int i = 0; i < mems.length; i++) {
+        //Searches for first or last name matches the search text when converted to lowercase adds to search results
         if (mems[i]
                 .firstName
                 .toLowerCase()
@@ -682,17 +685,18 @@ class DatabasePgState extends State<DatabasePg> {
       filteredMems = tempList;
     }
     //Setting up member name search results
+    //returning set up list widget of search results
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
             color: Colors.black,
           ),
       itemCount: mems == null ? 0 : filteredMems.length,
       itemBuilder: (BuildContext context, int index) {
-        return new ListTile(
+        return new ListTile( //display the results first and last name
           title: Text(filteredMems[index].firstName +
               " " +
               filteredMems[index].lastName),
-          onTap: () {
+          onTap: () { //if name is tapped, view the member
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -710,6 +714,7 @@ class DatabasePgState extends State<DatabasePg> {
     if (!(_searchText.isEmpty)) {
       List<History> tempList = new List();
       for (int i = 0; i < hist.length; i++) {
+        //
         if (hist[i]
                 .itemName
                 .toLowerCase()
