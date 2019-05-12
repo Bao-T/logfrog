@@ -198,7 +198,7 @@ class FirebaseFirestoreService {
           .then((doc) {
         if (doc.exists) {
           throw ("error: Item ID already exists");
-        } else {
+        } else { //TODO:  add extra id check for items having the id checks
           return Firestore.instance
               .runTransaction(createTransaction)
               .then((mapData) {
