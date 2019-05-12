@@ -23,8 +23,8 @@ class History {
   String get memID => _memID;
   String get memName => _memName;
   //String get username => _username;
-  String get timeCheckedOutString => _timeCheckedOut == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedOut.toDate());
-  String get timeCheckedInString =>  _timeCheckedIn == null ? '' : DateFormat('MM-dd-yyyy').format(_timeCheckedIn.toDate());
+  String get timeCheckedOutString => _timeCheckedOut == null ? '' : DateFormat.yMd().add_jm().format(_timeCheckedOut.toDate());
+  String get timeCheckedInString =>  _timeCheckedIn == null ? '' : DateFormat.yMd().add_jm().format(_timeCheckedIn.toDate());
   Timestamp get timeCheckedOut => _timeCheckedOut;
   Timestamp get timeCheckedIn => timeCheckedIn;
   //creates history object mapping

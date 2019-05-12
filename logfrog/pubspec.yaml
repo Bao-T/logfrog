@@ -36,7 +36,7 @@ dependencies:
   dio:
   qr_flutter:
   csv:
-  #audioplayers:
+  audioplayers:
 
 dev_dependencies:
   flutter_test:

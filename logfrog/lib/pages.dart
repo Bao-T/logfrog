@@ -7,7 +7,7 @@ import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart'; //does this do anything???
-//import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
@@ -38,7 +38,7 @@ class CheckoutPg extends StatefulWidget {
 }
 
 class CheckoutPgState extends State<CheckoutPg> {
-  //static AudioCache player = new AudioCache();
+  static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera orientation
   //Setting up lists for dealing with end transactions
   Set<String> dataSet = {};
@@ -48,7 +48,7 @@ class CheckoutPgState extends State<CheckoutPg> {
   GestureDetector camera; //setting up camera
   Expanded userInfo;
   String
-      currentMemberID; //member ID of student  (AKA patron) checking out equipment
+      currentMemberID = ""; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
   CustomScrollView database;
   int cameraIndex = 0;
@@ -88,7 +88,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         });
       });
       currentMemberID = code;
-    } else if (currentMemberID != null &&
+    } else if (currentMemberID != "" &&
         await fs.equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
@@ -105,14 +105,14 @@ class CheckoutPgState extends State<CheckoutPg> {
           dataNameList.add(doc.data['Name']);
         });
       });
-      //player.play(alarmAudioPath);
+      player.play(alarmAudioPath);
     } else {
       //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
       //We want to alert students if:
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
-      if (currentMemberID == null) {
+      if (currentMemberID == "") {
         //make widget which shows popup with "scan a member id"
         _showDialog(context, "Member Checkout Error", "Please scan student ID first");
       } else if (!(await fs.equipmentExists(code))) {
@@ -213,6 +213,7 @@ class CheckoutPgState extends State<CheckoutPg> {
       Timestamp timeCheckedIn; //null for now, will be filled when equipment
       Timestamp timeCheckedOut = Timestamp.now();
       Equipment currentItem = Equipment.fromMap(item.data);
+      print(currentItem.itemID);
       currentItem.setStatus("unavailable");
       fs.updateEquipment(
             name: currentItem.name,
@@ -229,6 +230,9 @@ class CheckoutPgState extends State<CheckoutPg> {
           memName: memName,
           timeCheckedIn: null, //Note that null is the default timeCheckedIn
           timeCheckedOut: timeCheckedOut);
+
+
+
     }
     return null;
   }
@@ -293,17 +297,21 @@ class CheckoutPgState extends State<CheckoutPg> {
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
-                      color: Colors.green,
+                      color: currentMemberID == "" ?Colors.grey : Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: () {
+                      onPressed: currentMemberID == ""? (){} : () {
                         //When button is pressed, will create history documents for each scanned item under the current user
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
                         //Clearing transaction fields for next user
-                        dataNameList.clear();
-                        dataList.clear();
-                        dataSet.clear();
-                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                        setState(() {
+                          currentMemberID = "";
+                          currentMemberName = "";
+                          dataSet.clear();
+                          dataList.clear();
+                          dataNameList.clear();
+                          dataWidget.clear();
+                        }); //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
@@ -364,8 +372,27 @@ class CheckinPgState extends State<CheckinPg> {
         .orderBy("timeCheckedOut", descending: true)
         .limit(1)
         .getDocuments();
+
+
     //Note that this must search through all items stored with that ID
     if (historyObj.documents.isNotEmpty && historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
+      var item = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .document(code)
+          .get();
+      Equipment currentItem = Equipment.fromMap(item.data);
+      print(currentItem.itemID);
+      currentItem.setStatus("available");
+      fs.updateEquipment(
+          name: currentItem.name,
+          itemID: currentItem.itemID,
+          itemType: currentItem.itemType,
+          purchased: currentItem.purchasedTimestamp,
+          status: currentItem.status,
+          condition: currentItem.condition,
+          notes: currentItem.notes);
       fs.updateHistory(
           historyObj.documents[0].documentID,
           historyObj.documents[0].data["itemID"],
@@ -374,6 +401,8 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["memName"],
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
+
+
     } else {
       if (!(historyObj.documents.isNotEmpty)) {
         _showDialog(context, "CheckIn Equipment Error", "This item is not in the system and cannot be checked back in");
