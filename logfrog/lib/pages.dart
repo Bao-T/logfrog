@@ -855,7 +855,6 @@ class DatabasePgState extends State<DatabasePg> {
           Center(child: Text("Filters")),
           Divider(),
           ListTile(
-            enabled: false,
             title: Text('Item Type'),
             trailing: DropdownButtonHideUnderline(
                 child: DropdownButton(
