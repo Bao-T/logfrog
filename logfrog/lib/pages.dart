@@ -40,17 +40,18 @@ class CheckoutPg extends StatefulWidget {
 class CheckoutPgState extends State<CheckoutPg> {
   //static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera orientation
-  Set<String> dataSet = {}; //???
-  List<String> dataList = []; //???
-  List<String> dataNameList = []; //??
-  List<Widget> dataWidget = []; //??
+  //Setting up lists for dealing with end transactions
+  Set<String> dataSet = {};
+  List<String> dataList = [];
+  List<String> dataNameList = [];
+  List<Widget> dataWidget = [];
   GestureDetector camera; //setting up camera
-  Expanded userInfo; //??
+  Expanded userInfo;
   String
       currentMemberID; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
-  CustomScrollView database; //??
-  int cameraIndex = 0; //??
+  CustomScrollView database;
+  int cameraIndex = 0;
   FirebaseFirestoreService fs;
   Stream<QuerySnapshot>
       itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
@@ -64,7 +65,7 @@ class CheckoutPgState extends State<CheckoutPg> {
     });
   }
 
-  Future validate(String code) async {
+  Future <void> validate(BuildContext context, String code) async {
     //checking if a student exists under the current scanned barcode
     print(fs.patronExists(code));
     if (await fs.patronExists(code)) {
@@ -125,6 +126,35 @@ class CheckoutPgState extends State<CheckoutPg> {
     }
   }
 
+
+  // Popups for the error cases above
+  //Adapted from: https://medium.com/@nils.backe/flutter-alert-dialogs-9b0bb9b01d28
+  //input of error title and error message strings
+  void _showDialog(String errorTitle, String errorText) {
+    //
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
+          title: new Text(errorTitle),
+          content: new Text(errorText),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
   //init state of checkout page
   @override
   void initState() {
@@ -148,8 +178,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
-                        validate(
-                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
                     });
                   }))),
