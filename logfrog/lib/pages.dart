@@ -133,7 +133,7 @@ class CheckoutPgState extends State<CheckoutPg> {
     //setting up camera
     camera = new GestureDetector(
       onTap: () {},
-      child: Card(
+      child: Card( //camera state setup
           margin: EdgeInsets.all(5.0),
           child: new SizedBox(
               width: 200.0,
@@ -144,7 +144,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                         error.toString(),
                         style: TextStyle(color: Colors.red),
                       ),
-                  qrCodeCallback: (code) {
+                  qrCodeCallback: (code) { //if
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
@@ -284,14 +284,14 @@ class CheckinPgState extends State<CheckinPg> {
   //static AudioCache player = new AudioCache();
 
   var ori = Orientation.portrait; //camera set up
-  //Updating history stuff
+  //Updating history variables
   Set<String> dataSet = {};
   List<String> dataList = [];
   List<String> dataNameList = [];
   List<Widget> dataWidget = [];
   //
   GestureDetector camera;
-  //User info
+  //User info variables
   Expanded userInfo;
   String currentMemberID = '';
   String currentMemberName = '';
@@ -336,12 +336,12 @@ class CheckinPgState extends State<CheckinPg> {
     }
   }
 
-  //Setting up checkin page
+  //Setting up checkin page initially
   @override
   void initState() {
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
-    camera = new GestureDetector(
+    camera = new GestureDetector(  //setting up camera
       onTap: () {},
       child: Card( //Camera on side
           margin: EdgeInsets.all(5.0),
@@ -364,7 +364,7 @@ class CheckinPgState extends State<CheckinPg> {
                   }))),
     );
 
-    //DO WE NEED THIS HERE?????  Userinfo is not necessary on checkin page
+    //DO WE NEED THIS HERE?????  Userinfo is not necessary on checkin page  //TODO: delete????
     userInfo = Expanded(
         child: Card(
       margin: EdgeInsets.all(5.0),
@@ -375,7 +375,7 @@ class CheckinPgState extends State<CheckinPg> {
   //Context for page while running
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold( //scaffolding layout
         appBar: AppBar(title: Text('Check-in')),
         body: Padding(
             padding: const EdgeInsets.all(5.0),
@@ -383,7 +383,7 @@ class CheckinPgState extends State<CheckinPg> {
                 body: Column(children: [
               Expanded(
                   flex: 8,
-                  child: Container(
+                  child: Container( //placing camera and userinfo square
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[camera, userInfo], //Two children at top of page TODO: (possible we do not need userInfo here)
@@ -391,9 +391,9 @@ class CheckinPgState extends State<CheckinPg> {
                   )),
               Expanded(
                   flex: 10,
-                  child: Card(
+                  child: Card( //list of items appearing at the bottom of the screen
                       child: ListView.builder(
-                    itemCount: dataList.length,
+                    itemCount: dataList.l0ength,
                     itemBuilder: (context, int index) {
                       return Dismissible( //Dismissible qr scanned will appear
                           key: Key(UniqueKey().toString()),
@@ -429,11 +429,12 @@ class CheckinPgState extends State<CheckinPg> {
 class PageHome extends StatefulWidget {
   PageHome({Key key, this.referenceSite, this.checkoutPeriod}) : super(key: key);
   final checkoutPeriod; //adding a allowed checkoutPeriod time frame (ex: 10 days) for equipment
-  final referenceSite;
+  final referenceSite; //site name currently being accessed
   @override
   PageHomeState createState() => PageHomeState();
 }
 
+//Creating state of home page with statistics
 class PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
@@ -481,6 +482,7 @@ class SettingsPage extends StatefulWidget {
 
 //Log in/log out mechanics
 //uses on sign out tapped in the Widget(build)
+//Page to access firebase management options- allow authorized users to create equipment and patrons of the app, and search equipment, patrons, and checkout/checkin histories
 class _SettingsPageState extends State<SettingsPage> {
   _signOut() async {
     try {
@@ -494,11 +496,12 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     //Scaffold of settings page
+    //TWo initial options for settings page:  log out of site and manage database
     return Scaffold(
         appBar: AppBar(title: Text('Settings')),
         body: ListView(
           children: <Widget>[
-            ListTile(  //two options
+            ListTile(  //two options in setting page
               title: Text("Manage Databases"), //enter management/edit mode
               onTap: () {},
             ),
@@ -514,13 +517,16 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 //Setting up database page
+//setup Database page
 class DatabasePg extends StatefulWidget {
+  //Setup site name for accessing the correct database
   DatabasePg({Key key, this.site}) : super(key: key);
   final String site;
   @override
   DatabasePgState createState() => DatabasePgState(site);
 }
 
+//Running state for the database page in the app
 class DatabasePgState extends State<DatabasePg> {
   //search bar set up
   final TextEditingController _filter = new TextEditingController();
@@ -535,12 +541,12 @@ class DatabasePgState extends State<DatabasePg> {
   List<History> filteredHist = new List();
   List<Widget> itemFilters;
 
-  //Setting up query snapshots for the three collections of the site
+  //Setting up query snapshots for the three collections of the site contained on firebase
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
   StreamSubscription<QuerySnapshot> memSub;
   StreamSubscription<QuerySnapshot> histSub;
-
+  //Setting up search bar
   Icon _searchIcon = new Icon(Icons.search);
   Widget _appBarTitle = new Text('Database');
   String _mode = "Items";
@@ -550,6 +556,7 @@ class DatabasePgState extends State<DatabasePg> {
   bool order = true;
 
   //Listener for search bar, detects if there is text in the bar
+  //If it is, sets the search text to the detected text
   DatabasePgState(String site) {
     dataSite = site;
     fs = new FirebaseFirestoreService(dataSite);
@@ -570,15 +577,15 @@ class DatabasePgState extends State<DatabasePg> {
 
   @override
   //searching items
-  void initState() {
+  void initState() { //initialize the settings page equipment query stream
     itemSub?.cancel();
     this.itemSub = fs
-        .getItemsQuery(itemType, availability, sort, order)
+        .getItemsQuery(itemType, availability, sort, order) //querying firebase for equipment items
         .listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
-          .toList();
-      setState(() {
+          .toList(); //Making list of equipment objects from stored firebase equipments
+      setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment and items
         this.items = equipment;
         this.filteredItems = items;
       });
@@ -589,7 +596,7 @@ class DatabasePgState extends State<DatabasePg> {
     this.histSub = fs.getHistories().listen((QuerySnapshot snapshot) {
       final List<History> histories = snapshot.documents
           .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
-          .toList();
+          .toList(); //Creating list of History objects from stored firebase histories
       setState(() {
         this.hist = histories;
         this.filteredHist = hist;
@@ -601,7 +608,7 @@ class DatabasePgState extends State<DatabasePg> {
     this.memSub = fs.getMembers().listen((QuerySnapshot snapshot) {
       final List<Patrons> members = snapshot.documents
           .map((documentSnapshot) => Patrons.fromMap(documentSnapshot.data))
-          .toList();
+          .toList(); //Creating list of Patrons class objects from stored firebase data for students/patrons of the site
       setState(() {
         this.mems = members;
         this.filteredMems = mems;
@@ -611,6 +618,7 @@ class DatabasePgState extends State<DatabasePg> {
     super.initState();
   }
 
+  //Disposing of settings object necessitates cancelling the query streams
   @override
   void dispose() {
     itemSub?.cancel();
@@ -620,6 +628,7 @@ class DatabasePgState extends State<DatabasePg> {
   }
 
   //searching items for search text
+  //
   Widget _buildItemsList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
@@ -906,7 +915,7 @@ class DatabasePgState extends State<DatabasePg> {
         ],
       );
     } else if (filterType == "Members") {
-      return Container(); 
+      return Container();
     } else if (filterType == "History") {
       return Container();
     } else {
