@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   int _bottomNavBarIndex = 0;
   CheckoutPg checkoutPg;
   CheckinPg checkinPg;
+  DatabasePg databasePg;
   PageHome pgHome;
   SettingsPage settingpg;
   List<Widget> pageList;
@@ -66,6 +67,9 @@ class _HomePageState extends State<HomePage> {
         checkoutPg = CheckoutPg(site: currentSite);
         checkinPg = CheckinPg(site: currentSite);
         pgHome = PageHome(referenceSite: widget.userId, checkoutPeriod: checkoutPeriodActual ); //calling statistics page with site and allowed checkout period to display out/in items and late items
+        databasePg = new DatabasePg(
+          site: currentSite,
+        );
         settingpg = SettingsPage(
             userId: widget.userId,
             auth: widget.auth,
@@ -74,9 +78,7 @@ class _HomePageState extends State<HomePage> {
           pgHome,
           checkoutPg,
           checkinPg,
-          new DatabasePg(
-            site: currentSite,
-          ),
+          databasePg,
           settingpg
         ];
         currentPage = pgHome;
@@ -300,9 +302,63 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _bottomNavBarIndex,
           onTap: (int index) {
             setState(() {
-              _bottomNavBarIndex = index;
               //Temp page selector
-              currentPage = pageList[index];
+              if (index == 3){
+                bool failedAttempt = false;
+                showDialog(
+                  barrierDismissible: false,
+                    context: context,
+                builder: (BuildContext context){
+                      TextEditingController passwordControl = new TextEditingController(
+                      );
+                  return AlertDialog(
+                    title: new Text("Please enter your password"),
+                    content: TextField(
+                      obscureText: true,
+                      controller: passwordControl,
+                        decoration: new InputDecoration(
+                          hintText: "Password",
+                          errorText: failedAttempt ? 'Error authenticating password' : null,
+                        )
+                    ),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text("Cancel"),
+                        onPressed: (){
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      FlatButton(
+                      child: Text("Authenticate"),
+                      onPressed: () async{
+                       bool validate = await widget.auth.reauthenticate(passwordControl.text);
+                       if (validate == true){
+                         setState(() {
+                           _bottomNavBarIndex = index;
+                           currentPage = pageList[index];
+                         });
+
+                         Navigator.of(context).pop();
+                       }
+                       else
+                         {
+                           print("failed");
+                           passwordControl.clear();
+                           setState(() {
+                             failedAttempt = true;
+                           });
+
+                         }
+                      }
+                    )]
+                  );
+                }
+                );
+              }
+              else {
+                _bottomNavBarIndex = index;
+                currentPage = pageList[index];
+              }
             });
           },
           items: [

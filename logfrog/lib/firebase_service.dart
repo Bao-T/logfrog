@@ -491,7 +491,22 @@ class FirebaseFirestoreService {
       return false;
     });
   }
+  Future<dynamic> deletePatron(String id) async {
+    final TransactionHandler deleteTransaction = (Transaction tx) async {
+      final DocumentSnapshot ds = await tx.get(
+          objectCollection.document(site).collection("Members").document(id));
+      await tx.delete(ds.reference);
+      return {'deleted': true};
+    };
 
+    return Firestore.instance
+        .runTransaction(deleteTransaction)
+        .then((result) => result['deleted'])
+        .catchError((error) {
+      print('error: $error');
+      return false;
+    });
+  }
   Future<dynamic> deleteUsers(int id) async {
     final TransactionHandler deleteTransaction = (Transaction tx) async {
       final DocumentSnapshot ds =

@@ -393,7 +393,7 @@ class CheckinPgState extends State<CheckinPg> {
                   flex: 10,
                   child: Card( //list of items appearing at the bottom of the screen
                       child: ListView.builder(
-                    itemCount: dataList.l0ength,
+                    itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible( //Dismissible qr scanned will appear
                           key: Key(UniqueKey().toString()),
@@ -1441,7 +1441,10 @@ class ViewItemState extends State<ViewItem> {
                           )),
                           editMode == false
                               ? Container()
-                              : RaisedButton(
+                              :
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[RaisedButton(
                                   child: Text("Update"),
                                   onPressed: () async {
                                     if (name.value.isEmpty) {
@@ -1475,7 +1478,47 @@ class ViewItemState extends State<ViewItem> {
                                       }
                                     }
                                   },
-                                )
+                                ),
+                                RaisedButton(
+                                  color: Colors.red,
+                                  child: Text("Delete"),
+                                  onPressed: () async {
+                                    showDialog(context: context,
+                                    builder: (BuildContext context){
+                                      return AlertDialog(
+                                        title: Text("Delete Item"),
+                                        content: Text("Are you sure you want to delete this item? This will not reflect in the history logs and may unlink data."),
+                                        actions: <Widget>[
+                                          FlatButton(
+                                            child: Text("Delete"),
+                                            onPressed: (){
+                                              try {
+                                                fs.deleteEquipment(widget.item.itemID);
+                                                Navigator.of(context).pop();
+                                                Navigator.pop(context);
+                                              } catch (e) {
+                                                print(e.toString());
+                                                _showToast(context, e.toString());
+                                              }
+                                            }
+                                          ),
+                                          FlatButton(
+                                              child: Text("Cancel"),
+                                              onPressed: (){
+                                                Navigator.of(context).pop();
+                                              }
+                                          ),
+                                        ]
+                                      );
+                                    });
+
+
+                                  },
+                                ),
+                                ],
+                              )
+
+
                         ])));
   }
 
@@ -1703,37 +1746,79 @@ class ViewMemberState extends State<ViewMember> {
                           )),
                           editMode == false
                               ? Container()
-                              : RaisedButton(
-                                  child: Text("Update"),
-                                  onPressed: () async {
-                                    if (firstName.value.isEmpty) {
-                                      setState(() {
-                                        firstName = FieldWidget(
-                                            title: 'Item Name',
-                                            hint: 'Enter Item Name',
-                                            validate: true,
-                                            enabled: true);
-                                      });
-                                      _showToast(context,
-                                          'Error: You must enter item name.');
-                                    } else {
-                                      try {
-                                        //print(id.value);
-                                        await fs.updatePatrons(
-                                            id.value,
-                                            firstName.value,
-                                            lastName.value,
-                                            address.value,
-                                            phone.value,
-                                            notes.value);
-                                        Navigator.pop(context);
-                                      } catch (e) {
-                                        print(e.toString());
-                                        _showToast(context, e.toString());
-                                      }
-                                    }
-                                  },
-                                ),
+                              : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                            RaisedButton(
+                              child: Text("Update"),
+                              onPressed: () async {
+                                if (firstName.value.isEmpty) {
+                                  setState(() {
+                                    firstName = FieldWidget(
+                                        title: 'Item Name',
+                                        hint: 'Enter Item Name',
+                                        validate: true,
+                                        enabled: true);
+                                  });
+                                  _showToast(context,
+                                      'Error: You must enter item name.');
+                                } else {
+                                  try {
+                                    //print(id.value);
+                                    await fs.updatePatrons(
+                                        id.value,
+                                        firstName.value,
+                                        lastName.value,
+                                        address.value,
+                                        phone.value,
+                                        notes.value);
+                                    Navigator.pop(context);
+                                  } catch (e) {
+                                    print(e.toString());
+                                    _showToast(context, e.toString());
+                                  }
+                                }
+                              },
+                            ),
+                            RaisedButton(
+                              color: Colors.red,
+                              child: Text("Delete"),
+                              onPressed: () async {
+                                showDialog(context: context,
+                                    builder: (BuildContext context){
+                                      return AlertDialog(
+                                          title: Text("Delete Member"),
+                                          content: Text("Are you sure you want to delete this Member? This will not reflect in the history logs and may unlink data."),
+                                          actions: <Widget>[
+                                            FlatButton(
+                                                child: Text("Delete"),
+                                                onPressed: (){
+                                                  try {
+                                                    fs.deletePatron(widget.mem.id);
+                                                    Navigator.of(context).pop();
+                                                    Navigator.pop(context);
+                                                  } catch (e) {
+                                                    print(e.toString());
+                                                    _showToast(context, e.toString());
+                                                  }
+                                                }
+                                            ),
+                                            FlatButton(
+                                                child: Text("Cancel"),
+                                                onPressed: (){
+                                                  Navigator.of(context).pop();
+                                                }
+                                            ),
+                                          ]
+                                      );
+                                    });
+
+
+                              },
+                            )
+                          ],)
+
+
                         ])));
   }
 
