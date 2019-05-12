@@ -15,7 +15,7 @@ import 'history.dart';
 import "package:qr_mobile_vision/qr_camera.dart";
 
 
-bool frontCamera = true;
+bool frontCamera = false;
 
 String
     dataSite; //site for the user- tells firebase which initial document to access
@@ -111,17 +111,21 @@ class CheckoutPgState extends State<CheckoutPg> {
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
       //We want to alert students if:
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
+      //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == null) {
         //make widget which shows popup with "scan a member id"
+        _showDialog(context, "Member Checkout Error", "Please scan student ID first");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
-        _showDialog(context, "Checkout Member Error", "This member does not ");
+        _showDialog(context, "Equipment Checkout Error", "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
         //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
       } else if (!(await fs.equipmentNotCheckedOut(code))) {
         //Case 3: Equipment is shown as already checked out
+        _showDialog(context, "Equipment Checkout Error", "Equipment has already been checked out!  Please check item back in first if you wish to check it out");
         //make popup that shows "equipment is currently checked out.  Please checkin first."
       } else {
         //default case
+        _showDialog(context, "Unknown Checkout Error", "Unknown error as occured!");
         print("Unknown error as occured!");
       }
     }
@@ -131,7 +135,7 @@ class CheckoutPgState extends State<CheckoutPg> {
   // Popups for the error cases above
   //Adapted from: https://medium.com/@nils.backe/flutter-alert-dialogs-9b0bb9b01d28
   //input of error title and error message strings
-  void _showDialog(String errorTitle, String errorText) {
+  void _showDialog(BuildContext context, String errorTitle, String errorText) {
     //
     showDialog(
       context: context,
@@ -208,6 +212,16 @@ class CheckoutPgState extends State<CheckoutPg> {
       String itemName = item.data["Name"].toString();
       Timestamp timeCheckedIn; //null for now, will be filled when equipment
       Timestamp timeCheckedOut = Timestamp.now();
+      Equipment currentItem = Equipment.fromMap(item.data);
+      currentItem.setStatus("unavailable");
+      fs.updateEquipment(
+            name: currentItem.name,
+            itemID: currentItem.itemID,
+            itemType: currentItem.itemType,
+            purchased: currentItem.purchasedTimestamp,
+            status: currentItem.status,
+            condition: currentItem.condition,
+            notes: currentItem.notes);
       fs.createHistory(
           itemID: itemID,
           itemName: itemName,
@@ -361,12 +375,34 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
     } else {
-      if (!(historyObj.docuemnts.isNotEmpty)) {
+      if (!(historyObj.documents.isNotEmpty)) {
         _showDialog(context, "CheckIn Equipment Error", "This item is not in the system and cannot be checked back in");
       } else {
         _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in");
       }
     }
+  }
+  void _showDialog(BuildContext context, String errorTitle, String errorText) {
+    //
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
+          title: new Text(errorTitle),
+          content: new Text(errorText),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   //Setting up checkin page initially
@@ -391,7 +427,7 @@ class CheckinPgState extends State<CheckinPg> {
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
-                        validate(code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
                     });
                   }))),
@@ -859,7 +895,6 @@ class DatabasePgState extends State<DatabasePg> {
           Center(child: Text("Filters")),
           Divider(),
           ListTile(
-            enabled: false,
             title: Text('Item Type'),
             trailing: DropdownButtonHideUnderline(
                 child: DropdownButton(
