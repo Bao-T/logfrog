@@ -115,6 +115,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         //make widget which shows popup with "scan a member id"
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
+        _showDialog(context, "Checkout Member Error", "This member does not ");
         //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
       } else if (!(await fs.equipmentNotCheckedOut(code))) {
         //Case 3: Equipment is shown as already checked out
