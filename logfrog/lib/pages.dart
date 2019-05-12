@@ -376,9 +376,9 @@ class CheckinPgState extends State<CheckinPg> {
           Timestamp.now());
     } else {
       if (!(historyObj.documents.isNotEmpty)) {
-        _showDialog(context, "CheckIn Equipment Error", "This item is not in the system and cannot be checked back in");
+        _showDialog(context, "CheckIn Equipment Error", "This equipment item is not in the system and cannot be checked back in");
       } else {
-        _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in");
+        _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in.");
       }
     }
   }
@@ -434,11 +434,12 @@ class CheckinPgState extends State<CheckinPg> {
     );
 
     //DO WE NEED THIS HERE?????  Userinfo is not necessary on checkin page  //TODO: delete????
-    userInfo = Expanded(
-        child: Card(
-      margin: EdgeInsets.all(5.0),
-      child: Center(child: Text("User Info")),
-    ));
+   // userInfo = Expanded(
+     //   child: Card(
+     // margin: EdgeInsets.all(5.0),
+      //child: Center(child: Text("User Info")),
+    //));
+    userinfo = Container();
   }
 
   //Context for page while running
