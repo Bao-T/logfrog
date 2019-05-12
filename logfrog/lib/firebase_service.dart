@@ -92,6 +92,10 @@ class FirebaseFirestoreService {
     return docs.snapshots();
   }
 
+  Future<List<List>> getHistoryLog() async{
+    await objectCollection.document(site).collection("History").snapshots();
+
+  }
   //create an equipment asynchronously
   //input of Equipment type map
   Future<Equipment> createEquipment(

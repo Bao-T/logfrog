@@ -35,6 +35,7 @@ dependencies:
   json_annotation:
   dio:
   qr_flutter:
+  csv:
   #audioplayers:
 
 dev_dependencies:

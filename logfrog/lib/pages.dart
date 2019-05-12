@@ -425,7 +425,7 @@ class CheckinPgState extends State<CheckinPg> {
                   flex: 10,
                   child: Card( //list of items appearing at the bottom of the screen
                       child: ListView.builder(
-                    itemCount: dataList.l0ength,
+                    itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Dismissible( //Dismissible qr scanned will appear
                           key: Key(UniqueKey().toString()),
@@ -501,9 +501,10 @@ class PageHomeState extends State<PageHome> {
 
 //Settings page for viewing/adjusting site content
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut})
+  SettingsPage({Key key, this.auth, this.userId, this.onSignedOut, this.site})
       : super(key: key);
   //Login information for re-verifying user in app before allowing them to make edits
+  final String site;
   final BaseAuth auth;
   final VoidCallback onSignedOut;
   final String userId;
@@ -533,9 +534,15 @@ class _SettingsPageState extends State<SettingsPage> {
         appBar: AppBar(title: Text('Settings')),
         body: ListView(
           children: <Widget>[
-            ListTile(  //two options in setting page
-              title: Text("Manage Databases"), //enter management/edit mode
-              onTap: () {},
+            ListTile(
+              //two options in setting page
+              title: Text("Email History"), //enter management/edit mode
+              onTap: () {
+               FirebaseFirestoreService fs = FirebaseFirestoreService(widget.site);
+               fs..getHistoryLog(); //TODO
+
+              },
+
             ),
             ListTile(
               title: Text("Log Out"), //sign out of edit mode
@@ -572,10 +579,12 @@ class DatabasePgState extends State<DatabasePg> {
   List<Patrons> filteredMems = new List();
   List<History> filteredHist = new List();
   List<Widget> itemFilters;
-
+  List<dynamic> itemTypes;
+  List<DropdownMenuItem<String>> itemTypesMenu = new List();
   //Setting up query snapshots for the three collections of the site contained on firebase
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
+  StreamSubscription<DocumentSnapshot> itemTypeSub;
   StreamSubscription<QuerySnapshot> memSub;
   StreamSubscription<QuerySnapshot> histSub;
   //Setting up search bar
@@ -621,6 +630,24 @@ class DatabasePgState extends State<DatabasePg> {
         this.items = equipment;
         this.filteredItems = items;
       });
+    });
+    itemTypeSub?.cancel();
+    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
+      itemTypes = snapshot.data["ItemTypes"];
+      itemTypesMenu.add(DropdownMenuItem(
+        child: Text('All'),
+        value: '',
+      ));
+      itemTypesMenu.add(DropdownMenuItem(
+        child: Text('None'),
+        value: '_null_',
+      ));
+      for (int i = 0; i < itemTypes.length; i++) {
+        itemTypesMenu.add(DropdownMenuItem(
+          child: Text(itemTypes[i].toString()),
+          value: itemTypes[i].toString(),
+        ));
+      }
     });
 
     //searching checkout/checkin histories
@@ -751,7 +778,9 @@ class DatabasePgState extends State<DatabasePg> {
                 .itemName
                 .toLowerCase()
                 .contains(_searchText.toLowerCase()) ||
-            hist[i].memName.toLowerCase().contains(_searchText.toLowerCase())) {
+            hist[i].memName.toLowerCase().contains(_searchText.toLowerCase()) ||
+            hist[i].itemID.contains(_searchText) ||
+            hist[i].memID.contains(_searchText)) {
           tempList.add(hist[i]);
         }
       }
@@ -831,6 +860,29 @@ class DatabasePgState extends State<DatabasePg> {
           ListTile(
             enabled: false,
             title: Text('Item Type'),
+            trailing: DropdownButtonHideUnderline(
+                child: DropdownButton(
+                    value: itemType,
+                    items: itemTypesMenu,
+                    onChanged: (String type) {
+                      setState(() {
+                        itemType = type;
+                        itemSub?.cancel();
+                        this.itemSub = fs
+                            .getItemsQuery(itemType, availability, sort, order)
+                            .listen((QuerySnapshot snapshot) {
+                          final List<Equipment> equipment = snapshot.documents
+                              .map((documentSnapshot) =>
+                                  Equipment.fromMap(documentSnapshot.data))
+                              .toList();
+                          setState(() {
+                            this.items = equipment;
+                            this.filteredItems = items;
+                          });
+                        });
+                      });
+                    })),
+
           ),
           Divider(),
           ListTile(
