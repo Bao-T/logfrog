@@ -113,16 +113,13 @@ class CheckoutPgState extends State<CheckoutPg> {
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == null) {
-        //make widget which shows popup with "scan a member id"
         _showDialog(context, "Member Checkout Error", "Please scan student ID first");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
         _showDialog(context, "Equipment Checkout Error", "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
-        //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
       } else if (!(await fs.equipmentNotCheckedOut(code))) {
         //Case 3: Equipment is shown as already checked out
         _showDialog(context, "Equipment Checkout Error", "Equipment has already been checked out!  Please check item back in first if you wish to check it out");
-        //make popup that shows "equipment is currently checked out.  Please checkin first."
       } else {
         //default case
         _showDialog(context, "Unknown Checkout Error", "Unknown error as occured!");
