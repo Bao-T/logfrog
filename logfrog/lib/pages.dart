@@ -67,7 +67,7 @@ class CheckoutPgState extends State<CheckoutPg> {
 
   Future <void> validate(BuildContext context, String code) async {
     //checking if a student exists under the current scanned barcode
-    //print(fs.patronExists(code));
+    print(fs.patronExists(code));
     if (await fs.patronExists(code)) {
       Firestore.instance
           .collection('Objects')
@@ -78,7 +78,7 @@ class CheckoutPgState extends State<CheckoutPg> {
           .then((doc) {
         //retrieves snapshot of that student
         currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
-        //print(currentMemberName);
+        print(currentMemberName);
         setState(() {
           userInfo = Expanded(
               child: Card(
@@ -113,19 +113,15 @@ class CheckoutPgState extends State<CheckoutPg> {
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == null) {
         //make widget which shows popup with "scan a member id"
-        _showDialog(context, "Member Checkout Error", "Please scan student ID first");
-      } else if (!(await fs.patronExists(code))) {
-        _showDialog(context, "Member Checkout Error", "Invalid student ID, please check that you have been entered into the school site database correctly");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
-        _showDialog(context, "Equipment Checkout Error", "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
+        //make widget popup that shows "equipment qr code not recognized, cannot checkout. Check that this equipment is entered for the school site"
       } else if (!(await fs.equipmentNotCheckedOut(code))) {
         //Case 3: Equipment is shown as already checked out
-        _showDialog(context, "Equipment Checkout Error", "Equipment has already been checked out!  Please check item back in first if you wish to check it out");
         //make popup that shows "equipment is currently checked out.  Please checkin first."
       } else {
         //default case
-        _showDialog(context, "Unknown Checkout Error", "Unknown error as occured!");
+        print("Unknown error as occured!");
       }
     }
   }
@@ -140,13 +136,13 @@ class CheckoutPgState extends State<CheckoutPg> {
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
-        return AlertDialog( //displays a popup window over the rest of the screen which closes when "Okay" is pressed
+        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
           title: new Text(errorTitle),
           content: new Text(errorText),
           actions: <Widget>[
             // usually buttons at the bottom of the dialog
             new FlatButton(
-              child: new Text("Okay"),
+              child: new Text("Close"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -1061,8 +1057,10 @@ class AddItemState extends State<AddItem> {
     title: 'Purchased Date',
     hint: 'Date',
   );
-  FieldWidget status =
-      FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)'); //Status for checking an item in and out
+  FieldWidget status = FieldWidget(
+      title: 'Item Status',
+      hint:
+          '(Available, Unavailable)'); //Status for checking an item in and out
   bool cameraView = false;
 
   @override

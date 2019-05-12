@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:logfrog/firebase_service.dart';
 import 'package:logfrog/users.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 abstract class BaseAuth {
@@ -16,6 +15,8 @@ abstract class BaseAuth {
   Future<void> signOut();
 
   Future<bool> isEmailVerified();
+
+  Future<bool> reauthenticate(String password);
 }
 
 class Auth implements BaseAuth {
@@ -30,6 +31,7 @@ class Auth implements BaseAuth {
   Future<String> signIn(String email, String password) async {
     FirebaseUser user = await _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
+    _email = email;
     return user.uid;
   }
 
@@ -79,6 +81,7 @@ class Auth implements BaseAuth {
 
   Future<FirebaseUser> getCurrentUser() async {
     FirebaseUser user = await _firebaseAuth.currentUser();
+    _email = user.email;
     return user;
   }
 
@@ -89,6 +92,28 @@ class Auth implements BaseAuth {
   Future<void> sendEmailVerification() async {
     FirebaseUser user = await _firebaseAuth.currentUser();
     user.sendEmailVerification();
+  }
+  
+  Future<void> updatePassword(String newPass) async{
+    FirebaseUser user = await _firebaseAuth.currentUser();
+    user.updatePassword(newPass);
+  }
+
+  Future<bool> reauthenticate(String password) async {
+    FirebaseUser user = await _firebaseAuth.currentUser();
+    _email = user.email;
+    try {
+      user = await _firebaseAuth.signInWithEmailAndPassword(
+          email: _email, password: password);
+      if (user.uid != null) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    catch(e){}
+    return false;
   }
 
   Future<bool> isEmailVerified() async {
