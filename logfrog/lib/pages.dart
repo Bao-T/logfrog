@@ -714,7 +714,7 @@ class DatabasePgState extends State<DatabasePg> {
     if (!(_searchText.isEmpty)) {
       List<History> tempList = new List();
       for (int i = 0; i < hist.length; i++) {
-        //
+        //Looking for search histories which match a member name
         if (hist[i]
                 .itemName
                 .toLowerCase()
@@ -766,7 +766,7 @@ class DatabasePgState extends State<DatabasePg> {
     }
   }
 
-  //Called when search icon pressed in search bar
+  //Calls to populate the search bar when the icon is pressed
   void _searchPressed() {
     setState(() {
       if (this._searchIcon.icon == Icons.search) {
@@ -788,6 +788,7 @@ class DatabasePgState extends State<DatabasePg> {
     });
   }
 
+  //Uses drawer widget
   //Filtering options for searching items
   Widget _getFilters(String filterType) {
     if (filterType == "Items") {
@@ -818,12 +819,12 @@ class DatabasePgState extends State<DatabasePg> {
                           child: Text('Unavailable'),
                           value: 'unavailable',
                         ),
-                        DropdownMenuItem(
+                        DropdownMenuItem( //TODO: remove, we don't support this
                           child: Text('Discontinued'),
                           value: 'discontinued',
                         )
                       ],
-                      onChanged: (String avail) {
+                      onChanged: (String avail) { //Searching contents based on filters
                         setState(() {
                           availability = avail;
                           itemSub?.cancel();
@@ -843,7 +844,7 @@ class DatabasePgState extends State<DatabasePg> {
                         });
                       }))),
           Divider(),
-          ListTile(
+          ListTile(//Sorting the items based on values
               title: Text('Sort By'),
               trailing: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -882,10 +883,10 @@ class DatabasePgState extends State<DatabasePg> {
                         });
                       }))),
           Divider(),
-          ListTile(
+          ListTile( // Sorting results based on list  content order
               title: Text('Order'),
               trailing: DropdownButtonHideUnderline(
-                  child: DropdownButton<bool>(
+                  child: DropdownButton<bool>( //choosing option for sorting the results
                       value: order,
                       items: <DropdownMenuItem<bool>>[
                         DropdownMenuItem(
@@ -897,7 +898,7 @@ class DatabasePgState extends State<DatabasePg> {
                           value: true,
                         ),
                       ],
-                      onChanged: (bool ord) {
+                      onChanged: (bool ord) { //when ordering is selected, sorts query results
                         setState(() {
                           order = ord;
                           itemSub?.cancel();
@@ -930,7 +931,7 @@ class DatabasePgState extends State<DatabasePg> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    //Overall scaffolding, for drawer to choose search option, title, search bar
     return Scaffold(
       appBar: AppBar(
         title: _appBarTitle,
@@ -999,7 +1000,10 @@ class DatabasePgState extends State<DatabasePg> {
     );
   }
 }
+//End database page
 
+//Adding a new item widgets
+//For adding a new equipment/student
 class AddItem extends StatefulWidget {
   AddItem({Key key, this.site}) : super(key: key);
   final String site;
@@ -1007,10 +1011,11 @@ class AddItem extends StatefulWidget {
   AddItemState createState() => AddItemState();
 }
 
+//Setting up AddItemWidget
 class AddItemState extends State<AddItem> {
-  final Timestamp dateNow = Timestamp.now();
-  bool validateName = false;
-  FirebaseFirestoreService fs;
+  final Timestamp dateNow = Timestamp.now();//timetsamp of item creation in the database
+  bool validateName = false; //boolean for determining if the name will be valid
+  FirebaseFirestoreService fs; //declaring a instance of firestore to handle the transactions
   FieldWidget condition =
       FieldWidget(title: 'Condition', hint: 'Item Condition:');
   FieldWidget itemId = FieldWidget(
@@ -1024,10 +1029,11 @@ class AddItemState extends State<AddItem> {
     hint: 'Date',
   );
   FieldWidget status =
-      FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)');
+      FieldWidget(title: 'Item Status', hint: '(Available, Unavailable)'); //Status for checking an item in and out
   bool cameraView = false;
 
   @override
+  //Setting up the widget, default purchased date is reformatted Timestamp of current time
   void initState() {
     print(widget.site);
     fs = FirebaseFirestoreService(widget.site);
@@ -1037,6 +1043,7 @@ class AddItemState extends State<AddItem> {
   }
 
   @override
+  //Scaffolding the item adding widget
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
@@ -1044,13 +1051,14 @@ class AddItemState extends State<AddItem> {
           actions: <Widget>[
             IconButton(
                 icon: Icon(Icons.close),
-                onPressed: () {
+                onPressed: () { //when icon is pressed, pops up the add item area
                   Navigator.pop(context);
                 })
           ],
           title: Text("Add Item"),
         ),
         body: cameraView
+        //Allows new qr code to be scanned for a added item, that way a item can be assigned a qr sticker if any are available
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -1106,19 +1114,20 @@ class AddItemState extends State<AddItem> {
                           )),
                           RaisedButton(
                             child: Text("Submit"),
-                            onPressed: () async {
+                            onPressed: () async { //in item creation mode, when submit is pressed will create on firebase
                               if (name.value.isEmpty) {
                                 setState(() {
                                   name.validate = false;
                                 });
                                 _showToast(context,
-                                    'Error: You must enter item name.');
+                                    'Error: You must enter item name.'); //must have a item name
                               } else if (itemId.value.isEmpty) {
                                 _showToast(
-                                    context, 'Error: You must scan item code.');
+                                    context, 'Error: You must scan item code.'); //must have a id number for qr generation
+                                //TODO:  add another else if for checking if the id exists in firebase???? and is nto alreaydy used for a student id???
                               } else {
                                 try {
-                                  await fs.createEquipment(
+                                  await fs.createEquipment( //try to create the item
                                       name: name.value,
                                       itemID: itemId.value,
                                       itemType: itemType.value,
@@ -1150,7 +1159,9 @@ class AddItemState extends State<AddItem> {
     );
   }
 }
+//end equipment creation
 
+//Adding a new patron to firebase
 class AddMember extends StatefulWidget {
   AddMember({Key key, this.site}) : super(key: key);
   final String site;
@@ -1159,15 +1170,16 @@ class AddMember extends StatefulWidget {
 }
 
 class AddMemberState extends State<AddMember> {
-  final Timestamp dateNow = Timestamp.now();
+  final Timestamp dateNow = Timestamp.now(); //default timestamp is now....TODO: find out why we need this
   bool validateName = false;
   FirebaseFirestoreService fs;
   @override
-  void initState() {
+  void initState() { //opening a firestore service for the correct class site
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
   }
 
+  //Setting up widget fields to collect new member info
   FieldWidget firstName =
       FieldWidget(title: 'First Name', hint: 'Member First Name');
   FieldWidget lastName =
@@ -1177,7 +1189,7 @@ class AddMemberState extends State<AddMember> {
       hint: 'A random ID will be generated if left empty',
       enabled: false);
   FieldWidget address =
-      FieldWidget(title: 'Address', hint: 'Address of Member');
+      FieldWidget(title: 'Address', hint: 'Email address of Member');
   FieldWidget phone =
       FieldWidget(title: 'Phone Number', hint: 'Phone Contact of Member');
   FieldWidget notes = FieldWidget(title: 'Notes', hint: 'Notes:');
@@ -1199,7 +1211,7 @@ class AddMemberState extends State<AddMember> {
           title: Text("Add Member"),
         ),
         body: cameraView
-            ? Column(
+            ? Column( //Allowing new patron id codes from student IDs to be scanned when adding a member
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   new SizedBox(
@@ -1251,16 +1263,17 @@ class AddMemberState extends State<AddMember> {
                               notes,
                             ],
                           )),
-                          RaisedButton(
+                          RaisedButton( //when done filling info, add new patron to firestore
                             child: Text("Submit"),
                             onPressed: () async {
-                              if (firstName.value.isEmpty) {
+                              if (firstName.value.isEmpty) { //must enter a first name field for new members
                                 setState(() {
                                   firstName.validate = false;
                                 });
                                 _showToast(context,
-                                    'Error: You must enter item name.');
+                                    'Error: You must enter a member name.');
                               } else {
+                                //TODO:  add check for memberID to make sure it is not used and is not a equipment ID already
                                 try {
                                   await fs.createPatron(
                                       id: memberID.value,
@@ -1291,6 +1304,7 @@ class AddMemberState extends State<AddMember> {
     );
   }
 }
+//end new memeber/patron creation
 
 class ViewItem extends StatefulWidget {
   ViewItem({Key key, this.item, this.site}) : super(key: key);
@@ -1300,13 +1314,15 @@ class ViewItem extends StatefulWidget {
   ViewItemState createState() => ViewItemState();
 }
 
+//view an equipment item and update variables
+//Already has the equipment stored in the widget.item
 class ViewItemState extends State<ViewItem> {
-  final Timestamp dateNow = Timestamp.now();
+  final Timestamp dateNow = Timestamp.now(); //default timestamp is the current one
   bool validateName = false;
   bool editMode = false;
   FirebaseFirestoreService fs;
   @override
-  void initState() {
+  void initState() { //fill all values
     fs = FirebaseFirestoreService(widget.site);
     condition.setString(widget.item.condition);
     itemId.setString(widget.item.itemID);
@@ -1322,11 +1338,13 @@ class ViewItemState extends State<ViewItem> {
     setState(() {});
   }
 
+  //Setting up item viewer
   FieldWidget condition = FieldWidget(
     title: 'Condition',
     hint: 'Item Condition:',
     enabled: false,
   );
+  //Setting up viewer for equipment fields
   FieldWidget itemId = FieldWidget(
       title: 'Item ID', hint: 'An ID will generate by default', enabled: false);
   FieldWidget itemType =
@@ -1346,7 +1364,7 @@ class ViewItemState extends State<ViewItem> {
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-              icon: Icon(Icons.edit),
+              icon: Icon(Icons.edit), //if entering edit mode, uses above FieldWidgets to edit content
               onPressed: () {
                 editMode = true;
                 setState(() {
@@ -1379,7 +1397,7 @@ class ViewItemState extends State<ViewItem> {
                 });
               }),
           actions: <Widget>[
-            IconButton(
+            IconButton( //closing edit mode
                 icon: Icon(Icons.close),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1389,7 +1407,7 @@ class ViewItemState extends State<ViewItem> {
               editMode == false ? Text("Item Details") : Text("Edit Details"),
         ),
         body: cameraView
-            ? Column(
+            ? Column( //allow user to scan qr code to input updated qr
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   new SizedBox(
@@ -1447,7 +1465,7 @@ class ViewItemState extends State<ViewItem> {
                           editMode == false
                               ? Container()
                               : RaisedButton(
-                                  child: Text("Update"),
+                                  child: Text("Update"), //when update is pressed, update the equipment fields
                                   onPressed: () async {
                                     if (name.value.isEmpty) {
                                       setState(() {
@@ -1459,11 +1477,12 @@ class ViewItemState extends State<ViewItem> {
                                         );
                                       });
                                       _showToast(context,
-                                          'Error: You must enter item name.');
+                                          'Error: You must enter an item name.');
                                     } else if ((itemId.value.isEmpty)) {
                                       _showToast(context,
                                           'Error: You must scan an item code.');
                                     } else {
+                                      //TODO:  add itemID checks to make sure that it is not used in the equipemnt/patron classes already
                                       try {
                                         await fs.updateEquipment(
                                             name: name.value,
@@ -1495,26 +1514,30 @@ class ViewItemState extends State<ViewItem> {
     );
   }
 }
+//end view/udpate equipment
 
+//view/update member information
+//Has the member information already from the list widgets above
 class ViewMember extends StatefulWidget {
   ViewMember({Key key, this.mem, this.site}) : super(key: key);
-  final Patrons mem;
+  final Patrons mem; //has a Patrons class member
   final String site;
   @override
   ViewMemberState createState() => ViewMemberState();
 }
 
 class ViewMemberState extends State<ViewMember> {
-  final Timestamp dateNow = Timestamp.now();
+  final Timestamp dateNow = Timestamp.now(); //TODO:  why do we need this???
   bool validateName = false;
   bool editMode = false;
   FirebaseFirestoreService fs;
-  List<History> histories;
+  List<History> histories; //Will pull up the histories using a streamquery for this member
   StreamSubscription<QuerySnapshot> historySub;
   @override
   void initState() {
     fs = FirebaseFirestoreService(widget.site);
     historySub?.cancel();
+    //Finding relevant histories
     this.historySub =
         fs.getMemberHistory(widget.mem.id).listen((QuerySnapshot snapshot) {
       final List<History> history = snapshot.documents
@@ -1524,7 +1547,7 @@ class ViewMemberState extends State<ViewMember> {
         this.histories = history;
       });
     });
-
+    //Filling other member fields
     id.setString(widget.mem.id);
     firstName.setString(widget.mem.firstName);
     lastName.setString(widget.mem.lastName);
@@ -1538,6 +1561,7 @@ class ViewMemberState extends State<ViewMember> {
     setState(() {});
   }
 
+  //Setting up FieldWidgets for editting member/patron variables
   FieldWidget id = FieldWidget(
       title: 'Item ID', hint: 'An ID will generate by default', enabled: false);
   FieldWidget firstName = FieldWidget(
@@ -1559,7 +1583,7 @@ class ViewMemberState extends State<ViewMember> {
           leading: IconButton(
               icon: Icon(Icons.edit),
               onPressed: () {
-                editMode = true;
+                editMode = true; //if in edit mode, allow variables to be changed using above widgets
                 setState(() {
                   id = FieldWidget(
                       title: 'ID',
@@ -1581,7 +1605,7 @@ class ViewMemberState extends State<ViewMember> {
                       enabled: true);
                   notes = FieldWidget(
                       title: 'Notes', hint: 'Member notes:', enabled: true);
-                  id.setString(widget.mem.id);
+                  id.setString(widget.mem.id); //TODO:  add id checks for the members/patrons
                   firstName.setString(widget.mem.firstName);
                   lastName.setString(widget.mem.lastName);
                   address.setString(widget.mem.emailAddress);
@@ -1590,7 +1614,7 @@ class ViewMemberState extends State<ViewMember> {
                 });
               }),
           actions: <Widget>[
-            IconButton(
+            IconButton( //closing view mode
                 icon: Icon(Icons.close),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1652,7 +1676,7 @@ class ViewMemberState extends State<ViewMember> {
                               address,
                               phone,
                               notes,
-                              Card(
+                              Card( //displaying history items associated with this member in a list
                                   child: Padding(
                                 padding: EdgeInsets.all(5.0),
                                 child: Column(
@@ -1663,7 +1687,7 @@ class ViewMemberState extends State<ViewMember> {
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16.0))),
-                                    Container(
+                                    Container( //displaying history items associated with the member
                                         height: 500,
                                         child: ListView.separated(
                                           separatorBuilder: (context, index) =>
@@ -1709,7 +1733,7 @@ class ViewMemberState extends State<ViewMember> {
                           editMode == false
                               ? Container()
                               : RaisedButton(
-                                  child: Text("Update"),
+                                  child: Text("Update"), //if update is pressed, updates the contents on firebase
                                   onPressed: () async {
                                     if (firstName.value.isEmpty) {
                                       setState(() {
@@ -1724,6 +1748,7 @@ class ViewMemberState extends State<ViewMember> {
                                     } else {
                                       try {
                                         //print(id.value);
+                                        //TODO:  add the id checks before update
                                         await fs.updatePatrons(
                                             id.value,
                                             firstName.value,
@@ -1753,7 +1778,9 @@ class ViewMemberState extends State<ViewMember> {
     );
   }
 }
+//end user/Patron update
 
+//view/update history
 class ViewHistory extends StatefulWidget {
   ViewHistory({Key key, this.hist}) : super(key: key);
   final History hist;
@@ -1762,13 +1789,13 @@ class ViewHistory extends StatefulWidget {
 }
 
 class ViewHistoryState extends State<ViewHistory> {
-  final Timestamp dateNow = Timestamp.now();
+  final Timestamp dateNow = Timestamp.now(); //defaults to current date TODO: determine if we need this
   bool validateName = false;
   bool editMode = false;
   bool itemMode = false;
   bool memMode = false;
   @override
-  void initState() {
+  void initState() { //initialize all history variables with the current firebase values
     itemID.setString(widget.hist.itemID);
     itemName.setString(widget.hist.itemName);
     memID.setString(widget.hist.memID);
@@ -1781,7 +1808,7 @@ class ViewHistoryState extends State<ViewHistory> {
   void updateWidget() {
     setState(() {});
   }
-
+  //Setting up FieldWidgets for editing below
   FieldWidget itemID = FieldWidget(title: 'Item ID', hint: '', enabled: false);
   FieldWidget itemName =
       FieldWidget(title: 'Item Name', hint: '', enabled: false);
@@ -1805,12 +1832,12 @@ class ViewHistoryState extends State<ViewHistory> {
                   Navigator.pop(context);
                 })
           ],
-          title: editMode == false
+          title: editMode == false //Select view or edit history mode
               ? Text("History Details")
               : Text("Edit Details"),
         ),
         body: Builder(
-            builder: (context) => Column(
+            builder: (context) => Column( //view history values
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       Expanded(
@@ -1825,6 +1852,7 @@ class ViewHistoryState extends State<ViewHistory> {
                         ],
                       )),
                     ])));
+    //TODO: add edit mode here using the Field Widgets above
   }
 
   void _showToast(BuildContext context, String errorText) {
