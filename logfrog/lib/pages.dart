@@ -584,16 +584,19 @@ class DatabasePgState extends State<DatabasePg> {
   String _searchText = "";
   //Site members/items/histories set up for searching
   List<Equipment> items;
+  List<dynamic> itemTypes;
   List<Patrons> mems;
   List<History> hist;
   List<Equipment> filteredItems = new List();
   List<Patrons> filteredMems = new List();
   List<History> filteredHist = new List();
   List<Widget> itemFilters;
+  List<DropdownMenuItem<String>> itemTypesMenu = new List();
 
   //Setting up query snapshots for the three collections of the site contained on firebase
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
+  StreamSubscription<DocumentSnapshot> itemTypeSub;
   StreamSubscription<QuerySnapshot> memSub;
   StreamSubscription<QuerySnapshot> histSub;
   //Setting up search bar
@@ -629,6 +632,7 @@ class DatabasePgState extends State<DatabasePg> {
   //searching items
   void initState() {
     //initialize the settings page equipment query stream
+
     itemSub?.cancel();
     this.itemSub = fs
         .getItemsQuery(itemType, availability, sort,
@@ -643,7 +647,25 @@ class DatabasePgState extends State<DatabasePg> {
         this.filteredItems = items;
       });
     });
-
+    itemTypeSub?.cancel();
+    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot){
+      itemTypes = snapshot.data["ItemTypes"];
+      itemTypesMenu.add(DropdownMenuItem(
+        child: Text('All'),
+        value: '',
+      ));
+      itemTypesMenu.add(DropdownMenuItem(
+        child: Text('None'),
+        value: '_null_',
+      ));
+      for(int i = 0; i< itemTypes.length; i++ ){
+        itemTypesMenu.add(DropdownMenuItem(
+          child: Text(itemTypes[i].toString()),
+          value: itemTypes[i].toString(),
+        ));
+      }
+    });
+    print(itemTypesMenu.length.toString());
     //searching checkout/checkin histories
     histSub?.cancel();
     this.histSub = fs.getHistories().listen((QuerySnapshot snapshot) {
@@ -857,8 +879,27 @@ class DatabasePgState extends State<DatabasePg> {
           Center(child: Text("Filters")),
           Divider(),
           ListTile(
-            enabled: false,
             title: Text('Item Type'),
+            trailing: DropdownButtonHideUnderline(child: DropdownButton(value: itemType, items: itemTypesMenu, onChanged: (String type){
+              setState(() {
+                itemType = type;
+                itemSub?.cancel();
+                this.itemSub = fs
+                    .getItemsQuery(
+                    itemType, availability, sort, order)
+                    .listen((QuerySnapshot snapshot) {
+                  final List<Equipment> equipment = snapshot.documents
+                      .map((documentSnapshot) =>
+                      Equipment.fromMap(documentSnapshot.data))
+                      .toList();
+                  setState(() {
+                    this.items = equipment;
+                    this.filteredItems = items;
+                  });
+                });
+              });
+
+            })),
           ),
           Divider(),
           ListTile(

@@ -40,7 +40,11 @@ class FirebaseFirestoreService {
         objectCollection.document(site).collection("Items").snapshots();
     return snapshots;
   }
-
+  Stream<DocumentSnapshot> getItemTypes() {
+    Stream<DocumentSnapshot> snapshots =
+    objectCollection.document(site).snapshots();
+    return snapshots;
+  }
   //Returns stream of snapshots for members collection (owned by a site)
   Stream<QuerySnapshot> getMembers() {
     Stream<QuerySnapshot> snapshots =
@@ -70,18 +74,21 @@ class FirebaseFirestoreService {
       String itemType, String status, String sortBy, bool desc) {
     Query docs = objectCollection.document(site).collection("Items");
     if (itemType != "") {
-      docs = docs.where("ItemType", isEqualTo: itemType);
-      print("Type");
+      if(itemType == "_null_")
+        {
+          docs = docs.where("ItemType", isEqualTo: '');
+        }
+        else{
+        docs = docs.where("ItemType", isEqualTo: itemType);
+      }
+
     }
     if (status != "") {
       docs = docs.where("Status", isEqualTo: status);
-      print("Status");
     }
     if (sortBy != "" && desc != null) {
       docs = docs.orderBy(sortBy, descending: desc);
-      print("Sort");
     }
-    print("here");
     return docs.snapshots();
   }
 
