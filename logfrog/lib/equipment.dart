@@ -31,7 +31,11 @@ class Equipment {
   String get name => _name;
   String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased.toDate()); //reformats the date into MM-dd-yyyy
   String get status => _status;
+  Timestamp get purchasedTimestamp => _purchased;
 
+  void setStatus(String stat){
+    this._status = status;
+  }
   //mapping of object
   Equipment.map(dynamic obj) {
     this._condition =  obj['Condition'];

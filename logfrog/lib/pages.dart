@@ -15,7 +15,7 @@ import 'history.dart';
 import "package:qr_mobile_vision/qr_camera.dart";
 
 
-bool frontCamera = true;
+bool frontCamera = false;
 
 String
     dataSite; //site for the user- tells firebase which initial document to access
@@ -115,8 +115,6 @@ class CheckoutPgState extends State<CheckoutPg> {
       if (currentMemberID == null) {
         //make widget which shows popup with "scan a member id"
         _showDialog(context, "Member Checkout Error", "Please scan student ID first");
-      } else if (!(await fs.patronExists(code))) {
-        _showDialog(context, "Member Checkout Error", "Invalid student ID, please check that you have been entered into the school site database correctly");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
         _showDialog(context, "Equipment Checkout Error", "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
@@ -214,6 +212,16 @@ class CheckoutPgState extends State<CheckoutPg> {
       String itemName = item.data["Name"].toString();
       Timestamp timeCheckedIn; //null for now, will be filled when equipment
       Timestamp timeCheckedOut = Timestamp.now();
+      Equipment currentItem = Equipment.fromMap(item.data);
+      currentItem.setStatus("unavailable");
+      fs.updateEquipment(
+            name: currentItem.name,
+            itemID: currentItem.itemID,
+            itemType: currentItem.itemType,
+            purchased: currentItem.purchasedTimestamp,
+            status: currentItem.status,
+            condition: currentItem.condition,
+            notes: currentItem.notes);
       fs.createHistory(
           itemID: itemID,
           itemName: itemName,
@@ -367,12 +375,34 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
     } else {
-      if (!(historyObj.docuemnts.isNotEmpty)) {
+      if (!(historyObj.documents.isNotEmpty)) {
         _showDialog(context, "CheckIn Equipment Error", "This item is not in the system and cannot be checked back in");
       } else {
         _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in");
       }
     }
+  }
+  void _showDialog(BuildContext context, String errorTitle, String errorText) {
+    //
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
+          title: new Text(errorTitle),
+          content: new Text(errorText),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   //Setting up checkin page initially
@@ -397,7 +427,7 @@ class CheckinPgState extends State<CheckinPg> {
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
-                        validate(code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
                     });
                   }))),
