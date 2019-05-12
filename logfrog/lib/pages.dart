@@ -341,7 +341,7 @@ class CheckinPgState extends State<CheckinPg> {
   //
   GestureDetector camera;
   //User info variables
-  Expanded userInfo;
+  Container userInfo;
   String currentMemberID = '';
   String currentMemberName = '';
   //
@@ -466,7 +466,7 @@ class CheckinPgState extends State<CheckinPg> {
      // margin: EdgeInsets.all(5.0),
       //child: Center(child: Text("User Info")),
     //));
-    userinfo = Container();
+    userInfo = Container();
   }
 
   //Context for page while running
