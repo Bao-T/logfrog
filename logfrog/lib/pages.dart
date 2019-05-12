@@ -288,8 +288,7 @@ class CheckoutPgState extends State<CheckoutPg> {
                         dataNameList.clear();
                         dataList.clear();
                         dataSet.clear();
-                        currentMemberID =
-                            null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
@@ -341,7 +340,7 @@ class CheckinPgState extends State<CheckinPg> {
   }
 
   //Upon code being scanned, update the history
-  Future validate(String code) async {
+  Future validate(BuildContext context, String code) async {
     var historyObj = await Firestore.instance //get the historyObj from firebase (search by itemID)
         .collection('Objects')
         .document(widget.site)
@@ -361,7 +360,11 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
     } else {
-      print("This item DNE or is currently not checked out yet."); //TODO: make a popup for this
+      if (!(historyObj.docuemnts.isNotEmpty)) {
+        _showDialog(context, "CheckIn Equipment Error", "This item is not in the system and cannot be checked back in");
+      } else {
+        _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in");
+      }
     }
   }
 
