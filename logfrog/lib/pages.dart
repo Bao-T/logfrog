@@ -13,7 +13,7 @@ import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
 import "package:qr_mobile_vision/qr_camera.dart";
-
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 bool frontCamera = false;
 
@@ -661,6 +661,8 @@ class DatabasePgState extends State<DatabasePg> {
   String sort = '';
   bool order = true;
 
+  Timestamp startDate;
+  Timestamp endDate;
   //Listener for search bar, detects if there is text in the bar
   //If it is, sets the search text to the detected text
   DatabasePgState(String site) {
@@ -917,6 +919,9 @@ class DatabasePgState extends State<DatabasePg> {
   //Uses drawer widget
   //Filtering options for searching items
   Widget _getFilters(String filterType) {
+    Timestamp startDate;
+    Timestamp endDate;
+
     if (filterType == "Items") {
       return Column(
         children: <Widget>[
@@ -1071,7 +1076,67 @@ class DatabasePgState extends State<DatabasePg> {
     } else if (filterType == "Members") {
       return Container();
     } else if (filterType == "History") {
-      return Container();
+      return Column(
+          children: <Widget>[
+      Center(child: Text("Filters")),
+    Divider(),
+    ListTile(
+      title: Text("Start Date"),
+      trailing: this.startDate != null ? Text(DateFormat.yMd().format(this.startDate.toDate())) : Text(""),
+      onTap: (){
+        DatePicker.showDatePicker(context,
+            showTitleActions: true,
+        currentTime: this.startDate != null ? this.startDate.toDate() : null,
+        maxTime: this.endDate != null ? this.endDate.toDate() : DateTime.now(),
+        onConfirm: (date) {
+          setState(() {
+            this.startDate = Timestamp.fromDate(date);
+            print(DateFormat.yMd().format(date));
+            this.histSub?.cancel();
+            this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
+              final List<History> histories = snapshot.documents
+                  .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+                  .toList(); //Creating list of History objects from stored firebase histories
+              setState(() {
+                this.hist = histories;
+                this.filteredHist = hist;
+              });
+            });
+          });
+        });
+      },
+    ),
+      Divider(),
+      ListTile(
+        title: Text("End Date"),
+        trailing: this.endDate != null ? Text(DateFormat.yMd().format(this.endDate.toDate())) : Text(""),
+        onTap: (){
+          DatePicker.showDatePicker(context,
+              showTitleActions: true,
+              currentTime: this.endDate != null ? this.endDate.toDate() : null,
+              minTime: this.startDate != null ? this.startDate.toDate() : null,
+              maxTime: DateTime.now(),
+              onConfirm: (date) {
+                setState(() {
+                  this.endDate = Timestamp.fromDate(date);
+                  print(DateFormat.yMd().format(date));
+                  this.histSub?.cancel();
+                  this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
+                    final List<History> histories = snapshot.documents
+                        .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+                        .toList(); //Creating list of History objects from stored firebase histories
+                    setState(() {
+                      this.hist = histories;
+                      this.filteredHist = hist;
+                    });
+                  });
+
+                });
+              });
+        },
+      ),
+
+          ]);
     } else {
       return Container();
     }

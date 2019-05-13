@@ -69,7 +69,21 @@ class FirebaseFirestoreService {
         .snapshots();
     return snapshots;
   }
-
+  Stream<QuerySnapshot> getHistoryQuery(Timestamp start, Timestamp end){
+    Query docs = objectCollection.document(site).collection("History");
+    if (start != null)
+    {
+      docs = docs.where("timeCheckedOut", isGreaterThanOrEqualTo: start);
+    }
+    if (end != null)
+    {
+      docs = docs.where("timeCheckedOut", isLessThanOrEqualTo: end);
+    }
+    docs = docs.orderBy("timeCheckedOut", descending: true);
+    return docs.snapshots();
+  }
+  
+  
   Stream<QuerySnapshot> getItemsQuery(
       String itemType, String status, String sortBy, bool desc) {
     Query docs = objectCollection.document(site).collection("Items");
