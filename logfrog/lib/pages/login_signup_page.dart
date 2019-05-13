@@ -17,6 +17,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
   final _formKey = new GlobalKey<FormState>();
 
   String _password;
+  String _confirmPassword;
   String _errorMessage;
 
   // Initial form is login form
@@ -152,6 +153,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
 
               _showEmailInput(),
               _showPasswordInput(),
+              _formMode == FormMode.SIGNUP ? _confirmPasswordInput() : Container(),
               _showErrorMessage(),
               _showPrimaryButton(),
               _showSecondaryButton(),
@@ -230,6 +232,25 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
     );
   }
 
+  Widget _confirmPasswordInput() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0.0, 15.0, 0.0, 0.0),
+      child: new TextFormField(
+        maxLines: 1,
+        obscureText: true,
+        autofocus: false,
+        decoration: new InputDecoration(
+            hintText: 'Confirm Password',
+            icon: new Icon(
+              Icons.lock,
+              color: Colors.grey,
+            )),
+        validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
+        onSaved: (value) => _confirmPassword = value,
+      ),
+    );
+  }
+
   Widget _showSecondaryButton() {
     return new FlatButton(
       child: _formMode == FormMode.LOGIN
@@ -258,7 +279,22 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                     style: new TextStyle(fontSize: 20.0, color: Colors.white))
                 : new Text('Create account',
                     style: new TextStyle(fontSize: 20.0, color: Colors.white)),
-            onPressed: _validateAndSubmit,
+            onPressed: (){
+              if(_formMode == FormMode.SIGNUP) {
+                if (_password != _confirmPassword) {
+                  setState(() {
+                    _errorMessage = "Passwords do not match, please try again.";
+                  });
+                }
+                else {
+                  _validateAndSubmit();
+                }
+              }
+              else{
+                _validateAndSubmit();
+              }
+              }
+            ,
           ),
         ));
   }
