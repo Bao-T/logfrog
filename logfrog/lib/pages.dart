@@ -1195,10 +1195,7 @@ class DatabasePgState extends State<DatabasePg> {
       body: Container(child: _buildListView(_mode)),
       resizeToAvoidBottomPadding: false,
       floatingActionButton: _mode == "History"
-          ? FloatingActionButton(
-              child: Icon(Icons.filter_list),
-              onPressed: () {},
-            )
+          ? null
           : FloatingActionButton(
               onPressed: () {
                 Navigator.push(
