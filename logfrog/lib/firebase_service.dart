@@ -56,7 +56,7 @@ class FirebaseFirestoreService {
     Stream<QuerySnapshot> snapshots = objectCollection
         .document(site)
         .collection("History")
-        .where("memID", isEqualTo: memID)
+        .where("memID", isEqualTo: memID).orderBy("timeCheckedOut", descending: true)
         .snapshots();
     return snapshots;
   }

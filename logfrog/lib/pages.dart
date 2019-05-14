@@ -336,12 +336,13 @@ class CheckinPgState extends State<CheckinPg> {
   //Updating history variables
   Set<String> dataSet = {};
   List<String> dataList = [];
+  List<String> dataItemNameList = [];
   List<String> dataNameList = [];
   List<Widget> dataWidget = [];
   //
   GestureDetector camera;
   //User info variables
-  Container userInfo;
+  //Container userInfo;
   String currentMemberID = '';
   String currentMemberName = '';
   //
@@ -399,7 +400,9 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["memName"],
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
-
+      dataList.add(historyObj.documents[0].data["itemID"]);
+      dataItemNameList.add(historyObj.documents[0].data["itemName"]);
+      dataNameList.add(historyObj.documents[0].data["memName"]);
 
     } else {
       if (!(historyObj.documents.isNotEmpty)) {
@@ -466,7 +469,7 @@ class CheckinPgState extends State<CheckinPg> {
      // margin: EdgeInsets.all(5.0),
       //child: Center(child: Text("User Info")),
     //));
-    userInfo = Container();
+    //userInfo = Container();
   }
 
   //Context for page while running
@@ -477,13 +480,15 @@ class CheckinPgState extends State<CheckinPg> {
         body: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Scaffold(
-                body: Column(children: [
+                body: Column(
+                    children: [
               Expanded(
                   flex: 8,
                   child: Container( //placing camera and userinfo square
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo], //Two children at top of page TODO: (possible we do not need userInfo here)
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[camera], //Two children at top of page TODO: (possible we do not need userInfo here)
                     ),
                   )),
               Expanded(
@@ -492,16 +497,7 @@ class CheckinPgState extends State<CheckinPg> {
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
-                      return Dismissible( //Dismissible qr scanned will appear
-                          key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) {
-                            debugPrint(
-                                index.toString() + " " + dataList[index]);
-                            dataSet.remove(dataList[index]);
-                            dataList.removeAt(index);
-                            dataNameList.removeAt(index);
-                          },
-                          child: Column(children: <Widget>[
+                      return Column(children: <Widget>[
                             InkWell(
                                 onTap: () {
                                   print("tapped");
@@ -509,9 +505,11 @@ class CheckinPgState extends State<CheckinPg> {
                                 child: Padding(
                                     padding: const EdgeInsets.all(0.0),
                                     child: ListTile(
-                                        title: Text(dataNameList[index])))),
+                                        title: Text(dataItemNameList[index]),
+                                      trailing: Text(dataNameList[index]),
+                                    ))),
                             Divider()
-                          ]));
+                          ]);
                     },
                   ))),
             ]))));
