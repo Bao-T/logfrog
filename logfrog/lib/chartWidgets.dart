@@ -1,7 +1,25 @@
+import 'package:flutter/material.dart';
+
 /// Donut chart with labels example. This is a simple pie chart with a hole in
 /// the middle.
+///
+///
+/// Adapted from: https://fluttersensei.com/posts/the-toobox-charts-for-flutter/
+///
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
+
+
+
+class GraphingData {
+  final String title;
+  final int itemNumber;
+  final charts.Color color;
+
+  GraphingData(this.title, this.itemNumber, Color color) : this.color = new charts.Color(r: color.red, g: color.green, b: color.blue, a: color.alpha, y: color.yellow);
+
+}
+
 
 class DonutAutoLabelChart extends StatelessWidget {
   final List<charts.Series> seriesList;

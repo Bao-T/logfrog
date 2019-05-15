@@ -18,9 +18,9 @@ class Equipment {
   String _notes; //Any additional notes can go here
   Timestamp _purchased; //Date purchased for equipment (defaults to date added to database if not given)
   String _status; //Checked in or checked out status
-  
+  TimeStamp _lastCheckedOut; //Date last checked out (for making graphs faster)
   //Equipment mapping
-  Equipment(this._condition, this._itemID, this._itemType, this._name, this._notes, this._purchased, this._status);
+  Equipment(this._condition, this._itemID, this._itemType, this._name, this._notes, this._purchased, this._status, this._lastCheckedOut);
 
 
   //get functions to access private variables
@@ -32,6 +32,7 @@ class Equipment {
   String get thisPurchased => DateFormat('MM-dd-yyyy').format(_purchased.toDate()); //reformats the date into MM-dd-yyyy
   String get status => _status;
   Timestamp get purchasedTimestamp => _purchased;
+  Timestamp get lastCheckedOut => _lastCheckedOut;
 
   void setStatus(String stat){
     this._status = stat;
@@ -45,6 +46,7 @@ class Equipment {
     this._notes= obj['Notes'];
     this._purchased = obj['Purchased'];
     this._status =obj['Status'];
+    this._lastCheckedOut = obj['lastCheckedOut'];
   }
 
   //creates map of an object for storing on firebase
@@ -57,6 +59,7 @@ class Equipment {
     map['Notes'] = equip._notes;
     map['Purchased'] = equip._purchased;
     map['Status'] = equip._status;
+    map['lastCheckedOut'] = equip._lastCheckedOut;
     return map;
   }
 
@@ -70,6 +73,7 @@ class Equipment {
     this._notes= dataMap['Notes'];
     this._purchased = dataMap['Purchased'];
     this._status =dataMap['Status'];
+    this._lastCheckedOut = dataMap['lastCheckedOut'];
   }
 
 }

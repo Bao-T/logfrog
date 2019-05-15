@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import "chartWidgets.dart"; //does this do anything???
+import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import 'firebase_service.dart';
@@ -217,6 +217,7 @@ class CheckoutPgState extends State<CheckoutPg> {
             itemType: currentItem.itemType,
             purchased: currentItem.purchasedTimestamp,
             status: currentItem.status,
+            lastCheckedOut: timeCheckedOut, //added for speeding up graph computations
             condition: currentItem.condition,
             notes: currentItem.notes);
       fs.createHistory(
@@ -389,6 +390,7 @@ class CheckinPgState extends State<CheckinPg> {
           purchased: currentItem.purchasedTimestamp,
           status: currentItem.status,
           condition: currentItem.condition,
+          lastCheckedOut: curretItem.lastCheckedOut, //added for graph page
           notes: currentItem.notes);
       fs.updateHistory(
           historyObj.documents[0].documentID,
@@ -521,62 +523,186 @@ class CheckinPgState extends State<CheckinPg> {
 //Percentage of checked out material that is overdue
 class PageHome extends StatefulWidget {
   PageHome({Key key, this.referenceSite, this.checkoutPeriod}) : super(key: key);
-  final checkoutPeriod; //adding a allowed checkoutPeriod time frame (ex: 10 days) for equipment
-  final referenceSite; //site name currently being accessed
+  final referenceSite; //site statistics being viewed
+  final checkoutPeriod; //length of site checkout period
   @override
   PageHomeState createState() => PageHomeState();
+
 }
 
 //Creating state of home page with statistics
 class PageHomeState extends State<PageHome> {
   //get snapshots of all data when page opens
+  FirebaseFirestoreService fs;
+  StreamSubscription<QuerySnapshot> itemSub;
+  List<dynamic> itemTypes;
+  List<Equipment> items;
+  //map sortedItems;
+  var pieChartSeries; //overall data series
+  var barChartSeries; //list of chart.Series data
 
-  void initState() { //initialize the settings page equipment query stream
+  //searching items
+  void initState() {
+    //initialize the current equipment for the site
     itemSub?.cancel();
     this.itemSub = fs
-        .getItemsQuery(itemType, availability, sort, order) //querying firebase for equipment items
-        .listen((QuerySnapshot snapshot) {
-      final List<Equipment> equipment = snapshot.documents
-          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
-          .toList(); //Making list of equipment objects from stored firebase equipments
-      setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment and items
+        .getItemsQuery(itemType, availability, sort, order).listen((QuerySnapshot snapshot) {
+          final List<Equipment> equipment = snapshot.documents.map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data)).toList(); //Making list of equipment objects from stored firebase equipments
+           setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment we have
         this.items = equipment;
-        this.filteredItems = items;
       });
     });
+    //Getting the item types for the site
     itemTypeSub?.cancel();
-
+    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
+      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
+    });
+    var sortedItems = _buildItemLists(); //all sorting done in below function
+    //now, make the contents sorted items into a data series and a list of data series
+    var pieSeries = [
+      new GraphingData('Available Items', sortedItems[makePieChart][0], Colors.green),
+      new GraphingData('Unavailable Items', sortedItems[makePieChart][1], Colors.yellow),
+      new GraphingData('Overdue Items', sortedItems[makePieChart][2], Colors.red),
+    ];
+    this.pieChartSeries =[
+      new charts.Series (
+        id: "All Items",
+        domainFn: (GraphingData gdata, _) => gdata.title,
+        measureFn: (GraphingData gdata, _) => gdata.itemNumber,
+        colorFn: (GraphingData gdata, _) => gdata.color,
+        data: pieSeries,
+      ),
+    ];
+    //setting up bar chart items
+    //list.add(thing) in dart for adding item to list
+    this.barChartSeries = [];
+    for (i= 0; i <itemTypes.length; i++ ) {
+      //create list of series for each bar chart in future
+      barChartSeries.add(
+        new charts.Series (
+          id: itemTypes[i],
+          domainFn: (GraphingData gdata, _) => gdata.title,
+          measureFn: (GraphingData gdata, _) => gdata.itemNumber,
+          colorFn: (GraphingData gdata, _) => gdata.color,
+          data: [
+            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
+            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
+            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
+          ],
+        ),
+      );
     }
+    super.initState();
+  }
+
+  //Disposing of query stream subscriptions
+  @override
+  void dispose() {
+    itemSub?.cancel();
+    itemTypeSub?.cancel();
+    super.dispose();
+  }
+  //searching items for search text
+
+  //
+  Map _buildItemsList() {
+    if (!(_searchText.isEmpty)) {
+      List<Patrons> tempList = new List();
+      //set up a map for each data type
+      map typesSorted = {};
+      typesSorted["makePieChart"] = [0,0,0];
+      for (int i = 0; i < itemTypes.length; i++) {
+        typesSorted[itemTypes[i]] = [0,0,0]; //will have number in, number out, and number overdue for each type
+        //[Available, Unavailable, Overdue]
+      }
+      //sort items into types and three categories
+      for (int i = 0; i < items.length; i++) {
+        var type = items[i].itemType; //gets item type
+        var inOrOut = items[i].status; //gets item status "Available" or "Unavailable"
+        if (inOrOut == "Available") { //increments available
+          typesSorted[type][0] = typesSorted[type][0] + 1;
+          typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
+        }
+        else { //Status is unavailable, determine if checked in or checked out
+          var dateOut = items[i].lastCheckedOut; //Timestamp for last checked out date
+          //Have a Timestamp now, get number of days from current to lastCheckedOut
+          var difference = (dateOut.gettime()-Timestamp.now())/24 * 60 ^ 60 * 1000; //set difference to number of days
+          if (difference > checkoutPeriod) {
+            //overdue
+            typesSorted[type][2] = typesSorted[type][2] + 1;
+            typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
+          }
+          else {
+            //Just checked out, not overdue
+            typesSorted[type][1] = typesSorted[type][1] + 1;
+            typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
+          }
+
+        }
+      }
+    }
+    //returning set up list widget of bar graph
+  return typesSorted;
+  }
+
+  //searching items for search text
+  //
 
   @override
   Widget build(BuildContext context) {
+
+
     return Scaffold(
       appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
-      body: ListView(children: <Widget>[
-        Card(child: Text(widget.referenceSite)), //displays site name at top
-        Card( //Pie chart -> items in vs. items out vs. items out and late
-            child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(children: <Widget>[
-                  Text("Chart  1"),
-                  Container(
-                      width: MediaQuery.of(context).size.width / 2,
-                      height: MediaQuery.of(context).size.height / 4,
-                      child: DonutAutoLabelChart.withSampleData()) //pie chart
-                ]))),
-        Card(
-            child: Padding( //Bar chart ->  seperate items into types by keywords, then graph bars of in vs out
-                padding: const EdgeInsets.all(16.0),
-                child: Row(children: <Widget>[
-                  Text("Chart  2"),
-                  Container(
-                      width: MediaQuery.of(context).size.width / 2,
-                      height: MediaQuery.of(context).size.height / 4,
-                      child: StackedFillColorBarChart.withSampleData()) //barchart
-                ])))
+      body: Center(
+        child: ListView(children: <Widget>[
+          Card(child: Text(widget.referenceSite)), //displays site name at top
+          Card( //Pie chart -> items in vs. items out vs. items out and late
+              child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(children: <Widget>[
+                    Text("Items In, Out, and Overdue"),
+                    Container(
+                        width: MediaQuery.of(context).size.width / 2,
+                        height: MediaQuery.of(context).size.height / 4,
+                        child: new DonutAutoLabelChart(pieChartSeries, animate:true)) // new pie chart
+                  ]))),
+          Card(
+              Padding( //Bar chart ->  seperate items into types by keywords, then graph bars of in vs out
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(children: <Widget>[
+                    Text("Number In vs Out: "), //star
+                    Container(
+                        width: MediaQuery.of(context).size.width / 2,
+                        height: MediaQuery.of(context).size.height / 4,
+                        child: StackedFillColorBarChart.withSampleData()) //barchart
+                  ])))
       ]),
+        child: ListView.separated(
+        separatorBuilder: (context, index) => Divider(
+        color: Colors.black,
+        ),
+        itemCount: items == null ? 0 : itemTypes.length,
+        itemBuilder: (BuildContext context, int index) {
+            return new Card(
+              child: Padding (
+              Padding: const EdgeInsets.all(16.0),
+              child: Row(children: <Widget>[
+                  Text("Number In vs Out: "), //star
+                  Container(
+                      width: MediaQuery.of(context).size.width / 2,
+                      height: MediaQuery.of(context).size.height / 4,
+                      child: new charts.BarChart<GraphingData>(barChartSeries[i], animate: true,), //barchart
+                  ])
+                )
+              ),
+        }
+        );
+    ),
     );
   }
+
+
 }
 
 //Settings page for viewing/adjusting site content
@@ -591,6 +717,7 @@ class SettingsPage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => new _SettingsPageState();
+
 }
 
 //Log in/log out mechanics
@@ -768,6 +895,7 @@ class DatabasePgState extends State<DatabasePg> {
     super.dispose();
   }
 
+
   //searching items for search text
   //
   Widget _buildItemsList() {
@@ -781,12 +909,13 @@ class DatabasePgState extends State<DatabasePg> {
       }
       filteredItems = tempList;
     }
+
     //Sets up search results for items
     //displaying them in a list
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
-            color: Colors.black,
-          ),
+        color: Colors.black,
+      ),
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
         return new ListTile( //setting up the list entries
@@ -796,9 +925,9 @@ class DatabasePgState extends State<DatabasePg> {
               context,
               MaterialPageRoute(
                   builder: (context) => ViewItem(
-                        item: filteredItems[index],
-                        site: widget.site,
-                      )),
+                    item: filteredItems[index],
+                    site: widget.site,
+                  )),
             );
           },
         );
@@ -1361,6 +1490,7 @@ class AddItemState extends State<AddItem> {
                                       purchased: dateNow,
                                       status: status.value,
                                       condition: condition.value,
+                                      lastCheckedOut: dateNow, //default date last checked out to same as purchased date for new item
                                       notes: notes.value);
                                   await fs.updateItemTypes(itemType.value.toLowerCase());
 
@@ -1718,6 +1848,7 @@ class ViewItemState extends State<ViewItem> {
                                             purchased: dateNow,
                                             status: status.value,
                                             condition: condition.value,
+                                            lastCheckedOut: dateNow, //set last checked out date to same as purchased date
                                             notes: notes.value);
                                         Navigator.pop(context);
                                       } catch (e) {

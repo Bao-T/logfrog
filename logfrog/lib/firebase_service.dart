@@ -119,7 +119,8 @@ class FirebaseFirestoreService {
       Timestamp purchased,
       String status,
       String condition,
-      String notes}) async {
+      String notes,
+      Timestamp lastCheckedOut}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       //creating firestore transaction
       print(site);
@@ -146,6 +147,7 @@ class FirebaseFirestoreService {
       dataMap['Notes'] = notes;
       dataMap['Purchased'] = purchased;
       dataMap['Status'] = status;
+      dataMap['lastCheckedOut'] = lastCheckedOut;
       await tx.set(ds.reference,
           dataMap); //set data map to the reference for the transaction
       return dataMap;
@@ -251,8 +253,7 @@ class FirebaseFirestoreService {
   Future<Users> createUser({
     String id,
     String emailAddress,
-    List<String> databases,
-    int checkoutPeriod,
+    List<String> databases
   }) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
@@ -261,7 +262,6 @@ class FirebaseFirestoreService {
       var dataMap = new Map<String, dynamic>();
       dataMap['emailAddress'] = emailAddress;
       dataMap['databases'] = databases;
-      dataMap['checkoutPeriod'] = checkoutPeriod;
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
@@ -319,7 +319,8 @@ class FirebaseFirestoreService {
       Timestamp purchased,
       String status,
       String condition,
-      String notes}) async {
+      String notes,
+      Timestamp lastCheckedOut}) async {
     final TransactionHandler createTransaction = (Transaction tx) async {
       DocumentSnapshot ds;
       if (itemID != "") {
@@ -343,6 +344,7 @@ class FirebaseFirestoreService {
       dataMap['Notes'] = notes;
       dataMap['Purchased'] = purchased;
       dataMap['Status'] = status;
+      dataMap['lastCheckedOut'] = lastCheckedOut;
       await tx.set(ds.reference, dataMap);
       return dataMap;
     };
