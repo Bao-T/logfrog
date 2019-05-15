@@ -53,10 +53,8 @@ class CheckoutPgState extends State<CheckoutPg> {
   CustomScrollView database;
   int cameraIndex = 0;
   FirebaseFirestoreService fs;
-  Stream<QuerySnapshot>
-      itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
-  Stream<QuerySnapshot>
-      memberStream; //stream for members query (is this ALL students??)
+  Stream<QuerySnapshot> itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
+  Stream<QuerySnapshot> memberStream; //stream for members query (is this ALL students??)
   //Setting up camera for scanning
   changeCamera() {
     setState(() {
@@ -160,37 +158,37 @@ class CheckoutPgState extends State<CheckoutPg> {
   //init state of checkout page
   @override
   void initState() {
-    super.initState();
-    fs = FirebaseFirestoreService(widget.site); //connecting to firebase
-    //setting up camera
-    camera = new GestureDetector(
-      onTap: () {},
-      child: Card( //camera state setup
-          margin: EdgeInsets.all(5.0),
-          child: new SizedBox(
-              width: 200.0,
-              height: 300.0,
-              child: new QrCamera(
-                  front: frontCamera,
-                  onError: (context, error) => Text(
-                        error.toString(),
-                        style: TextStyle(color: Colors.red),
-                      ),
-                  qrCodeCallback: (code) { //if
-                    setState(() {
-                      if (dataSet.contains(code) == false) {
-                        dataSet.add(code); //adds code to codes seen
-                        validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
-                      }
-                    });
-                  }))),
-    );
-    //User info for scanned users displayed by camera view
-    userInfo = Expanded(
-        child: Card(
-      margin: EdgeInsets.all(5.0),
-      child: Center(child: Text("User Info")),
-    ));
+      super.initState();
+      fs = FirebaseFirestoreService(widget.site); //connecting to firebase
+      //setting up camera
+      camera = new GestureDetector(
+        onTap: () {},
+        child: Card( //camera state setup
+            margin: EdgeInsets.all(5.0),
+            child: new SizedBox(
+                width: 200.0,
+                height: 300.0,
+                child: new QrCamera(
+                    front: frontCamera,
+                    onError: (context, error) => Text(
+                      error.toString(),
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    qrCodeCallback: (code) { //if
+                      setState(() {
+                        if (dataSet.contains(code) == false) {
+                          dataSet.add(code); //adds code to codes seen
+                          validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        }
+                      });
+                    }))),
+      );
+      //User info for scanned users displayed by camera view
+      userInfo = Expanded(
+          child: Card(
+            margin: EdgeInsets.all(5.0),
+            child: Center(child: Text("User Info")),
+          ));
   }
 
   //Builds transaction when button is pushed
@@ -503,6 +501,25 @@ class PageHome extends StatefulWidget {
 
 //Creating state of home page with statistics
 class PageHomeState extends State<PageHome> {
+  //get snapshots of all data when page opens
+
+  void initState() { //initialize the settings page equipment query stream
+    itemSub?.cancel();
+    this.itemSub = fs
+        .getItemsQuery(itemType, availability, sort, order) //querying firebase for equipment items
+        .listen((QuerySnapshot snapshot) {
+      final List<Equipment> equipment = snapshot.documents
+          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
+          .toList(); //Making list of equipment objects from stored firebase equipments
+      setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment and items
+        this.items = equipment;
+        this.filteredItems = items;
+      });
+    });
+    itemTypeSub?.cancel();
+
+    }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
