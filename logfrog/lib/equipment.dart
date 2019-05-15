@@ -34,7 +34,7 @@ class Equipment {
   Timestamp get purchasedTimestamp => _purchased;
 
   void setStatus(String stat){
-    this._status = status;
+    this._status = stat;
   }
   //mapping of object
   Equipment.map(dynamic obj) {

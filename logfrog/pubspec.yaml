@@ -36,7 +36,8 @@ dependencies:
   dio:
   qr_flutter:
   csv:
-  #audioplayers:
+  audioplayers:
+  flutter_datetime_picker: ^1.2.0
 
 dev_dependencies:
   flutter_test:

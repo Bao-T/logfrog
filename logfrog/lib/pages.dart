@@ -7,13 +7,13 @@ import 'equipment.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets.dart'; //does this do anything???
-//import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audio_cache.dart';
 import 'package:intl/intl.dart';
 import 'patrons.dart';
 import 'package:logfrog/services/authentication.dart';
 import 'history.dart';
 import "package:qr_mobile_vision/qr_camera.dart";
-
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 bool frontCamera = false;
 
@@ -38,7 +38,7 @@ class CheckoutPg extends StatefulWidget {
 }
 
 class CheckoutPgState extends State<CheckoutPg> {
-  //static AudioCache player = new AudioCache();
+  static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera orientation
   //Setting up lists for dealing with end transactions
   Set<String> dataSet = {};
@@ -48,7 +48,7 @@ class CheckoutPgState extends State<CheckoutPg> {
   GestureDetector camera; //setting up camera
   Expanded userInfo;
   String
-      currentMemberID; //member ID of student  (AKA patron) checking out equipment
+      currentMemberID = ""; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
   CustomScrollView database;
   int cameraIndex = 0;
@@ -86,7 +86,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         });
       });
       currentMemberID = code;
-    } else if (currentMemberID != null &&
+    } else if (currentMemberID != "" &&
         await fs.equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
@@ -103,14 +103,15 @@ class CheckoutPgState extends State<CheckoutPg> {
           dataNameList.add(doc.data['Name']);
         });
       });
-      //player.play(alarmAudioPath);
+      player.play(alarmAudioPath);
     } else {
       //If it has reached this point:  The barcode scanned was not a student id
       //There is no currentMemberID set or the equipment does not exist or it is in firebase as 'checked out'
       //We want to alert students if:
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
-      if (currentMemberID == null) {
+      if (currentMemberID == "") {
+        //make widget which shows popup with "scan a member id"
         _showDialog(context, "Member Checkout Error", "Please scan student ID first");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
@@ -208,6 +209,7 @@ class CheckoutPgState extends State<CheckoutPg> {
       Timestamp timeCheckedIn; //null for now, will be filled when equipment
       Timestamp timeCheckedOut = Timestamp.now();
       Equipment currentItem = Equipment.fromMap(item.data);
+      print(currentItem.itemID);
       currentItem.setStatus("unavailable");
       fs.updateEquipment(
             name: currentItem.name,
@@ -224,6 +226,9 @@ class CheckoutPgState extends State<CheckoutPg> {
           memName: memName,
           timeCheckedIn: null, //Note that null is the default timeCheckedIn
           timeCheckedOut: timeCheckedOut);
+
+
+
     }
     return null;
   }
@@ -288,17 +293,21 @@ class CheckoutPgState extends State<CheckoutPg> {
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
-                      color: Colors.green,
+                      color: currentMemberID == "" ?Colors.grey : Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: () {
+                      onPressed: currentMemberID == ""? (){} : () {
                         //When button is pressed, will create history documents for each scanned item under the current user
                         finalTransaction(
                             currentMemberID, currentMemberName, dataList);
                         //Clearing transaction fields for next user
-                        dataNameList.clear();
-                        dataList.clear();
-                        dataSet.clear();
-                        currentMemberID = null; //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                        setState(() {
+                          currentMemberID = "";
+                          currentMemberName = "";
+                          dataSet.clear();
+                          dataList.clear();
+                          dataNameList.clear();
+                          dataWidget.clear();
+                        }); //resetting currentMemberID to null to prevent other users from checking out under past user's name
                       },
                     ),
                   ))
@@ -325,12 +334,13 @@ class CheckinPgState extends State<CheckinPg> {
   //Updating history variables
   Set<String> dataSet = {};
   List<String> dataList = [];
+  List<String> dataItemNameList = [];
   List<String> dataNameList = [];
   List<Widget> dataWidget = [];
   //
   GestureDetector camera;
   //User info variables
-  Expanded userInfo;
+  //Container userInfo;
   String currentMemberID = '';
   String currentMemberName = '';
   //
@@ -359,8 +369,27 @@ class CheckinPgState extends State<CheckinPg> {
         .orderBy("timeCheckedOut", descending: true)
         .limit(1)
         .getDocuments();
+
+
     //Note that this must search through all items stored with that ID
     if (historyObj.documents.isNotEmpty && historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
+      var item = await Firestore.instance
+          .collection('Objects')
+          .document(widget.site)
+          .collection('Items')
+          .document(code)
+          .get();
+      Equipment currentItem = Equipment.fromMap(item.data);
+      print(currentItem.itemID);
+      currentItem.setStatus("available");
+      fs.updateEquipment(
+          name: currentItem.name,
+          itemID: currentItem.itemID,
+          itemType: currentItem.itemType,
+          purchased: currentItem.purchasedTimestamp,
+          status: currentItem.status,
+          condition: currentItem.condition,
+          notes: currentItem.notes);
       fs.updateHistory(
           historyObj.documents[0].documentID,
           historyObj.documents[0].data["itemID"],
@@ -369,6 +398,10 @@ class CheckinPgState extends State<CheckinPg> {
           historyObj.documents[0].data["memName"],
           historyObj.documents[0].data["timeCheckedOut"],
           Timestamp.now());
+      dataList.add(historyObj.documents[0].data["itemID"]);
+      dataItemNameList.add(historyObj.documents[0].data["itemName"]);
+      dataNameList.add(historyObj.documents[0].data["memName"]);
+
     } else {
       if (!(historyObj.documents.isNotEmpty)) {
         _showDialog(context, "CheckIn Equipment Error", "This equipment item is not in the system and cannot be checked back in");
@@ -434,7 +467,7 @@ class CheckinPgState extends State<CheckinPg> {
      // margin: EdgeInsets.all(5.0),
       //child: Center(child: Text("User Info")),
     //));
-    userinfo = Container();
+    //userInfo = Container();
   }
 
   //Context for page while running
@@ -445,13 +478,15 @@ class CheckinPgState extends State<CheckinPg> {
         body: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Scaffold(
-                body: Column(children: [
+                body: Column(
+                    children: [
               Expanded(
                   flex: 8,
                   child: Container( //placing camera and userinfo square
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[camera, userInfo], //Two children at top of page TODO: (possible we do not need userInfo here)
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[camera], //Two children at top of page TODO: (possible we do not need userInfo here)
                     ),
                   )),
               Expanded(
@@ -460,16 +495,7 @@ class CheckinPgState extends State<CheckinPg> {
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
-                      return Dismissible( //Dismissible qr scanned will appear
-                          key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) {
-                            debugPrint(
-                                index.toString() + " " + dataList[index]);
-                            dataSet.remove(dataList[index]);
-                            dataList.removeAt(index);
-                            dataNameList.removeAt(index);
-                          },
-                          child: Column(children: <Widget>[
+                      return Column(children: <Widget>[
                             InkWell(
                                 onTap: () {
                                   print("tapped");
@@ -477,9 +503,11 @@ class CheckinPgState extends State<CheckinPg> {
                                 child: Padding(
                                     padding: const EdgeInsets.all(0.0),
                                     child: ListTile(
-                                        title: Text(dataNameList[index])))),
+                                        title: Text(dataItemNameList[index]),
+                                      trailing: Text(dataNameList[index]),
+                                    ))),
                             Divider()
-                          ]));
+                          ]);
                     },
                   ))),
             ]))));
@@ -648,6 +676,8 @@ class DatabasePgState extends State<DatabasePg> {
   String sort = '';
   bool order = true;
 
+  Timestamp startDate;
+  Timestamp endDate;
   //Listener for search bar, detects if there is text in the bar
   //If it is, sets the search text to the detected text
   DatabasePgState(String site) {
@@ -904,6 +934,9 @@ class DatabasePgState extends State<DatabasePg> {
   //Uses drawer widget
   //Filtering options for searching items
   Widget _getFilters(String filterType) {
+    Timestamp startDate;
+    Timestamp endDate;
+
     if (filterType == "Items") {
       return Column(
         children: <Widget>[
@@ -1058,7 +1091,67 @@ class DatabasePgState extends State<DatabasePg> {
     } else if (filterType == "Members") {
       return Container();
     } else if (filterType == "History") {
-      return Container();
+      return Column(
+          children: <Widget>[
+      Center(child: Text("Filters")),
+    Divider(),
+    ListTile(
+      title: Text("Start Date"),
+      trailing: this.startDate != null ? Text(DateFormat.yMd().format(this.startDate.toDate())) : Text(""),
+      onTap: (){
+        DatePicker.showDatePicker(context,
+            showTitleActions: true,
+        currentTime: this.startDate != null ? this.startDate.toDate() : null,
+        maxTime: this.endDate != null ? this.endDate.toDate() : DateTime.now(),
+        onConfirm: (date) {
+          setState(() {
+            this.startDate = Timestamp.fromDate(date);
+            print(DateFormat.yMd().format(date));
+            this.histSub?.cancel();
+            this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
+              final List<History> histories = snapshot.documents
+                  .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+                  .toList(); //Creating list of History objects from stored firebase histories
+              setState(() {
+                this.hist = histories;
+                this.filteredHist = hist;
+              });
+            });
+          });
+        });
+      },
+    ),
+      Divider(),
+      ListTile(
+        title: Text("End Date"),
+        trailing: this.endDate != null ? Text(DateFormat.yMd().format(this.endDate.toDate())) : Text(""),
+        onTap: (){
+          DatePicker.showDatePicker(context,
+              showTitleActions: true,
+              currentTime: this.endDate != null ? this.endDate.toDate() : null,
+              minTime: this.startDate != null ? this.startDate.toDate() : null,
+              maxTime: DateTime.now(),
+              onConfirm: (date) {
+                setState(() {
+                  this.endDate = Timestamp.fromDate(date);
+                  print(DateFormat.yMd().format(date));
+                  this.histSub?.cancel();
+                  this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
+                    final List<History> histories = snapshot.documents
+                        .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
+                        .toList(); //Creating list of History objects from stored firebase histories
+                    setState(() {
+                      this.hist = histories;
+                      this.filteredHist = hist;
+                    });
+                  });
+
+                });
+              });
+        },
+      ),
+
+          ]);
     } else {
       return Container();
     }
@@ -1117,10 +1210,7 @@ class DatabasePgState extends State<DatabasePg> {
       body: Container(child: _buildListView(_mode)),
       resizeToAvoidBottomPadding: false,
       floatingActionButton: _mode == "History"
-          ? FloatingActionButton(
-              child: Icon(Icons.filter_list),
-              onPressed: () {},
-            )
+          ? null
           : FloatingActionButton(
               onPressed: () {
                 Navigator.push(
