@@ -644,14 +644,29 @@ class PageHomeState extends State<PageHome> {
     //returning set up list widget of bar graph
   return typesSorted;
   }
-
   //searching items for search text
   //
+  /*
+  Widget createListView(BuildContext context) {
+    return new ListView.builder(
+      itemCount: items == null ? 0 : itemTypes.length,
+      itemBuilder: (BuildContext context, int index) {
+        return new Column(
+          children: <Widget>[
+            new text("Number In vs Out: "),
+            new ListTile(
+              title: new Text(values[index]),
+            ),
+            new Divider(height: 2.0,),
+          ],
+        );
+      },
+    );
+  }
+  */
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
       body: Center(
@@ -687,17 +702,18 @@ class PageHomeState extends State<PageHome> {
             return new Card(
               child: Padding (
               Padding: const EdgeInsets.all(16.0),
-              child: Row(children: <Widget>[
+              child: Row(
+                  children: <Widget>[
                   Text("Number In vs Out: "), //star
                   Container(
                       width: MediaQuery.of(context).size.width / 2,
                       height: MediaQuery.of(context).size.height / 4,
                       child: new charts.BarChart<GraphingData>(barChartSeries[i], animate: true,), //barchart
-                  ])
+                  )],
                 )
-              ),
+              ), );
         }
-        );
+    ),
     ),
     );
   }
