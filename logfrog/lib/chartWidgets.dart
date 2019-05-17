@@ -16,7 +16,7 @@ class GraphingData {
   final int itemNumber;
   final charts.Color color;
 
-  GraphingData(this.title, this.itemNumber, Color color) : this.color = new charts.Color(r: color.red, g: color.green, b: color.blue, a: color.alpha, y: color.yellow);
+  GraphingData(this.title, this.itemNumber, Color color) : this.color = new charts.Color(r: color.red, g: color.green, b: color.blue, a: color.alpha, );//y: color.yellow);
 
 }
 

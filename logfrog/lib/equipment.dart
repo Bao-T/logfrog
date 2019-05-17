@@ -18,7 +18,7 @@ class Equipment {
   String _notes; //Any additional notes can go here
   Timestamp _purchased; //Date purchased for equipment (defaults to date added to database if not given)
   String _status; //Checked in or checked out status
-  TimeStamp _lastCheckedOut; //Date last checked out (for making graphs faster)
+  Timestamp _lastCheckedOut; //Date last checked out (for making graphs faster)
   //Equipment mapping
   Equipment(this._condition, this._itemID, this._itemType, this._name, this._notes, this._purchased, this._status, this._lastCheckedOut);
 

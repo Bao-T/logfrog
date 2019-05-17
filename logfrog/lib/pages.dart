@@ -1,3 +1,4 @@
+import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import "chartWidgets.dart";
 import 'package:firebase_auth/firebase_auth.dart';
@@ -47,14 +48,16 @@ class CheckoutPgState extends State<CheckoutPg> {
   List<Widget> dataWidget = [];
   GestureDetector camera; //setting up camera
   Expanded userInfo;
-  String
-      currentMemberID = ""; //member ID of student  (AKA patron) checking out equipment
+  String currentMemberID =
+      ""; //member ID of student  (AKA patron) checking out equipment
   String currentMemberName; //name of student currently checking out equipment
   CustomScrollView database;
   int cameraIndex = 0;
   FirebaseFirestoreService fs;
-  Stream<QuerySnapshot> itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
-  Stream<QuerySnapshot> memberStream; //stream for members query (is this ALL students??)
+  Stream<QuerySnapshot>
+      itemStream; //stream for equipment query (IS THIS FOR ALL ITEMS?)
+  Stream<QuerySnapshot>
+      memberStream; //stream for members query (is this ALL students??)
   //Setting up camera for scanning
   changeCamera() {
     setState(() {
@@ -63,7 +66,7 @@ class CheckoutPgState extends State<CheckoutPg> {
     });
   }
 
-  Future <void> validate(BuildContext context, String code) async {
+  Future<void> validate(BuildContext context, String code) async {
     //checking if a student exists under the current scanned barcode
     print(fs.patronExists(code));
     if (await fs.patronExists(code)) {
@@ -86,8 +89,7 @@ class CheckoutPgState extends State<CheckoutPg> {
         });
       });
       currentMemberID = code;
-    } else if (currentMemberID != "" &&
-        await fs.equipmentNotCheckedOut(code)) {
+    } else if (currentMemberID != "" && await fs.equipmentNotCheckedOut(code)) {
       //If not a student, possibly a object
       //If the currentMemberID shows a student as checking out, allows scan to proceed
       //check if is equipment and it is not checked out
@@ -112,21 +114,24 @@ class CheckoutPgState extends State<CheckoutPg> {
       //Case 1:  There is no currentMemberID and the scanned barcode was not for a known student
       if (currentMemberID == "") {
         //make widget which shows popup with "scan a member id"
-        _showDialog(context, "Member Checkout Error", "Please scan student ID first");
+        _showDialog(
+            context, "Member Checkout Error", "Please scan student ID first");
       } else if (!(await fs.equipmentExists(code))) {
         //Case 2: Invalid equipment ID
-        _showDialog(context, "Equipment Checkout Error", "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
+        _showDialog(context, "Equipment Checkout Error",
+            "Equipment QR code not recognized.  Please check this equipment is entered for this school site.");
       } else if (!(await fs.equipmentNotCheckedOut(code))) {
         //Case 3: Equipment is shown as already checked out
-        _showDialog(context, "Equipment Checkout Error", "Equipment has already been checked out!  Please check item back in first if you wish to check it out");
+        _showDialog(context, "Equipment Checkout Error",
+            "Equipment has already been checked out!  Please check item back in first if you wish to check it out");
       } else {
         //default case
-        _showDialog(context, "Unknown Checkout Error", "Unknown error as occured!");
+        _showDialog(
+            context, "Unknown Checkout Error", "Unknown error as occured!");
         print("Unknown error as occured!");
       }
     }
   }
-
 
   // Popups for the error cases above
   //Adapted from: https://medium.com/@nils.backe/flutter-alert-dialogs-9b0bb9b01d28
@@ -137,7 +142,8 @@ class CheckoutPgState extends State<CheckoutPg> {
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
-        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
+        return AlertDialog(
+          //displays a popup window over the rest of the screen which closes when "close" is pressed
           title: new Text(errorTitle),
           content: new Text(errorText),
           actions: <Widget>[
@@ -154,42 +160,43 @@ class CheckoutPgState extends State<CheckoutPg> {
     );
   }
 
-
-
   //init state of checkout page
   @override
   void initState() {
-      super.initState();
-      fs = FirebaseFirestoreService(widget.site); //connecting to firebase
-      //setting up camera
-      camera = new GestureDetector(
-        onTap: () {},
-        child: Card( //camera state setup
-            margin: EdgeInsets.all(5.0),
-            child: new SizedBox(
-                width: 200.0,
-                height: 300.0,
-                child: new QrCamera(
-                    front: frontCamera,
-                    onError: (context, error) => Text(
-                      error.toString(),
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    qrCodeCallback: (code) { //if
-                      setState(() {
-                        if (dataSet.contains(code) == false) {
-                          dataSet.add(code); //adds code to codes seen
-                          validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
-                        }
-                      });
-                    }))),
-      );
-      //User info for scanned users displayed by camera view
-      userInfo = Expanded(
-          child: Card(
-            margin: EdgeInsets.all(5.0),
-            child: Center(child: Text("User Info")),
-          ));
+    super.initState();
+    fs = FirebaseFirestoreService(widget.site); //connecting to firebase
+    //setting up camera
+    camera = new GestureDetector(
+      onTap: () {},
+      child: Card(
+          //camera state setup
+          margin: EdgeInsets.all(5.0),
+          child: new SizedBox(
+              width: 200.0,
+              height: 300.0,
+              child: new QrCamera(
+                  front: frontCamera,
+                  onError: (context, error) => Text(
+                        error.toString(),
+                        style: TextStyle(color: Colors.red),
+                      ),
+                  qrCodeCallback: (code) {
+                    //if
+                    setState(() {
+                      if (dataSet.contains(code) == false) {
+                        dataSet.add(code); //adds code to codes seen
+                        validate(context,
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                      }
+                    });
+                  }))),
+    );
+    //User info for scanned users displayed by camera view
+    userInfo = Expanded(
+        child: Card(
+      margin: EdgeInsets.all(5.0),
+      child: Center(child: Text("User Info")),
+    ));
   }
 
   //Builds transaction when button is pushed
@@ -212,14 +219,15 @@ class CheckoutPgState extends State<CheckoutPg> {
       print(currentItem.itemID);
       currentItem.setStatus("unavailable");
       fs.updateEquipment(
-            name: currentItem.name,
-            itemID: currentItem.itemID,
-            itemType: currentItem.itemType,
-            purchased: currentItem.purchasedTimestamp,
-            status: currentItem.status,
-            lastCheckedOut: timeCheckedOut, //added for speeding up graph computations
-            condition: currentItem.condition,
-            notes: currentItem.notes);
+          name: currentItem.name,
+          itemID: currentItem.itemID,
+          itemType: currentItem.itemType,
+          purchased: currentItem.purchasedTimestamp,
+          status: currentItem.status,
+          lastCheckedOut:
+              timeCheckedOut, //added for speeding up graph computations
+          condition: currentItem.condition,
+          notes: currentItem.notes);
       fs.createHistory(
           itemID: itemID,
           itemName: itemName,
@@ -227,9 +235,6 @@ class CheckoutPgState extends State<CheckoutPg> {
           memName: memName,
           timeCheckedIn: null, //Note that null is the default timeCheckedIn
           timeCheckedOut: timeCheckedOut);
-
-
-
     }
     return null;
   }
@@ -294,22 +299,24 @@ class CheckoutPgState extends State<CheckoutPg> {
                   flex: 1,
                   child: SizedBox.expand(
                     child: RaisedButton(
-                      color: currentMemberID == "" ?Colors.grey : Colors.green,
+                      color: currentMemberID == "" ? Colors.grey : Colors.green,
                       child: Text("Finish Transaction"),
-                      onPressed: currentMemberID == ""? (){} : () {
-                        //When button is pressed, will create history documents for each scanned item under the current user
-                        finalTransaction(
-                            currentMemberID, currentMemberName, dataList);
-                        //Clearing transaction fields for next user
-                        setState(() {
-                          currentMemberID = "";
-                          currentMemberName = "";
-                          dataSet.clear();
-                          dataList.clear();
-                          dataNameList.clear();
-                          dataWidget.clear();
-                        }); //resetting currentMemberID to null to prevent other users from checking out under past user's name
-                      },
+                      onPressed: currentMemberID == ""
+                          ? () {}
+                          : () {
+                              //When button is pressed, will create history documents for each scanned item under the current user
+                              finalTransaction(
+                                  currentMemberID, currentMemberName, dataList);
+                              //Clearing transaction fields for next user
+                              setState(() {
+                                currentMemberID = "";
+                                currentMemberName = "";
+                                dataSet.clear();
+                                dataList.clear();
+                                dataNameList.clear();
+                                dataWidget.clear();
+                              }); //resetting currentMemberID to null to prevent other users from checking out under past user's name
+                            },
                     ),
                   ))
             ]))));
@@ -362,7 +369,8 @@ class CheckinPgState extends State<CheckinPg> {
 
   //Upon code being scanned, update the history
   Future validate(BuildContext context, String code) async {
-    var historyObj = await Firestore.instance //get the historyObj from firebase (search by itemID)
+    var historyObj = await Firestore
+        .instance //get the historyObj from firebase (search by itemID)
         .collection('Objects')
         .document(widget.site)
         .collection('History')
@@ -371,9 +379,10 @@ class CheckinPgState extends State<CheckinPg> {
         .limit(1)
         .getDocuments();
 
-
     //Note that this must search through all items stored with that ID
-    if (historyObj.documents.isNotEmpty && historyObj.documents[0].data["timeCheckedIn"] == null) { //item must have been checked out to be checked back in
+    if (historyObj.documents.isNotEmpty &&
+        historyObj.documents[0].data["timeCheckedIn"] == null) {
+      //item must have been checked out to be checked back in
       var item = await Firestore.instance
           .collection('Objects')
           .document(widget.site)
@@ -390,7 +399,7 @@ class CheckinPgState extends State<CheckinPg> {
           purchased: currentItem.purchasedTimestamp,
           status: currentItem.status,
           condition: currentItem.condition,
-          lastCheckedOut: curretItem.lastCheckedOut, //added for graph page
+          lastCheckedOut: currentItem.lastCheckedOut, //added for graph page
           notes: currentItem.notes);
       fs.updateHistory(
           historyObj.documents[0].documentID,
@@ -403,22 +412,25 @@ class CheckinPgState extends State<CheckinPg> {
       dataList.add(historyObj.documents[0].data["itemID"]);
       dataItemNameList.add(historyObj.documents[0].data["itemName"]);
       dataNameList.add(historyObj.documents[0].data["memName"]);
-
     } else {
       if (!(historyObj.documents.isNotEmpty)) {
-        _showDialog(context, "CheckIn Equipment Error", "This equipment item is not in the system and cannot be checked back in");
+        _showDialog(context, "CheckIn Equipment Error",
+            "This equipment item is not in the system and cannot be checked back in");
       } else {
-        _showDialog(context, "CheckIn Equipment Error", "This item has not been checked out yet, cannot be checked back in.");
+        _showDialog(context, "CheckIn Equipment Error",
+            "This item has not been checked out yet, cannot be checked back in.");
       }
     }
   }
+
   void _showDialog(BuildContext context, String errorTitle, String errorText) {
     //
     showDialog(
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
-        return AlertDialog( //displays a popup window over the rest of the screen which closes when "close" is pressed
+        return AlertDialog(
+          //displays a popup window over the rest of the screen which closes when "close" is pressed
           title: new Text(errorTitle),
           content: new Text(errorText),
           actions: <Widget>[
@@ -440,34 +452,39 @@ class CheckinPgState extends State<CheckinPg> {
   void initState() {
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
-    camera = new GestureDetector(  //setting up camera
+    camera = new GestureDetector(
+      //setting up camera
       onTap: () {},
-      child: Card( //Camera on side
+      child: Card(
+          //Camera on side
           margin: EdgeInsets.all(5.0),
           child: new SizedBox(
               width: 200.0,
               height: 300.0,
-              child: new QrCamera( //QR scanner
+              child: new QrCamera(
+                  //QR scanner
                   front: frontCamera,
                   onError: (context, error) => Text(
                         error.toString(),
                         style: TextStyle(color: Colors.red),
                       ),
-                  qrCodeCallback: (code) { //When qr code is scanned
+                  qrCodeCallback: (code) {
+                    //When qr code is scanned
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
-                        validate(context, code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
+                        validate(context,
+                            code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
                     });
                   }))),
     );
 
     //DO WE NEED THIS HERE?????  Userinfo is not necessary on checkin page  //TODO: delete????
-   // userInfo = Expanded(
-     //   child: Card(
-     // margin: EdgeInsets.all(5.0),
-      //child: Center(child: Text("User Info")),
+    // userInfo = Expanded(
+    //   child: Card(
+    // margin: EdgeInsets.all(5.0),
+    //child: Center(child: Text("User Info")),
     //));
     //userInfo = Container();
   }
@@ -475,41 +492,45 @@ class CheckinPgState extends State<CheckinPg> {
   //Context for page while running
   @override
   Widget build(BuildContext context) {
-    return Scaffold( //scaffolding layout
+    return Scaffold(
+        //scaffolding layout
         appBar: AppBar(title: Text('Check-in')),
         body: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Scaffold(
-                body: Column(
-                    children: [
+                body: Column(children: [
               Expanded(
                   flex: 8,
-                  child: Container( //placing camera and userinfo square
+                  child: Container(
+                    //placing camera and userinfo square
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[camera], //Two children at top of page TODO: (possible we do not need userInfo here)
+                      children: <Widget>[
+                        camera
+                      ], //Two children at top of page TODO: (possible we do not need userInfo here)
                     ),
                   )),
               Expanded(
                   flex: 10,
-                  child: Card( //list of items appearing at the bottom of the screen
+                  child: Card(
+                      //list of items appearing at the bottom of the screen
                       child: ListView.builder(
                     itemCount: dataList.length,
                     itemBuilder: (context, int index) {
                       return Column(children: <Widget>[
-                            InkWell(
-                                onTap: () {
-                                  print("tapped");
-                                },
-                                child: Padding(
-                                    padding: const EdgeInsets.all(0.0),
-                                    child: ListTile(
-                                        title: Text(dataItemNameList[index]),
-                                      trailing: Text(dataNameList[index]),
-                                    ))),
-                            Divider()
-                          ]);
+                        InkWell(
+                            onTap: () {
+                              print("tapped");
+                            },
+                            child: Padding(
+                                padding: const EdgeInsets.all(0.0),
+                                child: ListTile(
+                                  title: Text(dataItemNameList[index]),
+                                  trailing: Text(dataNameList[index]),
+                                ))),
+                        Divider()
+                      ]);
                     },
                   ))),
             ]))));
@@ -522,12 +543,12 @@ class CheckinPgState extends State<CheckinPg> {
 //Graph for number available and number unavailable of different types of equipment
 //Percentage of checked out material that is overdue
 class PageHome extends StatefulWidget {
-  PageHome({Key key, this.referenceSite, this.checkoutPeriod}) : super(key: key);
+  PageHome({Key key, this.referenceSite, this.checkoutPeriod})
+      : super(key: key);
   final referenceSite; //site statistics being viewed
   final checkoutPeriod; //length of site checkout period
   @override
   PageHomeState createState() => PageHomeState();
-
 }
 
 //Creating state of home page with statistics
@@ -535,6 +556,7 @@ class PageHomeState extends State<PageHome> {
   //get snapshots of all data when page opens
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
+  StreamSubscription<DocumentSnapshot> itemTypeSub;
   List<dynamic> itemTypes;
   List<Equipment> items;
   //map sortedItems;
@@ -545,27 +567,33 @@ class PageHomeState extends State<PageHome> {
   void initState() {
     //initialize the current equipment for the site
     itemSub?.cancel();
-    this.itemSub = fs
-        .getItemsQuery(itemType, availability, sort, order).listen((QuerySnapshot snapshot) {
-          final List<Equipment> equipment = snapshot.documents.map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data)).toList(); //Making list of equipment objects from stored firebase equipments
-           setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment we have
+    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
+      final List<Equipment> equipment = snapshot.documents
+          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
+          .toList(); //Making list of equipment objects from stored firebase equipments
+      setState(() {
+        //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment we have
         this.items = equipment;
       });
     });
     //Getting the item types for the site
     itemTypeSub?.cancel();
     this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
-      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
+      itemTypes =
+          snapshot.data["ItemTypes"]; //should be a list of item type strings
     });
-    var sortedItems = _buildItemLists(); //all sorting done in below function
+    var sortedItems = _buildItemsList(); //all sorting done in below function
     //now, make the contents sorted items into a data series and a list of data series
     var pieSeries = [
-      new GraphingData('Available Items', sortedItems[makePieChart][0], Colors.green),
-      new GraphingData('Unavailable Items', sortedItems[makePieChart][1], Colors.yellow),
-      new GraphingData('Overdue Items', sortedItems[makePieChart][2], Colors.red),
+      new GraphingData(
+          'Available Items', sortedItems["makePieChart"][0], Colors.green),
+      new GraphingData(
+          'Unavailable Items', sortedItems["makePieChart"][1], Colors.yellow),
+      new GraphingData(
+          'Overdue Items', sortedItems["makePieChart"][2], Colors.red),
     ];
-    this.pieChartSeries =[
-      new charts.Series (
+    this.pieChartSeries = [
+      new Series(
         id: "All Items",
         domainFn: (GraphingData gdata, _) => gdata.title,
         measureFn: (GraphingData gdata, _) => gdata.itemNumber,
@@ -576,18 +604,21 @@ class PageHomeState extends State<PageHome> {
     //setting up bar chart items
     //list.add(thing) in dart for adding item to list
     this.barChartSeries = [];
-    for (i= 0; i <itemTypes.length; i++ ) {
+    for (int i = 0; i < itemTypes.length; i++) {
       //create list of series for each bar chart in future
       barChartSeries.add(
-        new charts.Series (
+        new Series(
           id: itemTypes[i],
           domainFn: (GraphingData gdata, _) => gdata.title,
           measureFn: (GraphingData gdata, _) => gdata.itemNumber,
           colorFn: (GraphingData gdata, _) => gdata.color,
           data: [
-            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
-            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
-            new GraphingData(itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
+            new GraphingData(
+                itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
+            new GraphingData(
+                itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
+            new GraphingData(
+                itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
           ],
         ),
       );
@@ -606,43 +637,48 @@ class PageHomeState extends State<PageHome> {
 
   //
   Map _buildItemsList() {
-    if (!(_searchText.isEmpty)) {
-      List<Patrons> tempList = new List();
-      //set up a map for each data type
-      map typesSorted = {};
-      typesSorted["makePieChart"] = [0,0,0];
-      for (int i = 0; i < itemTypes.length; i++) {
-        typesSorted[itemTypes[i]] = [0,0,0]; //will have number in, number out, and number overdue for each type
-        //[Available, Unavailable, Overdue]
-      }
-      //sort items into types and three categories
-      for (int i = 0; i < items.length; i++) {
-        var type = items[i].itemType; //gets item type
-        var inOrOut = items[i].status; //gets item status "Available" or "Unavailable"
-        if (inOrOut == "Available") { //increments available
-          typesSorted[type][0] = typesSorted[type][0] + 1;
-          typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
-        }
-        else { //Status is unavailable, determine if checked in or checked out
-          var dateOut = items[i].lastCheckedOut; //Timestamp for last checked out date
-          //Have a Timestamp now, get number of days from current to lastCheckedOut
-          var difference = (dateOut.gettime()-Timestamp.now())/24 * 60 ^ 60 * 1000; //set difference to number of days
-          if (difference > checkoutPeriod) {
-            //overdue
-            typesSorted[type][2] = typesSorted[type][2] + 1;
-            typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
-          }
-          else {
-            //Just checked out, not overdue
-            typesSorted[type][1] = typesSorted[type][1] + 1;
-            typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
-          }
+    List<Patrons> tempList = new List();
+    //set up a map for each data type
+    Map typesSorted = {};
+    typesSorted["makePieChart"] = [0, 0, 0];
+    for (int i = 0; i < itemTypes.length; i++) {
+      typesSorted[itemTypes[i]] = [
+        0,
+        0,
+        0
+      ]; //will have number in, number out, and number overdue for each type
+      //[Available, Unavailable, Overdue]
+    }
+    //sort items into types and three categories
+    for (int i = 0; i < items.length; i++) {
+      var type = items[i].itemType; //gets item type
+      var inOrOut =
+          items[i].status; //gets item status "Available" or "Unavailable"
+      if (inOrOut == "Available") {
+        //increments available
+        typesSorted[type][0] = typesSorted[type][0] + 1;
+        typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
+      } else {
+        //Status is unavailable, determine if checked in or checked out
+        Timestamp dateOut =
+            items[i].lastCheckedOut; //Timestamp for last checked out date
+        //Have a Timestamp now, get number of days from current to lastCheckedOut
+        var difference = (dateOut.toDate().difference(DateTime.now()).inDays);
 
+        ///24 * 60 ^ 60 * 1000; //set difference to number of days
+        if (difference > widget.checkoutPeriod) {
+          //overdue
+          typesSorted[type][2] = typesSorted[type][2] + 1;
+          typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
+        } else {
+          //Just checked out, not overdue
+          typesSorted[type][1] = typesSorted[type][1] + 1;
+          typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
         }
       }
     }
     //returning set up list widget of bar graph
-  return typesSorted;
+    return typesSorted;
   }
   //searching items for search text
   //
@@ -670,9 +706,11 @@ class PageHomeState extends State<PageHome> {
     return Scaffold(
       appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
       body: Center(
-        child: ListView(children: <Widget>[
+          child: ListView(
+        children: <Widget>[
           Card(child: Text(widget.referenceSite)), //displays site name at top
-          Card( //Pie chart -> items in vs. items out vs. items out and late
+          Card(
+              //Pie chart -> items in vs. items out vs. items out and late
               child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(children: <Widget>[
@@ -680,45 +718,35 @@ class PageHomeState extends State<PageHome> {
                     Container(
                         width: MediaQuery.of(context).size.width / 2,
                         height: MediaQuery.of(context).size.height / 4,
-                        child: new DonutAutoLabelChart(pieChartSeries, animate:true)) // new pie chart
+                        child: new DonutAutoLabelChart(pieChartSeries,
+                            animate: true)) // new pie chart
                   ]))),
           Card(
-              Padding( //Bar chart ->  seperate items into types by keywords, then graph bars of in vs out
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(children: <Widget>[
-                    Text("Number In vs Out: "), //star
-                    Container(
-                        width: MediaQuery.of(context).size.width / 2,
-                        height: MediaQuery.of(context).size.height / 4,
-                        child: StackedFillColorBarChart.withSampleData()) //barchart
-                  ])))
-      ]),
-        child: ListView.separated(
-        separatorBuilder: (context, index) => Divider(
-        color: Colors.black,
-        ),
-        itemCount: items == null ? 0 : itemTypes.length,
-        itemBuilder: (BuildContext context, int index) {
-            return new Card(
-              child: Padding (
-              Padding: const EdgeInsets.all(16.0),
-              child: Row(
-                  children: <Widget>[
-                  Text("Number In vs Out: "), //star
-                  Container(
-                      width: MediaQuery.of(context).size.width / 2,
-                      height: MediaQuery.of(context).size.height / 4,
-                      child: new charts.BarChart<GraphingData>(barChartSeries[i], animate: true,), //barchart
-                  )],
-                )
-              ), );
-        }
-    ),
-    ),
+              child: ListView.separated(
+                  separatorBuilder: (context, index) => Divider(
+                        color: Colors.black,
+                      ),
+                  itemCount: items == null ? 0 : itemTypes.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return new Card(
+                        child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(children: <Widget>[
+                              Text("Number In vs Out: "), //star
+                              Container(
+                                width: MediaQuery.of(context).size.width / 2,
+                                height: MediaQuery.of(context).size.height / 4,
+                                child: new BarChart(
+                                  barChartSeries[index],
+                                  animate: true,
+                                ), //barchart
+                              )
+                            ])));
+                  })),
+        ],
+      )),
     );
   }
-
-
 }
 
 //Settings page for viewing/adjusting site content
@@ -733,7 +761,6 @@ class SettingsPage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => new _SettingsPageState();
-
 }
 
 //Log in/log out mechanics
@@ -761,11 +788,10 @@ class _SettingsPageState extends State<SettingsPage> {
               //two options in setting page
               title: Text("Email History"), //enter management/edit mode
               onTap: () {
-               FirebaseFirestoreService fs = FirebaseFirestoreService(widget.site);
-               fs..getHistoryLog(); //TODO
-
+                FirebaseFirestoreService fs =
+                    FirebaseFirestoreService(widget.site);
+                fs..getHistoryLog(); //TODO
               },
-
             ),
             ListTile(
               title: Text("Log Out"), //sign out of edit mode
@@ -843,15 +869,18 @@ class DatabasePgState extends State<DatabasePg> {
 
   @override
   //searching items
-  void initState() { //initialize the settings page equipment query stream
+  void initState() {
+    //initialize the settings page equipment query stream
     itemSub?.cancel();
     this.itemSub = fs
-        .getItemsQuery(itemType, availability, sort, order) //querying firebase for equipment items
+        .getItemsQuery(itemType, availability, sort,
+            order) //querying firebase for equipment items
         .listen((QuerySnapshot snapshot) {
       final List<Equipment> equipment = snapshot.documents
           .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
           .toList(); //Making list of equipment objects from stored firebase equipments
-      setState(() { //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment and items
+      setState(() {
+        //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment and items
         this.items = equipment;
         this.filteredItems = items;
       });
@@ -911,14 +940,14 @@ class DatabasePgState extends State<DatabasePg> {
     super.dispose();
   }
 
-
   //searching items for search text
   //
   Widget _buildItemsList() {
     if (!(_searchText.isEmpty)) {
       List<Equipment> tempList = new List();
       //Searches items for those with names containing the search phrase
-      for (int i = 0; i < items.length; i++) { //convert names to lower case to standardize searching
+      for (int i = 0; i < items.length; i++) {
+        //convert names to lower case to standardize searching
         if (items[i].name.toLowerCase().contains(_searchText.toLowerCase())) {
           tempList.add(items[i]);
         }
@@ -930,20 +959,22 @@ class DatabasePgState extends State<DatabasePg> {
     //displaying them in a list
     return ListView.separated(
       separatorBuilder: (context, index) => Divider(
-        color: Colors.black,
-      ),
+            color: Colors.black,
+          ),
       itemCount: items == null ? 0 : filteredItems.length,
       itemBuilder: (BuildContext context, int index) {
-        return new ListTile( //setting up the list entries
+        return new ListTile(
+          //setting up the list entries
           title: Text(filteredItems[index].name),
-          onTap: () { //ontap, pull up item details
+          onTap: () {
+            //ontap, pull up item details
             Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => ViewItem(
-                    item: filteredItems[index],
-                    site: widget.site,
-                  )),
+                        item: filteredItems[index],
+                        site: widget.site,
+                      )),
             );
           },
         );
@@ -964,7 +995,8 @@ class DatabasePgState extends State<DatabasePg> {
             mems[i]
                 .lastName
                 .toLowerCase()
-                .contains(_searchText.toLowerCase())) { //searches first and last name
+                .contains(_searchText.toLowerCase())) {
+          //searches first and last name
           tempList.add(mems[i]);
         }
       }
@@ -978,11 +1010,13 @@ class DatabasePgState extends State<DatabasePg> {
           ),
       itemCount: mems == null ? 0 : filteredMems.length,
       itemBuilder: (BuildContext context, int index) {
-        return new ListTile( //display the results first and last name
+        return new ListTile(
+          //display the results first and last name
           title: Text(filteredMems[index].firstName +
               " " +
               filteredMems[index].lastName),
-          onTap: () { //if name is tapped, view the member
+          onTap: () {
+            //if name is tapped, view the member
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -1021,7 +1055,8 @@ class DatabasePgState extends State<DatabasePg> {
       itemCount: hist == null ? 0 : filteredHist.length,
       itemBuilder: (BuildContext context, int index) {
         return new Container(
-            color: filteredHist[index].timeCheckedInString == "" //Green if checked in, red if checked out for current history state
+            color: filteredHist[index].timeCheckedInString ==
+                    "" //Green if checked in, red if checked out for current history state
                 ? Colors.red[200]
                 : Colors.green[200],
             child: ListTile(
@@ -1111,7 +1146,6 @@ class DatabasePgState extends State<DatabasePg> {
                         });
                       });
                     })),
-
           ),
           Divider(),
           ListTile(
@@ -1132,12 +1166,14 @@ class DatabasePgState extends State<DatabasePg> {
                           child: Text('Unavailable'),
                           value: 'unavailable',
                         ),
-                        DropdownMenuItem( //TODO: remove, we don't support this
+                        DropdownMenuItem(
+                          //TODO: remove, we don't support this
                           child: Text('Discontinued'),
                           value: 'discontinued',
                         )
                       ],
-                      onChanged: (String avail) { //Searching contents based on filters
+                      onChanged: (String avail) {
+                        //Searching contents based on filters
                         setState(() {
                           availability = avail;
                           itemSub?.cancel();
@@ -1157,7 +1193,8 @@ class DatabasePgState extends State<DatabasePg> {
                         });
                       }))),
           Divider(),
-          ListTile(//Sorting the items based on values
+          ListTile(
+              //Sorting the items based on values
               title: Text('Sort By'),
               trailing: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -1196,10 +1233,12 @@ class DatabasePgState extends State<DatabasePg> {
                         });
                       }))),
           Divider(),
-          ListTile( // Sorting results based on list  content order
+          ListTile(
+              // Sorting results based on list  content order
               title: Text('Order'),
               trailing: DropdownButtonHideUnderline(
-                  child: DropdownButton<bool>( //choosing option for sorting the results
+                  child: DropdownButton<bool>(
+                      //choosing option for sorting the results
                       value: order,
                       items: <DropdownMenuItem<bool>>[
                         DropdownMenuItem(
@@ -1211,7 +1250,8 @@ class DatabasePgState extends State<DatabasePg> {
                           value: true,
                         ),
                       ],
-                      onChanged: (bool ord) { //when ordering is selected, sorts query results
+                      onChanged: (bool ord) {
+                        //when ordering is selected, sorts query results
                         setState(() {
                           order = ord;
                           itemSub?.cancel();
@@ -1236,67 +1276,83 @@ class DatabasePgState extends State<DatabasePg> {
     } else if (filterType == "Members") {
       return Container();
     } else if (filterType == "History") {
-      return Column(
-          children: <Widget>[
-      Center(child: Text("Filters")),
-    Divider(),
-    ListTile(
-      title: Text("Start Date"),
-      trailing: this.startDate != null ? Text(DateFormat.yMd().format(this.startDate.toDate())) : Text(""),
-      onTap: (){
-        DatePicker.showDatePicker(context,
-            showTitleActions: true,
-        currentTime: this.startDate != null ? this.startDate.toDate() : null,
-        maxTime: this.endDate != null ? this.endDate.toDate() : DateTime.now(),
-        onConfirm: (date) {
-          setState(() {
-            this.startDate = Timestamp.fromDate(date);
-            print(DateFormat.yMd().format(date));
-            this.histSub?.cancel();
-            this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
-              final List<History> histories = snapshot.documents
-                  .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
-                  .toList(); //Creating list of History objects from stored firebase histories
+      return Column(children: <Widget>[
+        Center(child: Text("Filters")),
+        Divider(),
+        ListTile(
+          title: Text("Start Date"),
+          trailing: this.startDate != null
+              ? Text(DateFormat.yMd().format(this.startDate.toDate()))
+              : Text(""),
+          onTap: () {
+            DatePicker.showDatePicker(context,
+                showTitleActions: true,
+                currentTime:
+                    this.startDate != null ? this.startDate.toDate() : null,
+                maxTime: this.endDate != null
+                    ? this.endDate.toDate()
+                    : DateTime.now(), onConfirm: (date) {
               setState(() {
-                this.hist = histories;
-                this.filteredHist = hist;
-              });
-            });
-          });
-        });
-      },
-    ),
-      Divider(),
-      ListTile(
-        title: Text("End Date"),
-        trailing: this.endDate != null ? Text(DateFormat.yMd().format(this.endDate.toDate())) : Text(""),
-        onTap: (){
-          DatePicker.showDatePicker(context,
-              showTitleActions: true,
-              currentTime: this.endDate != null ? this.endDate.toDate() : null,
-              minTime: this.startDate != null ? this.startDate.toDate() : null,
-              maxTime: DateTime.now(),
-              onConfirm: (date) {
-                setState(() {
-                  this.endDate = Timestamp.fromDate(date);
-                  print(DateFormat.yMd().format(date));
-                  this.histSub?.cancel();
-                  this.histSub = fs.getHistoryQuery(this.startDate, Timestamp.fromDate(this.endDate.toDate().add(new Duration(days: 1)))).listen((QuerySnapshot snapshot) {
-                    final List<History> histories = snapshot.documents
-                        .map((documentSnapshot) => History.fromMap(documentSnapshot.data))
-                        .toList(); //Creating list of History objects from stored firebase histories
-                    setState(() {
-                      this.hist = histories;
-                      this.filteredHist = hist;
-                    });
+                this.startDate = Timestamp.fromDate(date);
+                print(DateFormat.yMd().format(date));
+                this.histSub?.cancel();
+                this.histSub = fs
+                    .getHistoryQuery(
+                        this.startDate,
+                        Timestamp.fromDate(
+                            this.endDate.toDate().add(new Duration(days: 1))))
+                    .listen((QuerySnapshot snapshot) {
+                  final List<History> histories = snapshot.documents
+                      .map((documentSnapshot) =>
+                          History.fromMap(documentSnapshot.data))
+                      .toList(); //Creating list of History objects from stored firebase histories
+                  setState(() {
+                    this.hist = histories;
+                    this.filteredHist = hist;
                   });
-
                 });
               });
-        },
-      ),
-
-          ]);
+            });
+          },
+        ),
+        Divider(),
+        ListTile(
+          title: Text("End Date"),
+          trailing: this.endDate != null
+              ? Text(DateFormat.yMd().format(this.endDate.toDate()))
+              : Text(""),
+          onTap: () {
+            DatePicker.showDatePicker(context,
+                showTitleActions: true,
+                currentTime:
+                    this.endDate != null ? this.endDate.toDate() : null,
+                minTime:
+                    this.startDate != null ? this.startDate.toDate() : null,
+                maxTime: DateTime.now(), onConfirm: (date) {
+              setState(() {
+                this.endDate = Timestamp.fromDate(date);
+                print(DateFormat.yMd().format(date));
+                this.histSub?.cancel();
+                this.histSub = fs
+                    .getHistoryQuery(
+                        this.startDate,
+                        Timestamp.fromDate(
+                            this.endDate.toDate().add(new Duration(days: 1))))
+                    .listen((QuerySnapshot snapshot) {
+                  final List<History> histories = snapshot.documents
+                      .map((documentSnapshot) =>
+                          History.fromMap(documentSnapshot.data))
+                      .toList(); //Creating list of History objects from stored firebase histories
+                  setState(() {
+                    this.hist = histories;
+                    this.filteredHist = hist;
+                  });
+                });
+              });
+            });
+          },
+        ),
+      ]);
     } else {
       return Container();
     }
@@ -1361,8 +1417,9 @@ class DatabasePgState extends State<DatabasePg> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          _mode == "Items" ? AddItem(site: widget.site) : AddMember(site: widget.site)),
+                      builder: (context) => _mode == "Items"
+                          ? AddItem(site: widget.site)
+                          : AddMember(site: widget.site)),
                 );
               },
               child: Icon(Icons.add),
@@ -1383,9 +1440,11 @@ class AddItem extends StatefulWidget {
 
 //Setting up AddItemWidget
 class AddItemState extends State<AddItem> {
-  final Timestamp dateNow = Timestamp.now();//timetsamp of item creation in the database
+  final Timestamp dateNow =
+      Timestamp.now(); //timetsamp of item creation in the database
   bool validateName = false; //boolean for determining if the name will be valid
-  FirebaseFirestoreService fs; //declaring a instance of firestore to handle the transactions
+  FirebaseFirestoreService
+      fs; //declaring a instance of firestore to handle the transactions
   FieldWidget condition =
       FieldWidget(title: 'Condition', hint: 'Item Condition:');
   FieldWidget itemId = FieldWidget(
@@ -1423,14 +1482,15 @@ class AddItemState extends State<AddItem> {
           actions: <Widget>[
             IconButton(
                 icon: Icon(Icons.close),
-                onPressed: () { //when icon is pressed, pops up the add item area
+                onPressed: () {
+                  //when icon is pressed, pops up the add item area
                   Navigator.pop(context);
                 })
           ],
           title: Text("Add Item"),
         ),
         body: cameraView
-        //Allows new qr code to be scanned for a added item, that way a item can be assigned a qr sticker if any are available
+            //Allows new qr code to be scanned for a added item, that way a item can be assigned a qr sticker if any are available
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -1486,7 +1546,8 @@ class AddItemState extends State<AddItem> {
                           )),
                           RaisedButton(
                             child: Text("Submit"),
-                            onPressed: () async { //in item creation mode, when submit is pressed will create on firebase
+                            onPressed: () async {
+                              //in item creation mode, when submit is pressed will create on firebase
                               if (name.value.isEmpty) {
                                 setState(() {
                                   name.validate = false;
@@ -1494,21 +1555,24 @@ class AddItemState extends State<AddItem> {
                                 _showToast(context,
                                     'Error: You must enter item name.'); //must have a item name
                               } else if (itemId.value.isEmpty) {
-                                _showToast(
-                                    context, 'Error: You must scan item code.'); //must have a id number for qr generation
+                                _showToast(context,
+                                    'Error: You must scan item code.'); //must have a id number for qr generation
                                 //TODO:  add another else if for checking if the id exists in firebase???? and is nto alreaydy used for a student id???
                               } else {
                                 try {
-                                  await fs.createEquipment( //try to create the item
+                                  await fs.createEquipment(
+                                      //try to create the item
                                       name: name.value,
                                       itemID: itemId.value,
                                       itemType: itemType.value,
                                       purchased: dateNow,
                                       status: status.value,
                                       condition: condition.value,
-                                      lastCheckedOut: dateNow, //default date last checked out to same as purchased date for new item
+                                      lastCheckedOut:
+                                          dateNow, //default date last checked out to same as purchased date for new item
                                       notes: notes.value);
-                                  await fs.updateItemTypes(itemType.value.toLowerCase());
+                                  await fs.updateItemTypes(
+                                      itemType.value.toLowerCase());
 
                                   Navigator.pop(context);
                                 } catch (e) {
@@ -1543,11 +1607,13 @@ class AddMember extends StatefulWidget {
 }
 
 class AddMemberState extends State<AddMember> {
-  final Timestamp dateNow = Timestamp.now(); //default timestamp is now....TODO: find out why we need this
+  final Timestamp dateNow = Timestamp
+      .now(); //default timestamp is now....TODO: find out why we need this
   bool validateName = false;
   FirebaseFirestoreService fs;
   @override
-  void initState() { //opening a firestore service for the correct class site
+  void initState() {
+    //opening a firestore service for the correct class site
     fs = FirebaseFirestoreService(widget.site);
     super.initState();
   }
@@ -1584,7 +1650,8 @@ class AddMemberState extends State<AddMember> {
           title: Text("Add Member"),
         ),
         body: cameraView
-            ? Column( //Allowing new patron id codes from student IDs to be scanned when adding a member
+            ? Column(
+                //Allowing new patron id codes from student IDs to be scanned when adding a member
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   new SizedBox(
@@ -1636,10 +1703,12 @@ class AddMemberState extends State<AddMember> {
                               notes,
                             ],
                           )),
-                          RaisedButton( //when done filling info, add new patron to firestore
+                          RaisedButton(
+                            //when done filling info, add new patron to firestore
                             child: Text("Submit"),
                             onPressed: () async {
-                              if (firstName.value.isEmpty) { //must enter a first name field for new members
+                              if (firstName.value.isEmpty) {
+                                //must enter a first name field for new members
                                 setState(() {
                                   firstName.validate = false;
                                 });
@@ -1690,12 +1759,14 @@ class ViewItem extends StatefulWidget {
 //view an equipment item and update variables
 //Already has the equipment stored in the widget.item
 class ViewItemState extends State<ViewItem> {
-  final Timestamp dateNow = Timestamp.now(); //default timestamp is the current one
+  final Timestamp dateNow =
+      Timestamp.now(); //default timestamp is the current one
   bool validateName = false;
   bool editMode = false;
   FirebaseFirestoreService fs;
   @override
-  void initState() { //fill all values
+  void initState() {
+    //fill all values
     fs = FirebaseFirestoreService(widget.site);
     condition.setString(widget.item.condition);
     itemId.setString(widget.item.itemID);
@@ -1737,7 +1808,8 @@ class ViewItemState extends State<ViewItem> {
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-              icon: Icon(Icons.edit), //if entering edit mode, uses above FieldWidgets to edit content
+              icon: Icon(Icons
+                  .edit), //if entering edit mode, uses above FieldWidgets to edit content
               onPressed: () {
                 editMode = true;
                 setState(() {
@@ -1770,7 +1842,8 @@ class ViewItemState extends State<ViewItem> {
                 });
               }),
           actions: <Widget>[
-            IconButton( //closing edit mode
+            IconButton(
+                //closing edit mode
                 icon: Icon(Icons.close),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1780,7 +1853,8 @@ class ViewItemState extends State<ViewItem> {
               editMode == false ? Text("Item Details") : Text("Edit Details"),
         ),
         body: cameraView
-            ? Column( //allow user to scan qr code to input updated qr
+            ? Column(
+                //allow user to scan qr code to input updated qr
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   new SizedBox(
@@ -1838,7 +1912,8 @@ class ViewItemState extends State<ViewItem> {
                           editMode == false
                               ? Container()
                               : RaisedButton(
-                                  child: Text("Update"), //when update is pressed, update the equipment fields
+                                  child: Text(
+                                      "Update"), //when update is pressed, update the equipment fields
                                   onPressed: () async {
                                     if (name.value.isEmpty) {
                                       setState(() {
@@ -1864,7 +1939,8 @@ class ViewItemState extends State<ViewItem> {
                                             purchased: dateNow,
                                             status: status.value,
                                             condition: condition.value,
-                                            lastCheckedOut: dateNow, //set last checked out date to same as purchased date
+                                            lastCheckedOut:
+                                                dateNow, //set last checked out date to same as purchased date
                                             notes: notes.value);
                                         Navigator.pop(context);
                                       } catch (e) {
@@ -1905,7 +1981,8 @@ class ViewMemberState extends State<ViewMember> {
   bool validateName = false;
   bool editMode = false;
   FirebaseFirestoreService fs;
-  List<History> histories; //Will pull up the histories using a streamquery for this member
+  List<History>
+      histories; //Will pull up the histories using a streamquery for this member
   StreamSubscription<QuerySnapshot> historySub;
   @override
   void initState() {
@@ -1957,7 +2034,8 @@ class ViewMemberState extends State<ViewMember> {
           leading: IconButton(
               icon: Icon(Icons.edit),
               onPressed: () {
-                editMode = true; //if in edit mode, allow variables to be changed using above widgets
+                editMode =
+                    true; //if in edit mode, allow variables to be changed using above widgets
                 setState(() {
                   id = FieldWidget(
                       title: 'ID',
@@ -1979,7 +2057,8 @@ class ViewMemberState extends State<ViewMember> {
                       enabled: true);
                   notes = FieldWidget(
                       title: 'Notes', hint: 'Member notes:', enabled: true);
-                  id.setString(widget.mem.id); //TODO:  add id checks for the members/patrons
+                  id.setString(widget
+                      .mem.id); //TODO:  add id checks for the members/patrons
                   firstName.setString(widget.mem.firstName);
                   lastName.setString(widget.mem.lastName);
                   address.setString(widget.mem.emailAddress);
@@ -1988,7 +2067,8 @@ class ViewMemberState extends State<ViewMember> {
                 });
               }),
           actions: <Widget>[
-            IconButton( //closing view mode
+            IconButton(
+                //closing view mode
                 icon: Icon(Icons.close),
                 onPressed: () {
                   Navigator.pop(context);
@@ -2050,7 +2130,8 @@ class ViewMemberState extends State<ViewMember> {
                               address,
                               phone,
                               notes,
-                              Card( //displaying history items associated with this member in a list
+                              Card(
+                                  //displaying history items associated with this member in a list
                                   child: Padding(
                                 padding: EdgeInsets.all(5.0),
                                 child: Column(
@@ -2061,7 +2142,8 @@ class ViewMemberState extends State<ViewMember> {
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16.0))),
-                                    Container( //displaying history items associated with the member
+                                    Container(
+                                        //displaying history items associated with the member
                                         height: 500,
                                         child: ListView.separated(
                                           separatorBuilder: (context, index) =>
@@ -2107,7 +2189,8 @@ class ViewMemberState extends State<ViewMember> {
                           editMode == false
                               ? Container()
                               : RaisedButton(
-                                  child: Text("Update"), //if update is pressed, updates the contents on firebase
+                                  child: Text(
+                                      "Update"), //if update is pressed, updates the contents on firebase
                                   onPressed: () async {
                                     if (firstName.value.isEmpty) {
                                       setState(() {
@@ -2163,13 +2246,15 @@ class ViewHistory extends StatefulWidget {
 }
 
 class ViewHistoryState extends State<ViewHistory> {
-  final Timestamp dateNow = Timestamp.now(); //defaults to current date TODO: determine if we need this
+  final Timestamp dateNow = Timestamp
+      .now(); //defaults to current date TODO: determine if we need this
   bool validateName = false;
   bool editMode = false;
   bool itemMode = false;
   bool memMode = false;
   @override
-  void initState() { //initialize all history variables with the current firebase values
+  void initState() {
+    //initialize all history variables with the current firebase values
     itemID.setString(widget.hist.itemID);
     itemName.setString(widget.hist.itemName);
     memID.setString(widget.hist.memID);
@@ -2182,6 +2267,7 @@ class ViewHistoryState extends State<ViewHistory> {
   void updateWidget() {
     setState(() {});
   }
+
   //Setting up FieldWidgets for editing below
   FieldWidget itemID = FieldWidget(title: 'Item ID', hint: '', enabled: false);
   FieldWidget itemName =
@@ -2211,7 +2297,8 @@ class ViewHistoryState extends State<ViewHistory> {
               : Text("Edit Details"),
         ),
         body: Builder(
-            builder: (context) => Column( //view history values
+            builder: (context) => Column(
+                    //view history values
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       Expanded(
