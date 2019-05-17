@@ -557,14 +557,17 @@ class PageHomeState extends State<PageHome> {
   FirebaseFirestoreService fs;
   StreamSubscription<QuerySnapshot> itemSub;
   StreamSubscription<DocumentSnapshot> itemTypeSub;
-  List<dynamic> itemTypes;
+  List<String> itemTypes;
   List<Equipment> items;
   //map sortedItems;
   var pieChartSeries; //overall data series
   var barChartSeries; //list of chart.Series data
 
   //searching items
+  @override
   void initState() {
+    fs = new FirebaseFirestoreService(widget.referenceSite);
+    print(widget.referenceSite);
     //initialize the current equipment for the site
     itemSub?.cancel();
     this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
@@ -579,8 +582,7 @@ class PageHomeState extends State<PageHome> {
     //Getting the item types for the site
     itemTypeSub?.cancel();
     this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
-      itemTypes =
-          snapshot.data["ItemTypes"]; //should be a list of item type strings
+      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
     });
     var sortedItems = _buildItemsList(); //all sorting done in below function
     //now, make the contents sorted items into a data series and a list of data series

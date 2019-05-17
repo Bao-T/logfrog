@@ -60,14 +60,15 @@ class _HomePageState extends State<HomePage> {
         _todoQuery.onChildChanged.listen(_onEntryChanged);
     Future getDatabases() async{
       var document = await db.Firestore.instance.collection('Users').document(widget.userId).get();
-      var siteDocument = await db.Firestore.instance.collection(document.data["databases"][0].toString()).document(currentSite).get(); //gets the checkoutPeriod for the first site
+      //var siteDocument = await db.Firestore.instance.collection('Objects').document(document.data["databases"][0].toString()).get(); //gets the checkoutPeriod for the first site
+
       setState(() {
         databases = document.data["databases"]; //databases that user has access to
         currentSite = databases[0].toString(); //name of current stite
-        checkoutPeriodActual = siteDocument.data["checkoutPeriod"]; //checkout period to determine if items are overdue for a site
+        checkoutPeriodActual = 7;//siteDocument.data["checkoutPeriod"]; //checkout period to determine if items are overdue for a site
         checkoutPg = CheckoutPg(site: currentSite);
         checkinPg = CheckinPg(site: currentSite);
-        pgHome = PageHome(referenceSite: widget.userId, checkoutPeriod: checkoutPeriodActual ); //calling statistics page with site and allowed checkout period to display out/in items and late items
+        pgHome = PageHome(referenceSite: currentSite, checkoutPeriod: checkoutPeriodActual ); //calling statistics page with site and allowed checkout period to display out/in items and late items
         databasePg = new DatabasePg(
           site: currentSite,
         );
