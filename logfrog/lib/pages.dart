@@ -18,9 +18,6 @@ import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 bool frontCamera = false;
 
-String
-    dataSite; //site for the user- tells firebase which initial document to access
-
 const alarmAudioPath = "beep.mp3"; //check in checkout scanner beep
 
 //Checkout Page:  Students will open this page to checkout equipment _________________________________________
@@ -262,38 +259,40 @@ class CheckoutPgState extends State<CheckoutPg> {
               Expanded(
                   flex: 10,
                   child: Card(
+                      color: Colors.green[100],
                       //Pops up checked out objects when they process below camer and user info
                       child: ListView.builder(
-                    itemCount: dataList.length,
-                    itemBuilder: (context, int index) {
-                      return Dismissible(
-                          //For each key, if the box that appears can be dismissed to cancel the transaction
-                          key: Key(UniqueKey().toString()),
-                          onDismissed: (direction) {
-                            //IF DISMISSED:
-                            debugPrint(
-                                index.toString() + " " + dataList[index]);
-                            dataSet.remove(dataList[index]); //Remove the code
-                            dataList.removeAt(index);
-                            dataNameList.removeAt(index); //remove the name
-                          },
-                          //NOT USED- location for adding a ontap action for the equipment cards
+                        itemCount: dataList.length,
+                        itemBuilder: (context, int index) {
+                          return Dismissible(
+                              //For each key, if the box that appears can be dismissed to cancel the transaction
+                              key: Key(UniqueKey().toString()),
+                              onDismissed: (direction) {
+                                //IF DISMISSED:
+                                debugPrint(
+                                    index.toString() + " " + dataList[index]);
+                                dataSet
+                                    .remove(dataList[index]); //Remove the code
+                                dataList.removeAt(index);
+                                dataNameList.removeAt(index); //remove the name
+                              },
+                              //NOT USED- location for adding a ontap action for the equipment cards
+                              //
+                              child: Column(children: <Widget>[
+                                InkWell(
+                                    onTap: () {
+                                      print("tapped");
+                                    },
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(0.0),
+                                        child: ListTile(
+                                            title: Text(dataNameList[index])))),
+                                Divider()
+                              ]));
                           //
-                          child: Column(children: <Widget>[
-                            InkWell(
-                                onTap: () {
-                                  print("tapped");
-                                },
-                                child: Padding(
-                                    padding: const EdgeInsets.all(0.0),
-                                    child: ListTile(
-                                        title: Text(dataNameList[index])))),
-                            Divider()
-                          ]));
-                      //
-                      //NOT USED
-                    },
-                  ))),
+                          //NOT USED
+                        },
+                      ))),
               Expanded(
                   //Final transaction button widget
                   flex: 1,
@@ -459,7 +458,7 @@ class CheckinPgState extends State<CheckinPg> {
           //Camera on side
           margin: EdgeInsets.all(5.0),
           child: new SizedBox(
-              width: 200.0,
+              width: 370.0,
               height: 300.0,
               child: new QrCamera(
                   //QR scanner
@@ -497,8 +496,8 @@ class CheckinPgState extends State<CheckinPg> {
         appBar: AppBar(title: Text('Check-in')),
         body: Padding(
             padding: const EdgeInsets.all(5.0),
-            child: Scaffold(
-                body: Column(children: [
+            child: Container(
+                child: Column(children: [
               Expanded(
                   flex: 8,
                   child: Container(
@@ -514,25 +513,26 @@ class CheckinPgState extends State<CheckinPg> {
               Expanded(
                   flex: 10,
                   child: Card(
+                      color: Colors.yellow[100],
                       //list of items appearing at the bottom of the screen
                       child: ListView.builder(
-                    itemCount: dataList.length,
-                    itemBuilder: (context, int index) {
-                      return Column(children: <Widget>[
-                        InkWell(
-                            onTap: () {
-                              print("tapped");
-                            },
-                            child: Padding(
-                                padding: const EdgeInsets.all(0.0),
-                                child: ListTile(
-                                  title: Text(dataItemNameList[index]),
-                                  trailing: Text(dataNameList[index]),
-                                ))),
-                        Divider()
-                      ]);
-                    },
-                  ))),
+                        itemCount: dataList.length,
+                        itemBuilder: (context, int index) {
+                          return Column(children: <Widget>[
+                            InkWell(
+                                onTap: () {
+                                  print("tapped");
+                                },
+                                child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile(
+                                      title: Text(dataItemNameList[index]),
+                                      trailing: Text(dataNameList[index]),
+                                    ))),
+                            Divider()
+                          ]);
+                        },
+                      ))),
             ]))));
   }
 }
@@ -553,202 +553,195 @@ class PageHome extends StatefulWidget {
 
 //Creating state of home page with statistics
 class PageHomeState extends State<PageHome> {
-  //get snapshots of all data when page opens
-  FirebaseFirestoreService fs;
-  StreamSubscription<QuerySnapshot> itemSub;
-  StreamSubscription<DocumentSnapshot> itemTypeSub;
-  List<String> itemTypes;
-  List<Equipment> items;
-  //map sortedItems;
-  var pieChartSeries; //overall data series
-  var barChartSeries; //list of chart.Series data
-
-  //searching items
-  @override
-  void initState() {
-    fs = new FirebaseFirestoreService(widget.referenceSite);
-    print(widget.referenceSite);
-    //initialize the current equipment for the site
-    itemSub?.cancel();
-    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
-      final List<Equipment> equipment = snapshot.documents
-          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
-          .toList(); //Making list of equipment objects from stored firebase equipments
-      setState(() {
-        //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment we have
-        this.items = equipment;
-      });
-    });
-    //Getting the item types for the site
-    itemTypeSub?.cancel();
-    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
-      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
-    });
-    var sortedItems = _buildItemsList(); //all sorting done in below function
-    //now, make the contents sorted items into a data series and a list of data series
-    var pieSeries = [
-      new GraphingData(
-          'Available Items', sortedItems["makePieChart"][0], Colors.green),
-      new GraphingData(
-          'Unavailable Items', sortedItems["makePieChart"][1], Colors.yellow),
-      new GraphingData(
-          'Overdue Items', sortedItems["makePieChart"][2], Colors.red),
-    ];
-    this.pieChartSeries = [
-      new Series(
-        id: "All Items",
-        domainFn: (GraphingData gdata, _) => gdata.title,
-        measureFn: (GraphingData gdata, _) => gdata.itemNumber,
-        colorFn: (GraphingData gdata, _) => gdata.color,
-        data: pieSeries,
-      ),
-    ];
-    //setting up bar chart items
-    //list.add(thing) in dart for adding item to list
-    this.barChartSeries = [];
-    for (int i = 0; i < itemTypes.length; i++) {
-      //create list of series for each bar chart in future
-      barChartSeries.add(
-        new Series(
-          id: itemTypes[i],
-          domainFn: (GraphingData gdata, _) => gdata.title,
-          measureFn: (GraphingData gdata, _) => gdata.itemNumber,
-          colorFn: (GraphingData gdata, _) => gdata.color,
-          data: [
-            new GraphingData(
-                itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
-            new GraphingData(
-                itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
-            new GraphingData(
-                itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
-          ],
-        ),
-      );
-    }
-    super.initState();
-  }
-
-  //Disposing of query stream subscriptions
-  @override
-  void dispose() {
-    itemSub?.cancel();
-    itemTypeSub?.cancel();
-    super.dispose();
-  }
-  //searching items for search text
-
-  //
-  Map _buildItemsList() {
-    List<Patrons> tempList = new List();
-    //set up a map for each data type
-    Map typesSorted = {};
-    typesSorted["makePieChart"] = [0, 0, 0];
-    for (int i = 0; i < itemTypes.length; i++) {
-      typesSorted[itemTypes[i]] = [
-        0,
-        0,
-        0
-      ]; //will have number in, number out, and number overdue for each type
-      //[Available, Unavailable, Overdue]
-    }
-    //sort items into types and three categories
-    for (int i = 0; i < items.length; i++) {
-      var type = items[i].itemType; //gets item type
-      var inOrOut =
-          items[i].status; //gets item status "Available" or "Unavailable"
-      if (inOrOut == "Available") {
-        //increments available
-        typesSorted[type][0] = typesSorted[type][0] + 1;
-        typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
-      } else {
-        //Status is unavailable, determine if checked in or checked out
-        Timestamp dateOut =
-            items[i].lastCheckedOut; //Timestamp for last checked out date
-        //Have a Timestamp now, get number of days from current to lastCheckedOut
-        var difference = (dateOut.toDate().difference(DateTime.now()).inDays);
-
-        ///24 * 60 ^ 60 * 1000; //set difference to number of days
-        if (difference > widget.checkoutPeriod) {
-          //overdue
-          typesSorted[type][2] = typesSorted[type][2] + 1;
-          typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
-        } else {
-          //Just checked out, not overdue
-          typesSorted[type][1] = typesSorted[type][1] + 1;
-          typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
-        }
-      }
-    }
-    //returning set up list widget of bar graph
-    return typesSorted;
-  }
-  //searching items for search text
-  //
-  /*
-  Widget createListView(BuildContext context) {
-    return new ListView.builder(
-      itemCount: items == null ? 0 : itemTypes.length,
-      itemBuilder: (BuildContext context, int index) {
-        return new Column(
-          children: <Widget>[
-            new text("Number In vs Out: "),
-            new ListTile(
-              title: new Text(values[index]),
-            ),
-            new Divider(height: 2.0,),
-          ],
-        );
-      },
-    );
-  }
-  */
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
-      body: Center(
-          child: ListView(
-        children: <Widget>[
-          Card(child: Text(widget.referenceSite)), //displays site name at top
-          Card(
-              //Pie chart -> items in vs. items out vs. items out and late
-              child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(children: <Widget>[
-                    Text("Items In, Out, and Overdue"),
-                    Container(
-                        width: MediaQuery.of(context).size.width / 2,
-                        height: MediaQuery.of(context).size.height / 4,
-                        child: new DonutAutoLabelChart(pieChartSeries,
-                            animate: true)) // new pie chart
-                  ]))),
-          Card(
-              child: ListView.separated(
-                  separatorBuilder: (context, index) => Divider(
-                        color: Colors.black,
-                      ),
-                  itemCount: items == null ? 0 : itemTypes.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return new Card(
-                        child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(children: <Widget>[
-                              Text("Number In vs Out: "), //star
-                              Container(
-                                width: MediaQuery.of(context).size.width / 2,
-                                height: MediaQuery.of(context).size.height / 4,
-                                child: new BarChart(
-                                  barChartSeries[index],
-                                  animate: true,
-                                ), //barchart
-                              )
-                            ])));
-                  })),
-        ],
-      )),
-    );
+    // TODO: implement build
+    return Container();
   }
+
+//  if(true){
+//  //get snapshots of all data when page opens
+//  FirebaseFirestoreService fs;
+//  StreamSubscription<QuerySnapshot> itemSub;
+//  StreamSubscription<DocumentSnapshot> itemTypeSub;
+//  List<dynamic> itemTypes;
+//  List<Equipment> items;
+//  //map sortedItems;
+//  var pieChartSeries; //overall data series
+//  var barChartSeries; //list of chart.Series data
+//  var sortedItems;
+//  //searching items
+//  @override
+//  void initState() {
+//    fs = new FirebaseFirestoreService(widget.referenceSite);
+//    print(widget.referenceSite);
+//    //initialize the current equipment for the site
+//    itemSub?.cancel();
+//    this.itemSub = fs.getItems().listen((QuerySnapshot snapshot) {
+//      final List<Equipment> equipment = snapshot.documents
+//          .map((documentSnapshot) => Equipment.fromMap(documentSnapshot.data))
+//          .toList(); //Making list of equipment objects from stored firebase equipments
+//      setState(() {
+//        //After pulling firebase stored equipment snapshots, sets them as the settings list of equipment we have
+//        this.items = equipment;
+//      });
+//    });
+//    //Getting the item types for the site
+//    itemTypeSub?.cancel();
+//    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
+//      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
+//      sortedItems = _buildItemsList();
+//    });
+//
+//
+//    super.initState();
+//  }
+//
+//  //Disposing of query stream subscriptions
+//  @override
+//  void dispose() {
+//    itemSub?.cancel();
+//    itemTypeSub?.cancel();
+//    super.dispose();
+//  }
+//  //searching items for search text
+//
+//  //
+//  Map _buildItemsList() {
+//    //set up a map for each data type
+//    Map typesSorted = {};
+//    typesSorted["makePieChart"] = [0, 0, 0];
+//    for (int i = 0; i < itemTypes.length; i++) {
+//      typesSorted[itemTypes[i]] = [
+//        0,
+//        0,
+//        0
+//      ]; //will have number in, number out, and number overdue for each type
+//      //[Available, Unavailable, Overdue]
+//    }
+//    //sort items into types and three categories
+//    for (int i = 0; i < items.length; i++) {
+//      var type = items[i].itemType; //gets item type
+//      var inOrOut =
+//          items[i].status; //gets item status "Available" or "Unavailable"
+//      if (inOrOut == "Available") {
+//        //increments available
+//        typesSorted[type][0] = typesSorted["type"][0] + 1;
+//        typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
+//      } else {
+//        //Status is unavailable, determine if checked in or checked out
+////        Timestamp dateOut =
+////            items[i].lastCheckedOut; //Timestamp for last checked out date
+////        //Have a Timestamp now, get number of days from current to lastCheckedOut
+////        var difference = (dateOut.toDate().difference(DateTime.now()).inDays);
+////
+////        ///24 * 60 ^ 60 * 1000; //set difference to number of days
+////        if (difference > widget.checkoutPeriod) {
+////          //overdue
+////          typesSorted[type][2] = typesSorted[type][2] + 1;
+////          typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
+////        } else {
+//          //Just checked out, not overdue
+//          typesSorted[type][1] = typesSorted["type"][1] + 1;
+//          typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
+// //       }
+//      }
+//    }
+//    //returning set up list widget of bar graph
+//    return typesSorted;
+//  }
+//
+//  void _makeCharts(){
+//     //all sorting done in below function
+//    //now, make the contents sorted items into a data series and a list of data series
+//    var pieSeries = [
+//      new GraphingData(
+//          'Available Items', sortedItems["makePieChart"][0], Colors.green),
+//      new GraphingData(
+//          'Unavailable Items', sortedItems["makePieChart"][1], Colors.yellow),
+//      new GraphingData(
+//          'Overdue Items', sortedItems["makePieChart"][2], Colors.red),
+//    ];
+//    this.pieChartSeries = [
+//      new Series(
+//        id: "All Items",
+//        domainFn: (GraphingData gdata, _) => gdata.title,
+//        measureFn: (GraphingData gdata, _) => gdata.itemNumber,
+//        colorFn: (GraphingData gdata, _) => gdata.color,
+//        data: pieSeries,
+//      ),
+//    ];
+//    //setting up bar chart items
+//    //list.add(thing) in dart for adding item to list
+//    this.barChartSeries = [];
+//    for (int i = 0; i < itemTypes.length; i++) {
+//      //create list of series for each bar chart in future
+//      barChartSeries.add(
+//        new Series(
+//          id: itemTypes[i],
+//          domainFn: (GraphingData gdata, _) => gdata.title,
+//          measureFn: (GraphingData gdata, _) => gdata.itemNumber,
+//          colorFn: (GraphingData gdata, _) => gdata.color,
+//          data: [
+//            new GraphingData(
+//                itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
+//            new GraphingData(
+//                itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
+//            new GraphingData(
+//                itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
+//          ],
+//        ),
+//      );
+//    }
+//  }
+//
+//  @override
+//  Widget build(BuildContext context) {
+//    return Scaffold(
+//      appBar: AppBar(title: Text('LogFrog')), //Display app name at top of app
+//      body: Center(
+//          child: ListView(
+//        children: <Widget>[
+//          Card(child: Text(widget.referenceSite)), //displays site name at top
+//          Card(
+//              //Pie chart -> items in vs. items out vs. items out and late
+//              child: Padding(
+//                  padding: const EdgeInsets.all(16.0),
+//                  child: Row(children: <Widget>[
+//                    Text("Items In, Out, and Overdue"),
+//                    Container(
+//                        width: MediaQuery.of(context).size.width / 2,
+//                        height: MediaQuery.of(context).size.height / 4,
+//                        child: new DonutAutoLabelChart(pieChartSeries,
+//                            animate: true)) // new pie chart
+//                  ]))),
+//          Card(
+//              child: ListView.separated(
+//                  separatorBuilder: (context, index) => Divider(
+//                        color: Colors.black,
+//                      ),
+//                  itemCount: items == null ? 0 : itemTypes.length,
+//                  itemBuilder: (BuildContext context, int index) {
+//                    return new Card(
+//                        child: Padding(
+//                            padding: const EdgeInsets.all(16.0),
+//                            child: Row(children: <Widget>[
+//                              Text("Number In vs Out: "), //star
+//                              Container(
+//                                width: MediaQuery.of(context).size.width / 2,
+//                                height: MediaQuery.of(context).size.height / 4,
+//                                child: new BarChart(
+//                                  barChartSeries[index],
+//                                  animate: true,
+//                                ), //barchart
+//                              )
+//                            ])));
+//                  })),
+//        ],
+//      )),
+//    );
+//  }
+//  }
 }
 
 //Settings page for viewing/adjusting site content
@@ -852,8 +845,7 @@ class DatabasePgState extends State<DatabasePg> {
   //Listener for search bar, detects if there is text in the bar
   //If it is, sets the search text to the detected text
   DatabasePgState(String site) {
-    dataSite = site;
-    fs = new FirebaseFirestoreService(dataSite);
+    fs = new FirebaseFirestoreService(site);
     _filter.addListener(() {
       if (_filter.text.isEmpty) {
         setState(() {
@@ -1459,10 +1451,10 @@ class AddItemState extends State<AddItem> {
     title: 'Purchased Date',
     hint: 'Date',
   );
-  FieldWidget status = FieldWidget(
-      title: 'Item Status',
-      hint:
-          '(Available, Unavailable)'); //Status for checking an item in and out
+  StatusWidget status = StatusWidget(
+    title: 'Item Status',
+  );
+  //Status for checking an item in and out
   bool cameraView = false;
 
   @override
@@ -1775,7 +1767,7 @@ class ViewItemState extends State<ViewItem> {
     itemType.setString(widget.item.itemType);
     name.setString(widget.item.name);
     notes.setString(widget.item.notes);
-    status.setString(widget.item.status);
+    status.setStatus(widget.item.status);
     purchased.setString(widget.item.thisPurchased);
     super.initState();
   }
@@ -1801,8 +1793,7 @@ class ViewItemState extends State<ViewItem> {
       FieldWidget(title: 'Notes', hint: 'Item Notes', enabled: false);
   FieldWidget purchased =
       FieldWidget(title: 'Purchased Date', hint: 'Date', enabled: false);
-  FieldWidget status = FieldWidget(
-      title: 'Item Status', hint: '(Available, Unavailable)', enabled: false);
+  StatusWidget status = StatusWidget(title: 'Item Status', enabled: false);
   bool cameraView = false;
 
   @override
@@ -1831,16 +1822,14 @@ class ViewItemState extends State<ViewItem> {
                       title: 'Notes', hint: 'Item Notes', enabled: true);
                   purchased = FieldWidget(
                       title: 'Purchased Date', hint: 'Date', enabled: true);
-                  status = FieldWidget(
-                      title: 'Item Status',
-                      hint: '(Available, Unavailable)',
-                      enabled: true);
+                  status = StatusWidget(title: 'Item Status', enabled: true);
                   condition.setString(widget.item.condition);
                   itemId.setString(widget.item.itemID);
                   itemType.setString(widget.item.itemType);
                   name.setString(widget.item.name);
                   notes.setString(widget.item.notes);
                   purchased.setString(widget.item.thisPurchased);
+                  status.setStatus(widget.item.status);
                 });
               }),
           actions: <Widget>[
@@ -1913,45 +1902,93 @@ class ViewItemState extends State<ViewItem> {
                           )),
                           editMode == false
                               ? Container()
-                              : RaisedButton(
-                                  child: Text(
-                                      "Update"), //when update is pressed, update the equipment fields
-                                  onPressed: () async {
-                                    if (name.value.isEmpty) {
-                                      setState(() {
-                                        name = FieldWidget(
-                                          title: 'Item Name',
-                                          hint: 'Enter Item Name',
-                                          validate: true,
-                                          enabled: true,
-                                        );
-                                      });
-                                      _showToast(context,
-                                          'Error: You must enter an item name.');
-                                    } else if ((itemId.value.isEmpty)) {
-                                      _showToast(context,
-                                          'Error: You must scan an item code.');
-                                    } else {
-                                      //TODO:  add itemID checks to make sure that it is not used in the equipemnt/patron classes already
-                                      try {
-                                        await fs.updateEquipment(
-                                            name: name.value,
-                                            itemID: itemId.value,
-                                            itemType: itemType.value,
-                                            purchased: dateNow,
-                                            status: status.value,
-                                            condition: condition.value,
-                                            lastCheckedOut:
-                                                dateNow, //set last checked out date to same as purchased date
-                                            notes: notes.value);
-                                        Navigator.pop(context);
-                                      } catch (e) {
-                                        print(e.toString());
-                                        _showToast(context, e.toString());
-                                      }
-                                    }
-                                  },
-                                )
+                              : Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                      RaisedButton(
+                                        child: Text(
+                                            "Update"), //when update is pressed, update the equipment fields
+                                        onPressed: () async {
+                                          if (name.value.isEmpty) {
+                                            setState(() {
+                                              name = FieldWidget(
+                                                title: 'Item Name',
+                                                hint: 'Enter Item Name',
+                                                validate: true,
+                                                enabled: true,
+                                              );
+                                            });
+                                            _showToast(context,
+                                                'Error: You must enter an item name.');
+                                          } else if ((itemId.value.isEmpty)) {
+                                            _showToast(context,
+                                                'Error: You must scan an item code.');
+                                          } else {
+                                            //TODO:  add itemID checks to make sure that it is not used in the equipemnt/patron classes already
+                                            try {
+                                              await fs.updateEquipment(
+                                                  name: name.value,
+                                                  itemID: itemId.value,
+                                                  itemType: itemType.value,
+                                                  purchased: dateNow,
+                                                  status: status.value,
+                                                  condition: condition.value,
+                                                  lastCheckedOut:
+                                                      dateNow, //set last checked out date to same as purchased date
+                                                  notes: notes.value);
+                                              Navigator.pop(context);
+                                            } catch (e) {
+                                              print(e.toString());
+                                              _showToast(context, e.toString());
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      RaisedButton(
+                                        color: Colors.red,
+                                        child: Text("Delete"),
+                                        onPressed: () async {
+                                          showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                    title: Text("Delete Item"),
+                                                    content: Text(
+                                                        "Are you sure you want to delete this item? This will not reflect in the history logs and may unlink data."),
+                                                    actions: <Widget>[
+                                                      FlatButton(
+                                                          child: Text("Delete"),
+                                                          onPressed: () {
+                                                            try {
+                                                              fs.deleteEquipment(
+                                                                  widget.item
+                                                                      .itemID);
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                              Navigator.pop(
+                                                                  context);
+                                                            } catch (e) {
+                                                              print(
+                                                                  e.toString());
+                                                              _showToast(
+                                                                  context,
+                                                                  e.toString());
+                                                            }
+                                                          }),
+                                                      FlatButton(
+                                                          child: Text("Cancel"),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          }),
+                                                    ]);
+                                              });
+                                        },
+                                      ),
+                                    ])
                         ])));
   }
 
@@ -2190,39 +2227,77 @@ class ViewMemberState extends State<ViewMember> {
                           )),
                           editMode == false
                               ? Container()
-                              : RaisedButton(
-                                  child: Text(
-                                      "Update"), //if update is pressed, updates the contents on firebase
-                                  onPressed: () async {
-                                    if (firstName.value.isEmpty) {
-                                      setState(() {
-                                        firstName = FieldWidget(
-                                            title: 'Item Name',
-                                            hint: 'Enter Item Name',
-                                            validate: true,
-                                            enabled: true);
-                                      });
-                                      _showToast(context,
-                                          'Error: You must enter item name.');
-                                    } else {
-                                      try {
-                                        //print(id.value);
-                                        //TODO:  add the id checks before update
-                                        await fs.updatePatrons(
-                                            id.value,
-                                            firstName.value,
-                                            lastName.value,
-                                            address.value,
-                                            phone.value,
-                                            notes.value);
-                                        Navigator.pop(context);
-                                      } catch (e) {
-                                        print(e.toString());
-                                        _showToast(context, e.toString());
-                                      }
+                              : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              RaisedButton(
+                                child: Text("Update"),
+                                onPressed: () async {
+                                  if (firstName.value.isEmpty) {
+                                    setState(() {
+                                      firstName = FieldWidget(
+                                          title: 'Item Name',
+                                          hint: 'Enter Item Name',
+                                          validate: true,
+                                          enabled: true);
+                                    });
+                                    _showToast(context,
+                                        'Error: You must enter item name.');
+                                  } else {
+                                    try {
+                                      //print(id.value);
+                                      await fs.updatePatrons(
+                                          id.value,
+                                          firstName.value,
+                                          lastName.value,
+                                          address.value,
+                                          phone.value,
+                                          notes.value);
+                                      Navigator.pop(context);
+                                    } catch (e) {
+                                      print(e.toString());
+                                      _showToast(context, e.toString());
                                     }
-                                  },
-                                ),
+                                  }
+                                },
+                              ),
+                              RaisedButton(
+                                color: Colors.red,
+                                child: Text("Delete"),
+                                onPressed: () async {
+                                  showDialog(context: context,
+                                      builder: (BuildContext context){
+                                        return AlertDialog(
+                                            title: Text("Delete Member"),
+                                            content: Text("Are you sure you want to delete this Member? This will not reflect in the history logs and may unlink data."),
+                                            actions: <Widget>[
+                                              FlatButton(
+                                                  child: Text("Delete"),
+                                                  onPressed: (){
+                                                    try {
+                                                      fs.deletePatron(widget.mem.id);
+                                                      Navigator.of(context).pop();
+                                                      Navigator.pop(context);
+                                                    } catch (e) {
+                                                      print(e.toString());
+                                                      _showToast(context, e.toString());
+                                                    }
+                                                  }
+                                              ),
+                                              FlatButton(
+                                                  child: Text("Cancel"),
+                                                  onPressed: (){
+                                                    Navigator.of(context).pop();
+                                                  }
+                                              ),
+                                            ]
+                                        );
+                                      });
+
+
+                                },
+                              )
+                            ],)
                         ])));
   }
 
