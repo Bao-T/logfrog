@@ -559,7 +559,7 @@ class PageHomeState extends State<PageHome> {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(title: Text("LogFrog")),
-      body: Container();,
+      body: Container(),
     );
   }
 
