@@ -1578,7 +1578,7 @@ class AddItemState extends State<AddItem> {
                                           dateNow, //default date last checked out to same as purchased date for new item
                                       notes: notes.value);
                                   await fs.updateItemTypes(
-                                      itemType.value.toLowerCase());
+                                      itemType.value);
 
                                   Navigator.pop(context);
                                 } catch (e) {
@@ -1950,7 +1950,7 @@ class ViewItemState extends State<ViewItem> {
                                                       dateNow, //set last checked out date to same as purchased date
                                                   notes: notes.value);
                                               await fs.updateItemTypes(
-                                                  itemType.value.toLowerCase());
+                                                  itemType.value);
                                               Navigator.pop(context);
                                             } catch (e) {
                                               print(e.toString());

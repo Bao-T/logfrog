@@ -93,12 +93,12 @@ class FirebaseFirestoreService {
           docs = docs.where("ItemType", isEqualTo: '');
         }
         else{
-        docs = docs.where("ItemType", isEqualTo: itemType.toLowerCase());
+        docs = docs.where("ItemType", isEqualTo: itemType);
       }
 
     }
     if (status != "") {
-      docs = docs.where("Status", isEqualTo: status.toLowerCase());
+      docs = docs.where("Status", isEqualTo: status);
     }
     if (sortBy != "" && desc != null) {
       docs = docs.orderBy(sortBy, descending: desc);
