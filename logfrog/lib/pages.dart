@@ -335,8 +335,8 @@ class CheckinPg extends StatefulWidget {
 }
 
 class CheckinPgState extends State<CheckinPg> {
-  //static AudioCache player = new AudioCache();
 
+  static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera set up
   //Updating history variables
   Set<String> dataSet = {};
@@ -472,6 +472,7 @@ class CheckinPgState extends State<CheckinPg> {
                     setState(() {
                       if (dataSet.contains(code) == false) {
                         dataSet.add(code); //adds code to codes seen
+                        player.play(alarmAudioPath);
                         validate(context,
                             code); //runs validate checks to set student doing scanning, set object being checked out, pop ups
                       }
@@ -559,8 +560,7 @@ class PageHomeState extends State<PageHome> {
     return Container();
   }
 
-//  if(true){
-//  //get snapshots of all data when page opens
+// // get snapshots of all data when page opens
 //  FirebaseFirestoreService fs;
 //  StreamSubscription<QuerySnapshot> itemSub;
 //  StreamSubscription<DocumentSnapshot> itemTypeSub;
@@ -590,7 +590,8 @@ class PageHomeState extends State<PageHome> {
 //    itemTypeSub?.cancel();
 //    this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
 //      itemTypes = snapshot.data["ItemTypes"]; //should be a list of item type strings
-//      sortedItems = _buildItemsList();
+//      this.sortedItems = _buildItemsList();
+//      _makeCharts();
 //    });
 //
 //
@@ -609,24 +610,25 @@ class PageHomeState extends State<PageHome> {
 //  //
 //  Map _buildItemsList() {
 //    //set up a map for each data type
-//    Map typesSorted = {};
+//    Map<String,dynamic> typesSorted = {};
 //    typesSorted["makePieChart"] = [0, 0, 0];
+//    print(typesSorted.isEmpty);
 //    for (int i = 0; i < itemTypes.length; i++) {
-//      typesSorted[itemTypes[i]] = [
+//      typesSorted[itemTypes[i].toString()] = [
 //        0,
 //        0,
 //        0
 //      ]; //will have number in, number out, and number overdue for each type
 //      //[Available, Unavailable, Overdue]
 //    }
+//    print(typesSorted);
 //    //sort items into types and three categories
 //    for (int i = 0; i < items.length; i++) {
-//      var type = items[i].itemType; //gets item type
-//      var inOrOut =
-//          items[i].status; //gets item status "Available" or "Unavailable"
-//      if (inOrOut == "Available") {
+//      var type = items[i].itemType.toLowerCase(); //gets item type
+//      var inOrOut = items[i].status; //gets item status "Available" or "Unavailable"
+//      if (inOrOut == "available") {
 //        //increments available
-//        typesSorted[type][0] = typesSorted["type"][0] + 1;
+//        typesSorted[type][0] = typesSorted[type][0] + 1;
 //        typesSorted["makePieChart"][0] = typesSorted["makePieChart"][0] + 1;
 //      } else {
 //        //Status is unavailable, determine if checked in or checked out
@@ -642,11 +644,12 @@ class PageHomeState extends State<PageHome> {
 ////          typesSorted["makePieChart"][2] = typesSorted["makePieChart"][2] + 1;
 ////        } else {
 //          //Just checked out, not overdue
-//          typesSorted[type][1] = typesSorted["type"][1] + 1;
+//          typesSorted[type][1] = typesSorted[type][1] + 1;
 //          typesSorted["makePieChart"][1] = typesSorted["makePieChart"][1] + 1;
 // //       }
 //      }
 //    }
+//
 //    //returning set up list widget of bar graph
 //    return typesSorted;
 //  }
@@ -659,8 +662,8 @@ class PageHomeState extends State<PageHome> {
 //          'Available Items', sortedItems["makePieChart"][0], Colors.green),
 //      new GraphingData(
 //          'Unavailable Items', sortedItems["makePieChart"][1], Colors.yellow),
-//      new GraphingData(
-//          'Overdue Items', sortedItems["makePieChart"][2], Colors.red),
+////      new GraphingData(
+////          'Overdue Items', sortedItems["makePieChart"][2], Colors.red),
 //    ];
 //    this.pieChartSeries = [
 //      new Series(
@@ -673,26 +676,26 @@ class PageHomeState extends State<PageHome> {
 //    ];
 //    //setting up bar chart items
 //    //list.add(thing) in dart for adding item to list
-//    this.barChartSeries = [];
-//    for (int i = 0; i < itemTypes.length; i++) {
-//      //create list of series for each bar chart in future
-//      barChartSeries.add(
-//        new Series(
-//          id: itemTypes[i],
-//          domainFn: (GraphingData gdata, _) => gdata.title,
-//          measureFn: (GraphingData gdata, _) => gdata.itemNumber,
-//          colorFn: (GraphingData gdata, _) => gdata.color,
-//          data: [
-//            new GraphingData(
-//                itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
-//            new GraphingData(
-//                itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
-//            new GraphingData(
-//                itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
-//          ],
-//        ),
-//      );
-//    }
+////    this.barChartSeries = [];
+////    for (int i = 0; i < itemTypes.length; i++) {
+////      //create list of series for each bar chart in future
+////      barChartSeries.add(
+////        new Series(
+////          id: itemTypes[i],
+////          domainFn: (GraphingData gdata, _) => gdata.title,
+////          measureFn: (GraphingData gdata, _) => gdata.itemNumber,
+////          colorFn: (GraphingData gdata, _) => gdata.color,
+////          data: [
+////            new GraphingData(
+////                itemTypes[i], sortedItems[itemTypes[i]][0], Colors.green),
+////            new GraphingData(
+////                itemTypes[i], sortedItems[itemTypes[i]][1], Colors.yellow),
+////            new GraphingData(
+////                itemTypes[i], sortedItems[itemTypes[i]][2], Colors.red),
+////          ],
+////        ),
+////      );
+////    }
 //  }
 //
 //  @override
@@ -702,7 +705,7 @@ class PageHomeState extends State<PageHome> {
 //      body: Center(
 //          child: ListView(
 //        children: <Widget>[
-//          Card(child: Text(widget.referenceSite)), //displays site name at top
+//          //Card(child: Text(widget.referenceSite)), //displays site name at top
 //          Card(
 //              //Pie chart -> items in vs. items out vs. items out and late
 //              child: Padding(
@@ -715,32 +718,31 @@ class PageHomeState extends State<PageHome> {
 //                        child: new DonutAutoLabelChart(pieChartSeries,
 //                            animate: true)) // new pie chart
 //                  ]))),
-//          Card(
-//              child: ListView.separated(
-//                  separatorBuilder: (context, index) => Divider(
-//                        color: Colors.black,
-//                      ),
-//                  itemCount: items == null ? 0 : itemTypes.length,
-//                  itemBuilder: (BuildContext context, int index) {
-//                    return new Card(
-//                        child: Padding(
-//                            padding: const EdgeInsets.all(16.0),
-//                            child: Row(children: <Widget>[
-//                              Text("Number In vs Out: "), //star
-//                              Container(
-//                                width: MediaQuery.of(context).size.width / 2,
-//                                height: MediaQuery.of(context).size.height / 4,
-//                                child: new BarChart(
-//                                  barChartSeries[index],
-//                                  animate: true,
-//                                ), //barchart
-//                              )
-//                            ])));
-//                  })),
+////          Card(
+////              child: ListView.separated(
+////                  separatorBuilder: (context, index) => Divider(
+////                        color: Colors.black,
+////                      ),
+////                  itemCount: items == null ? 0 : itemTypes.length,
+////                  itemBuilder: (BuildContext context, int index) {
+////                    return new Card(
+////                        child: Padding(
+////                            padding: const EdgeInsets.all(16.0),
+////                            child: Row(children: <Widget>[
+////                              Text("Number In vs Out: "), //star
+////                              Container(
+////                                width: MediaQuery.of(context).size.width / 2,
+////                                height: MediaQuery.of(context).size.height / 4,
+////                                child: new BarChart(
+////                                  barChartSeries[index],
+////                                  animate: true,
+////                                ), //barchart
+////                              )
+////                            ])));
+////                  })),
 //        ],
 //      )),
 //    );
-//  }
 //  }
 }
 
@@ -779,15 +781,15 @@ class _SettingsPageState extends State<SettingsPage> {
         appBar: AppBar(title: Text('Settings')),
         body: ListView(
           children: <Widget>[
-            ListTile(
-              //two options in setting page
-              title: Text("Email History"), //enter management/edit mode
-              onTap: () {
-                FirebaseFirestoreService fs =
-                    FirebaseFirestoreService(widget.site);
-                fs..getHistoryLog(); //TODO
-              },
-            ),
+//            ListTile(
+//              //two options in setting page
+//              title: Text("Email History"), //enter management/edit mode
+//              onTap: () {
+//                FirebaseFirestoreService fs =
+//                    FirebaseFirestoreService(widget.site);
+//                fs..getHistoryLog(); //TODO
+//              },
+//            ),
             ListTile(
               title: Text("Log Out"), //sign out of edit mode
               onTap: () {
@@ -881,21 +883,28 @@ class DatabasePgState extends State<DatabasePg> {
     });
     itemTypeSub?.cancel();
     this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
-      itemTypes = snapshot.data["ItemTypes"];
-      itemTypesMenu.add(DropdownMenuItem(
-        child: Text('All'),
-        value: '',
-      ));
-      itemTypesMenu.add(DropdownMenuItem(
-        child: Text('None'),
-        value: '_null_',
-      ));
-      for (int i = 0; i < itemTypes.length; i++) {
+
+      setState(() {
+        itemTypes = snapshot.data["ItemTypes"];
+        itemTypesMenu.clear();
         itemTypesMenu.add(DropdownMenuItem(
-          child: Text(itemTypes[i].toString()),
-          value: itemTypes[i].toString(),
+          child: Text('All'),
+          value: '',
         ));
-      }
+        itemTypesMenu.add(DropdownMenuItem(
+          child: Text('None'),
+          value: '_null_',
+        ));
+        for (int i = 0; i < itemTypes.length; i++) {
+          itemTypesMenu.add(DropdownMenuItem(
+            child: Text(itemTypes[i].toString()),
+            value: itemTypes[i].toString(),
+          ));
+        }
+      });
+
+
+
     });
 
     //searching checkout/checkin histories
@@ -1937,6 +1946,8 @@ class ViewItemState extends State<ViewItem> {
                                                   lastCheckedOut:
                                                       dateNow, //set last checked out date to same as purchased date
                                                   notes: notes.value);
+                                              await fs.updateItemTypes(
+                                                  itemType.value.toLowerCase());
                                               Navigator.pop(context);
                                             } catch (e) {
                                               print(e.toString());
@@ -2228,76 +2239,81 @@ class ViewMemberState extends State<ViewMember> {
                           editMode == false
                               ? Container()
                               : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              RaisedButton(
-                                child: Text("Update"),
-                                onPressed: () async {
-                                  if (firstName.value.isEmpty) {
-                                    setState(() {
-                                      firstName = FieldWidget(
-                                          title: 'Item Name',
-                                          hint: 'Enter Item Name',
-                                          validate: true,
-                                          enabled: true);
-                                    });
-                                    _showToast(context,
-                                        'Error: You must enter item name.');
-                                  } else {
-                                    try {
-                                      //print(id.value);
-                                      await fs.updatePatrons(
-                                          id.value,
-                                          firstName.value,
-                                          lastName.value,
-                                          address.value,
-                                          phone.value,
-                                          notes.value);
-                                      Navigator.pop(context);
-                                    } catch (e) {
-                                      print(e.toString());
-                                      _showToast(context, e.toString());
-                                    }
-                                  }
-                                },
-                              ),
-                              RaisedButton(
-                                color: Colors.red,
-                                child: Text("Delete"),
-                                onPressed: () async {
-                                  showDialog(context: context,
-                                      builder: (BuildContext context){
-                                        return AlertDialog(
-                                            title: Text("Delete Member"),
-                                            content: Text("Are you sure you want to delete this Member? This will not reflect in the history logs and may unlink data."),
-                                            actions: <Widget>[
-                                              FlatButton(
-                                                  child: Text("Delete"),
-                                                  onPressed: (){
-                                                    try {
-                                                      fs.deletePatron(widget.mem.id);
-                                                      Navigator.of(context).pop();
-                                                      Navigator.pop(context);
-                                                    } catch (e) {
-                                                      print(e.toString());
-                                                      _showToast(context, e.toString());
-                                                    }
-                                                  }
-                                              ),
-                                              FlatButton(
-                                                  child: Text("Cancel"),
-                                                  onPressed: (){
-                                                    Navigator.of(context).pop();
-                                                  }
-                                              ),
-                                            ]
-                                        );
-                                      });
-
-
-                                },
-                              )
-                            ],)
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    RaisedButton(
+                                      child: Text("Update"),
+                                      onPressed: () async {
+                                        if (firstName.value.isEmpty) {
+                                          setState(() {
+                                            firstName = FieldWidget(
+                                                title: 'Item Name',
+                                                hint: 'Enter Item Name',
+                                                validate: true,
+                                                enabled: true);
+                                          });
+                                          _showToast(context,
+                                              'Error: You must enter item name.');
+                                        } else {
+                                          try {
+                                            //print(id.value);
+                                            await fs.updatePatrons(
+                                                id.value,
+                                                firstName.value,
+                                                lastName.value,
+                                                address.value,
+                                                phone.value,
+                                                notes.value);
+                                            Navigator.pop(context);
+                                          } catch (e) {
+                                            print(e.toString());
+                                            _showToast(context, e.toString());
+                                          }
+                                        }
+                                      },
+                                    ),
+                                    RaisedButton(
+                                      color: Colors.red,
+                                      child: Text("Delete"),
+                                      onPressed: () async {
+                                        showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                  title: Text("Delete Member"),
+                                                  content: Text(
+                                                      "Are you sure you want to delete this Member? This will not reflect in the history logs and may unlink data."),
+                                                  actions: <Widget>[
+                                                    FlatButton(
+                                                        child: Text("Delete"),
+                                                        onPressed: () {
+                                                          try {
+                                                            fs.deletePatron(
+                                                                widget.mem.id);
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                            Navigator.pop(
+                                                                context);
+                                                          } catch (e) {
+                                                            print(e.toString());
+                                                            _showToast(context,
+                                                                e.toString());
+                                                          }
+                                                        }),
+                                                    FlatButton(
+                                                        child: Text("Cancel"),
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        }),
+                                                  ]);
+                                            });
+                                      },
+                                    )
+                                  ],
+                                )
                         ])));
   }
 
