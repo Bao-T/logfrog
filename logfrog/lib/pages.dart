@@ -335,7 +335,6 @@ class CheckinPg extends StatefulWidget {
 }
 
 class CheckinPgState extends State<CheckinPg> {
-
   static AudioCache player = new AudioCache();
   var ori = Orientation.portrait; //camera set up
   //Updating history variables
@@ -559,7 +558,21 @@ class PageHomeState extends State<PageHome> {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(title: Text("LogFrog")),
-      body: Container(),
+      body: Center(
+        child: Card(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(padding: EdgeInsets.all(32.0), child: Image.asset('assets/FrogLog_Clear.png', scale: 2,)),
+
+              Text("Welcome to LogFrog Item Inventory System."),
+              Padding(padding: EdgeInsets.all(16.0),
+              child: Text("Add items and members on the database page. Make sure you have compatible QR or Barcodes for your item/member. Use our check-in and check-out pages to log the history of your items."),
+                  )
+              ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -846,7 +859,7 @@ class DatabasePgState extends State<DatabasePg> {
   bool order = true;
 
   Timestamp startDate;
-  Timestamp endDate;
+  Timestamp endDate = Timestamp.now();
   //Listener for search bar, detects if there is text in the bar
   //If it is, sets the search text to the detected text
   DatabasePgState(String site) {
@@ -886,7 +899,6 @@ class DatabasePgState extends State<DatabasePg> {
     });
     itemTypeSub?.cancel();
     this.itemTypeSub = fs.getItemTypes().listen((DocumentSnapshot snapshot) {
-
       setState(() {
         itemTypes = snapshot.data["ItemTypes"];
         itemTypesMenu.clear();
@@ -905,9 +917,6 @@ class DatabasePgState extends State<DatabasePg> {
           ));
         }
       });
-
-
-
     });
 
     //searching checkout/checkin histories
@@ -1120,8 +1129,6 @@ class DatabasePgState extends State<DatabasePg> {
   //Uses drawer widget
   //Filtering options for searching items
   Widget _getFilters(String filterType) {
-    Timestamp startDate;
-    Timestamp endDate;
 
     if (filterType == "Items") {
       return Column(
@@ -1577,8 +1584,7 @@ class AddItemState extends State<AddItem> {
                                       lastCheckedOut:
                                           dateNow, //default date last checked out to same as purchased date for new item
                                       notes: notes.value);
-                                  await fs.updateItemTypes(
-                                      itemType.value);
+                                  await fs.updateItemTypes(itemType.value);
 
                                   Navigator.pop(context);
                                 } catch (e) {
