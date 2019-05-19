@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "History",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "itemID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timeCheckedOut",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "History",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "itemID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timeCheckedOut",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

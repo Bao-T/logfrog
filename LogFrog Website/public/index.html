@@ -1,0 +1,80 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="qrcode.js"></script>
+</head>
+<body>
+<!--<form name = "formOne">-->
+    <div name = "formOne">
+How many qr codes? <input type='text' id = 'loopy' name='loopy' placeholder= "Enter an integer" >
+<button onclick="getHowMany()">Submit</button>
+</div>
+<!-- </form> -->
+
+<div id = "qrcodes"></div>
+
+
+
+<script type ="text/javascript">
+
+var howManyLoops;
+var q = document.getElementById('qrcodes');
+function getHowMany(){
+    var l = document.getElementById("loopy");
+    //howMany = document.formOne.loopy.value;
+    howMany = loopy.value;
+    localStorage.setItem("thisMany", howMany);
+    var loops = localStorage.getItem("thisMany");
+    console.log(loops);
+    generateQR(loops);
+}
+
+howManyLoops = getHowMany();
+console.log(howManyLoops);
+
+console.log(howMany);
+
+function createNewID(length){
+    // adapted from: https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript  
+    // date accessed: 5/16/2019
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
+console.log(createNewID(32));
+
+function generateQR(loops){
+var i;
+if (loops != 0){
+    for (i = 0; i < loops; i++){
+        var createID = createNewID(32);
+        //adapted from: https://davidshimjs.github.io/qrcodejs/
+        //date accessed: 5/16/2019
+        
+        var qrcode = new QRCode(document.getElementById("qrcodes"), {
+            text: createID,
+            width: 128,
+            height: 128});
+        // //adapted from: Pete Tucker
+        // //Date Accessed: 5/16/2019
+         
+         var imgqr = document.createElement('QRCode');
+         imgqr.src = qrcode;
+         q.appendChild(imgqr);
+
+         q.appendChild(document.createElement("br"));
+         //qrcode.clear();
+        }
+    }
+}
+</script>
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#reserved-urls -->
+
+</body>
+</html>
