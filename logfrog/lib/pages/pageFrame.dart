@@ -10,9 +10,10 @@ import 'package:logfrog/pages/databasePage.dart';
 import 'package:logfrog/pages/homePage.dart';
 import 'package:logfrog/pages/settingsPage.dart';
 
-
-class HomePage extends StatefulWidget {
-  HomePage({Key key, this.auth, this.userId, this.onSignedOut})
+//Frame of application.
+//Contains the initial setup and navigation between main pages.
+class PageFrame extends StatefulWidget {
+  PageFrame({Key key, this.auth, this.userId, this.onSignedOut})
       : super(key: key);
 
   final BaseAuth auth;
@@ -20,32 +21,35 @@ class HomePage extends StatefulWidget {
   final String userId;
 
   @override
-  State<StatefulWidget> createState() => new _HomePageState();
+  State<StatefulWidget> createState() => new _PageFrameState();
 }
 
-class _HomePageState extends State<HomePage> {
-  List<Todo> _todoList;
+class _PageFrameState extends State<PageFrame> {
 
+  //Firestore and Auth services variables
   final FirebaseDatabase _database = FirebaseDatabase.instance;
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final _textEditingController = TextEditingController();
   StreamSubscription<Event> _onTodoAddedSubscription;
   StreamSubscription<Event> _onTodoChangedSubscription;
-  Query _todoQuery;
+  List<Todo> _todoList;
+  List<Widget> pageList;
+  List<dynamic> databases;Query _todoQuery;
   FirebaseFirestoreService fs;
-  bool _isEmailVerified = false;
 
+
+  bool _isEmailVerified = false;
   int _bottomNavBarIndex = 0;
+  int checkoutPeriodActual;
+  String currentSite;
+
+  //Widgets for view navigation
   CheckoutPg checkoutPg;
   CheckinPg checkinPg;
   DatabasePg databasePg;
   PageHome pgHome;
   SettingsPage settingpg;
-  List<Widget> pageList;
-  List<dynamic> databases;
-  String currentSite;
   Widget currentPage;
-  int checkoutPeriodActual;
 
   @override
   void initState() {
@@ -61,10 +65,10 @@ class _HomePageState extends State<HomePage> {
     _onTodoAddedSubscription = _todoQuery.onChildAdded.listen(_onEntryAdded);
     _onTodoChangedSubscription =
         _todoQuery.onChildChanged.listen(_onEntryChanged);
-    Future getDatabases() async{
-      var document = await db.Firestore.instance.collection('Users').document(widget.userId).get();
-      //var siteDocument = await db.Firestore.instance.collection('Objects').document(document.data["databases"][0].toString()).get(); //gets the checkoutPeriod for the first site
 
+    //Get's current user's site and initializes application framework.
+    Future getSites() async{
+      var document = await db.Firestore.instance.collection('Users').document(widget.userId).get();
       setState(() {
         databases = document.data["databases"]; //databases that user has access to
         currentSite = databases[0].toString(); //name of current stite
@@ -93,7 +97,7 @@ class _HomePageState extends State<HomePage> {
      //Change Site to access different sites
 
     try {
-      getDatabases();
+      getSites();
     }
     catch(exception){
       _signOut();
@@ -299,10 +303,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
+  //Application main framework for UI.
+  //Initializes main pages of application
+  //Builder for navigation bar.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: currentPage,
+      //Navigate to selected page.
+      //Authenticate again if database page is selected.
       bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _bottomNavBarIndex,
@@ -367,6 +377,7 @@ class _HomePageState extends State<HomePage> {
               }
             });
           },
+          //Navigation bar items
           items: [
             BottomNavigationBarItem(
               icon: new Icon(Icons.home),

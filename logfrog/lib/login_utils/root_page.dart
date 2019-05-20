@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logfrog/login_utils/login_signup_page.dart';
 import 'package:logfrog/login_utils/authentication.dart';
-import 'package:logfrog/pages/home_page.dart';
+import 'package:logfrog/pages/pageFrame.dart';
 
 class RootPage extends StatefulWidget {
   RootPage({this.auth});
@@ -77,7 +77,7 @@ class _RootPageState extends State<RootPage> {
         break;
       case AuthStatus.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
-          return new HomePage(
+          return new PageFrame(
             userId: _userId,
             auth: widget.auth,
             onSignedOut: _onSignedOut,
