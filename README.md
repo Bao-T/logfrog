@@ -35,6 +35,8 @@ run ```pod install``` for [Podfile](logfrog/ios/Podfile)
 ## Meta
 
 Julia Abbot – jabbott19@my.whitworth.edu
+
 Alyssa La Fleur – alafleur19@my.whitworth.edu
+
 Bao Tran – btran19@my.whitworth.edu
 
