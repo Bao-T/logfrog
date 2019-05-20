@@ -1,6 +1,7 @@
 <html>
 <head>
-<script type="text/javascript" src="jquery.min.js"></script>
+<!-- import the qr code generating libraries -->
+<script type="text/javascript" src="jquery.min.js"></script> 
 <script type="text/javascript" src="qrcode.js"></script>
 </head>
 <body>
@@ -14,18 +15,21 @@ How many qr codes? <input type='text' id = 'loopy' name='loopy' placeholder= "En
 <div id = "qrcodes"></div>
 
 
-
+<!-- function: gets how many loops the user wants, then generate the qr codes and show them to the screen -->
 <script type ="text/javascript">
 
+//variable to funnel the info from the form to the generating function
 var howManyLoops;
 var q = document.getElementById('qrcodes');
 function getHowMany(){
     var l = document.getElementById("loopy");
-    //howMany = document.formOne.loopy.value;
+    //get the value from the form, pass it to how many
     howMany = loopy.value;
+    //create a cookie to keep the number of how many qr codes the user last asked for
     localStorage.setItem("thisMany", howMany);
     var loops = localStorage.getItem("thisMany");
     console.log(loops);
+    //generate the qr codes
     generateQR(loops);
 }
 
@@ -34,6 +38,7 @@ console.log(howManyLoops);
 
 console.log(howMany);
 
+//generates a random string to use as the qr code id; uses upper and lowercase letters, numbers, and - _ '
 function createNewID(length){
     // adapted from: https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript  
     // date accessed: 5/16/2019
@@ -48,14 +53,18 @@ function createNewID(length){
 
 console.log(createNewID(32));
 
+//generates the qr codes that the user requests
 function generateQR(loops){
 var i;
+
 if (loops != 0){
     for (i = 0; i < loops; i++){
+        //create a new random id of length 32 characters
         var createID = createNewID(32);
         //adapted from: https://davidshimjs.github.io/qrcodejs/
         //date accessed: 5/16/2019
         
+        //creaee the qr code using the new id, and push it into the <div> tag to display to screen
         var qrcode = new QRCode(document.getElementById("qrcodes"), {
             text: createID,
             width: 128,
