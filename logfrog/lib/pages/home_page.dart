@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as db;
 import 'package:flutter/material.dart';
-import 'package:logfrog/services/authentication.dart';
+import 'package:logfrog/login_utils/authentication.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:logfrog/models/todo.dart';
 import 'dart:async';
-import 'package:logfrog/pages.dart';
+import 'package:logfrog/pages/transactionPages.dart';
 import 'package:logfrog/firebase_service.dart';
+import 'package:logfrog/pages/databasePage.dart';
+import 'package:logfrog/pages/homePage.dart';
+import 'package:logfrog/pages/settingsPage.dart';
 
 
 class HomePage extends StatefulWidget {

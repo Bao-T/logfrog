@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:logfrog/services/authentication.dart';
+import 'package:logfrog/login_utils/authentication.dart';
 
+
+//Login in Widgets. Used from https://github.com/bizz84/firebase-login-flutter
 class LoginSignUpPage extends StatefulWidget {
   LoginSignUpPage({this.auth, this.onSignedIn});
 
@@ -13,6 +15,8 @@ class LoginSignUpPage extends StatefulWidget {
 
 enum FormMode { LOGIN, SIGNUP }
 
+//Login widget function and UI. Used to create new accounts or log in to existing ones.
+//Supported persistent login.
 class _LoginSignUpPageState extends State<LoginSignUpPage> {
   final _formKey = new GlobalKey<FormState>();
 

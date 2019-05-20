@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:logfrog/pages/login_signup_page.dart';
-import 'package:logfrog/services/authentication.dart';
+import 'package:logfrog/login_utils/login_signup_page.dart';
+import 'package:logfrog/login_utils/authentication.dart';
 import 'package:logfrog/pages/home_page.dart';
 
 class RootPage extends StatefulWidget {

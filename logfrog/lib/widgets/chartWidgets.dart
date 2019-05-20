@@ -10,7 +10,7 @@ import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
 
 
-//Graphing Data class for preparing item numbers in pages.dart graphing page
+//Graphing Data class for preparing item numbers in transactionPages.dart graphing page
 class GraphingData {
   final String title;
   final int itemNumber;
@@ -20,7 +20,7 @@ class GraphingData {
 
 }
 
-//pie chart used in pages.dart for graphing all available items of a given type
+//pie chart used in transactionPages.dart for graphing all available items of a given type
 class DonutAutoLabelChart extends StatelessWidget {
   final List<charts.Series> seriesList;
   final bool animate;

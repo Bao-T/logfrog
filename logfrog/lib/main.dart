@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:logfrog/services/authentication.dart';
-import 'package:logfrog/pages/root_page.dart';
+import 'package:logfrog/login_utils/authentication.dart';
+import 'package:logfrog/login_utils/root_page.dart';
 
 void main() {
   runApp(new MyApp());

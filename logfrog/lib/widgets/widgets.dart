@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-
+//Widgets that provide fields for databse page updates.
+//Widget is a combination of textfield and text widgets
+//Allows editability and getters of the field.
 class FieldWidget extends StatefulWidget{
   final String title;
   final String hint;
@@ -47,7 +49,10 @@ class FieldWidgetState extends State<FieldWidget>{
   }
 }
 
-
+//Widget specific to the status field in Items.
+//Used in the database view.
+//Creates a dropdown UI to select the different types of statuses
+//UI looks similar to field widget.
 class StatusWidget extends StatefulWidget{
   final String title;
   final String hint;

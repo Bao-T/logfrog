@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:logfrog/users.dart';
+import 'package:logfrog/classes/users.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-abstract class BaseAuth {
 
+//Supporting functions for authentication.
+//Taken from https://github.com/bizz84/firebase-login-flutter
+abstract class BaseAuth {
   Future<String> signIn(String email, String password);
 
   Future<String> signUp(String email, String password);
@@ -19,14 +21,16 @@ abstract class BaseAuth {
   Future<bool> reauthenticate(String password);
 }
 
+//authentication class
+//handles new and existing users
+//implements token exchange for persistent login.
 class Auth implements BaseAuth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   String _email;
 
-
-
-  String getEmail(){return _email;}
-
+  String getEmail() {
+    return _email;
+  }
 
   Future<String> signIn(String email, String password) async {
     FirebaseUser user = await _firebaseAuth.signInWithEmailAndPassword(
@@ -39,15 +43,15 @@ class Auth implements BaseAuth {
     FirebaseUser user = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
     final CollectionReference usersCollection =
-    Firestore.instance.collection('Users');
+        Firestore.instance.collection('Users');
     final CollectionReference equipmentCollection =
-    Firestore.instance.collection('Objects');
+        Firestore.instance.collection('Objects');
 
-
-    Future<Users> createNewUser(
-        { String id,
-          String emailAddress,
-          List<String> databases,}) async {
+    Future<Users> createNewUser({
+      String id,
+      String emailAddress,
+      List<String> databases,
+    }) async {
       final TransactionHandler createTransaction = (Transaction tx) async {
         DocumentSnapshot ds;
         DocumentSnapshot objectsDs;
@@ -62,27 +66,31 @@ class Auth implements BaseAuth {
         return dataMap;
       };
       return usersCollection.document(id).get().then((doc) {
-        if (doc.exists){
+        if (doc.exists) {
           //throw ("error: Item ID already exists");
         } else {
-          return Firestore.instance.runTransaction(createTransaction).then((mapData) {
+          return Firestore.instance
+              .runTransaction(createTransaction)
+              .then((mapData) {
             return Users.fromMap(mapData);
           }).catchError((error) {
             throw ('error: unable to communicate with server');
           });
         }
-      }).catchError((e){
+      }).catchError((e) {
         throw (e);
       });
     }
+
     createNewUser(id: user.uid, emailAddress: email, databases: []);
     return user.uid;
   }
 
   Future<FirebaseUser> getCurrentUser() async {
     FirebaseUser user = await _firebaseAuth.currentUser();
-    if (user != null)
-      {_email = user.email;}
+    if (user != null) {
+      _email = user.email;
+    }
     return user;
   }
 
@@ -94,12 +102,12 @@ class Auth implements BaseAuth {
     FirebaseUser user = await _firebaseAuth.currentUser();
     user.sendEmailVerification();
   }
-  
-  Future<void> updatePassword(String newPass) async{
+
+  Future<void> updatePassword(String newPass) async {
     FirebaseUser user = await _firebaseAuth.currentUser();
     user.updatePassword(newPass);
   }
-
+  //for use in database page. Second level of authorization to access page.
   Future<bool> reauthenticate(String password) async {
     FirebaseUser user = await _firebaseAuth.currentUser();
     _email = user.email;
@@ -108,12 +116,10 @@ class Auth implements BaseAuth {
           email: _email, password: password);
       if (user.uid != null) {
         return true;
-      }
-      else {
+      } else {
         return false;
       }
-    }
-    catch(e){}
+    } catch (e) {}
     return false;
   }
 
@@ -121,5 +127,4 @@ class Auth implements BaseAuth {
     FirebaseUser user = await _firebaseAuth.currentUser();
     return user.isEmailVerified;
   }
-
 }

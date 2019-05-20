@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:logfrog/equipment.dart';
-import 'package:logfrog/users.dart';
-import 'package:logfrog/patrons.dart';
-import 'package:logfrog/history.dart';
+import 'package:logfrog/classes/equipment.dart';
+import 'package:logfrog/classes/users.dart';
+import 'package:logfrog/classes/patrons.dart';
+import 'package:logfrog/classes/history.dart';
 
 final CollectionReference objectCollection =
     Firestore.instance.collection('Objects');
@@ -588,7 +588,7 @@ class FirebaseFirestoreService {
     return passes;
   }
 
-  //For use in livecamera.dart, checks if a given equipment id exists (use before equipmentNotCheckedOut check to avoid pulling data and generating a Equipment member)
+  //Checks if a given equipment id exists (use before equipmentNotCheckedOut check to avoid pulling data and generating a Equipment member)
   Future<bool> equipmentExists(String barcodeIn) async {
     bool exists = false;
     await objectCollection
@@ -604,7 +604,7 @@ class FirebaseFirestoreService {
     return exists;
   }
 
-  //function which checks if a item is currently checked in or currently checked out for a scanned item barcode in liveCamera.dart
+  //function which checks if a item is currently checked in or currently checked out for a scanned item barcode.
   //true = is checked in and can be checked out
   //false = is checked out and was not checked back in OR is not in the system
   //TODO: Add popups for the two cases to prompt a) scanning item back in to check out or b) entering item in database
