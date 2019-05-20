@@ -44,6 +44,7 @@ class CheckoutPgState extends State<CheckoutPg> {
   List<String> dataNameList = [];
   List<Widget> dataWidget = [];
   GestureDetector camera; //setting up camera
+  Text memNameWidget = Text("");
   Expanded userInfo;
   String currentMemberID =
       ""; //member ID of student  (AKA patron) checking out equipment
@@ -78,10 +79,11 @@ class CheckoutPgState extends State<CheckoutPg> {
         currentMemberName = doc.data['firstName'] + ' ' + doc.data['lastName'];
         print(currentMemberName);
         setState(() {
+          memNameWidget = Text(currentMemberName);
           userInfo = Expanded(
               child: Card(
             margin: EdgeInsets.all(5.0),
-            child: Center(child: Text(currentMemberName)),
+            child: Center(child: memNameWidget),
           ));
         });
       });
@@ -201,38 +203,59 @@ class CheckoutPgState extends State<CheckoutPg> {
   Future<dynamic> finalTransaction(
       String memID, String memName, List<String> itemIds) async {
     //For each item scanned, builds a history object
-    for (int i = 0; i < dataList.length; i++) {
+    for (int i = 0; i < dataList.length; i+=1) {
+      print(i);
+      print(dataList);
       String itemID = dataList[i];
-      var item = await Firestore.instance
+      print(itemID);
+      await Firestore.instance
           .collection('Objects')
           .document(widget.site)
           .collection('Items')
           .document(itemID)
-          .get();
-      String itemName = item.data["Name"].toString();
-      Timestamp timeCheckedIn; //null for now, will be filled when equipment
-      Timestamp timeCheckedOut = Timestamp.now();
-      Equipment currentItem = Equipment.fromMap(item.data);
-      print(currentItem.itemID);
-      currentItem.setStatus("unavailable");
-      fs.updateEquipment(
-          name: currentItem.name,
-          itemID: currentItem.itemID,
-          itemType: currentItem.itemType,
-          purchased: currentItem.purchasedTimestamp,
-          status: currentItem.status,
-          lastCheckedOut:
-              timeCheckedOut, //added for speeding up graph computations
-          condition: currentItem.condition,
-          notes: currentItem.notes);
-      fs.createHistory(
-          itemID: itemID,
-          itemName: itemName,
-          memID: memID,
-          memName: memName,
-          timeCheckedIn: null, //Note that null is the default timeCheckedIn
-          timeCheckedOut: timeCheckedOut);
+          .get().then((item){
+        String itemName = item.data["Name"].toString();
+        Timestamp timeCheckedIn; //null for now, will be filled when equipment
+        Timestamp timeCheckedOut = Timestamp.now();
+        Equipment currentItem = Equipment.fromMap(item.data);
+        print(currentItem.itemID);
+        currentItem.setStatus("unavailable");
+        fs.updateEquipment(
+            name: currentItem.name,
+            itemID: currentItem.itemID,
+            itemType: currentItem.itemType,
+            purchased: currentItem.purchasedTimestamp,
+            status: currentItem.status,
+            lastCheckedOut:
+            timeCheckedOut, //added for speeding up graph computations
+            condition: currentItem.condition,
+            notes: currentItem.notes);
+        fs.createHistory(
+            itemID: itemID,
+            itemName: itemName,
+            memID: memID,
+            memName: memName,
+            timeCheckedIn: null, //Note that null is the default timeCheckedIn
+            timeCheckedOut: timeCheckedOut);
+
+      });
+
     }
+    setState(() {
+      currentMemberID = "";
+      memNameWidget = Text("");
+      currentMemberName = "";
+      userInfo = Expanded(
+          child: Card(
+            margin: EdgeInsets.all(5.0),
+            child: Center(child: memNameWidget),
+          ));
+      dataSet.clear();
+      dataList.clear();
+      dataNameList.clear();
+      dataWidget.clear();
+    });
+
     return null;
   }
 
@@ -308,12 +331,12 @@ class CheckoutPgState extends State<CheckoutPg> {
                                   currentMemberID, currentMemberName, dataList);
                               //Clearing transaction fields for next user
                               setState(() {
-                                currentMemberID = "";
-                                currentMemberName = "";
-                                dataSet.clear();
-                                dataList.clear();
-                                dataNameList.clear();
-                                dataWidget.clear();
+//                                currentMemberID = "";
+//                                currentMemberName = "";
+//                                dataSet.clear();
+//                                dataList.clear();
+//                                dataNameList.clear();
+//                                dataWidget.clear();
                               }); //resetting currentMemberID to null to prevent other users from checking out under past user's name
                             },
                     ),
